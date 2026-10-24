@@ -98,7 +98,7 @@ create table if not exists public.mcp_tool_usage (
 );
 
 do $$ declare t text; begin
-  foreach t in array array['skill_configurations','uploaded_files','extracted_messages','communication_profiles','agent_sessions','agent_messages','generated_outputs','feedback_ratings','mcp_tool_usage'] loop
+  foreach t in array array['skill_configurations','uploaded_files','extracted_messages','communication_profiles','agent_sessions','generated_outputs','feedback_ratings','mcp_tool_usage'] loop
     execute format('alter table public.%I enable row level security',t);
     execute format('drop policy if exists member_owns_rows on public.%I',t);
     execute format('create policy member_owns_rows on public.%I for all to authenticated using (auth.uid()=user_id and (skill_id is null or public.can_access_skill(auth.uid(),skill_id))) with check (auth.uid()=user_id and (skill_id is null or public.can_access_skill(auth.uid(),skill_id)))',t);
@@ -106,6 +106,14 @@ do $$ declare t text; begin
     execute format('grant select,insert,update,delete on public.%I to authenticated',t);
     execute format('grant all on public.%I to service_role',t);
   end loop;
+  alter table public.agent_messages enable row level security;
+  drop policy if exists member_owns_agent_messages on public.agent_messages;
+  create policy member_owns_agent_messages on public.agent_messages for all to authenticated
+    using(auth.uid()=user_id and exists(select 1 from public.agent_sessions s where s.id=agent_session_id and s.user_id=auth.uid() and public.can_access_skill(auth.uid(),s.skill_id)))
+    with check(auth.uid()=user_id and exists(select 1 from public.agent_sessions s where s.id=agent_session_id and s.user_id=auth.uid() and public.can_access_skill(auth.uid(),s.skill_id)));
+  revoke all on public.agent_messages from anon,authenticated;
+  grant select,insert,update,delete on public.agent_messages to authenticated;
+  grant all on public.agent_messages to service_role;
   alter table public.member_skills enable row level security;
   drop policy if exists member_reads_own_skill_grants on public.member_skills;
   create policy member_reads_own_skill_grants on public.member_skills for select to authenticated using(auth.uid()=user_id);
@@ -130,6 +138,8 @@ end $$;
 
 alter table public.skill_categories enable row level security;
 alter table public.skills enable row level security;
+drop policy if exists "Active skill categories are discoverable" on public.skill_categories;
+drop policy if exists "Active skills are discoverable" on public.skills;
 create policy "Active skill categories are discoverable" on public.skill_categories for select to anon,authenticated using(exists(select 1 from public.skills s where s.category_id=skill_categories.id and s.is_active));
 create policy "Active skills are discoverable" on public.skills for select to anon,authenticated using(is_active);
 revoke all on public.skill_categories,public.skills from anon,authenticated;

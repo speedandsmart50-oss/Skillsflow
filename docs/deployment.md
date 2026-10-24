@@ -48,7 +48,7 @@ checkout disabled until SasPay has approved the account and live credentials are
 available.
 
 1. Create a dedicated Vercel project for SkillFlow and deploy the `skillflow` directory.
-2. Apply migrations `001_init.sql` through `010_catalog_and_personal_agent_data.sql` in numeric order, then `011_skills_library_and_member_agents.sql`. The 011 migration seeds 15 categories and 30 Skills, creates member/agent tables and RLS, and must be applied before opening `/member` or using private MCP tools.
+2. Apply migrations `001_init.sql` through `012_public_recent_sales_activity.sql` in numeric order. Migration 011 seeds 15 categories and 30 Skills and creates member/agent tables with RLS; migration 012 exposes only anonymized, paid purchase activity for catalogue popups. Apply both before opening `/member` or enabling the sales notifications.
 3. Verify the production build with `npm run build`, then check the public catalogue.
 
 The home page, `/shop`, product details, and `/api/products` read published,

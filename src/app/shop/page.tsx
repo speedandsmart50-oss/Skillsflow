@@ -2,6 +2,7 @@ import { ProductCard } from "@/components/product-card";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { getCatalogProducts } from "@/features/products/catalog";
+import { SalesActivityPop } from "@/components/sales-activity-pop";
 
 export default function ShopPage() {
   return (
@@ -43,6 +44,7 @@ async function ShopContent() {
           <p className="mt-3 text-sm text-slate-300">Le téléchargement sécurisé s’active après confirmation du paiement.</p>
         </div>
       </div>
+      <SalesActivityPop />
     </main>
   );
 }
