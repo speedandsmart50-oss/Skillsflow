@@ -6,6 +6,6 @@ SkillFlow is a product marketplace for downloadable AI skill packs. The MVP is i
 - customer authentication and account access
 - secure download authorization and version history
 - admin publication and monitoring workflows
-- isolated payment handling ready for SasPay integration
+- SasPay live payments with server-side transaction verification and idempotent webhook processing
 
-The application uses Next.js App Router, TypeScript strict mode, and Tailwind CSS. Data and access layers are intentionally separated from the UI so versioning, payment verification, and download authorization remain easy to replace with real Supabase policies and server-side checks later.
+The application uses Next.js App Router, TypeScript strict mode, and Tailwind CSS. Supabase stores profiles, products, paid orders, and download records. Product archives remain in a private Storage bucket and are delivered through short-lived signed URLs after a server-side purchase check.

@@ -1,21 +1,52 @@
 # Deployment notes
 
-## Public vitrine
+## SasPay production checkout and private delivery
 
-The current release can be deployed as a public product catalogue. Payments, sign-in,
-customer downloads, and admin pages remain unavailable; checkout and webhook endpoints
-return `503` until order persistence, payment reconciliation, and authentication are
-implemented. Do not enable live SasPay credentials as a substitute for those features.
+Checkout uses SasPay live credentials only. Orders are reconciled from verified webhooks,
+and paid customers can download the published pack through short-lived signed URLs.
+Configure a SasPay live `PAYIN` or `BOTH` key, the webhook secret, and server-side
+Supabase credentials in production.
+Configure Supabase Auth with the production site URL and allowed redirect URLs.
 
 1. Create a dedicated Vercel project for SkillFlow and deploy the `skillflow` directory.
-2. A custom domain is optional; use the Vercel-provided domain until a registered domain is configured.
-3. Verify the production build with `npm run build`, then check the public catalogue and
-   confirm checkout remains unavailable.
+2. Apply migrations `001_init.sql`, `002_sandbox_commerce.sql`, and `003_production_launch.sql` in order.
+3. Verify the production build with `npm run build`, then check the public catalogue.
 
-## Enabling commerce later
+The archive is excluded from Vercel and Git. After migration 003 creates the private
+`product-packs` bucket, configure the service-role key in local `.env.local` and run
+`npm run upload:product`. Verify the v1.0.0 archive is present in private Storage.
 
-1. Configure a Supabase project dedicated to SkillFlow.
-2. Apply `supabase/migrations/001_init.sql` and implement authentication and private downloads.
-3. Implement persistent orders and reconcile signed SasPay webhooks before enabling checkout.
-4. Add production environment variables from `.env.example` in Vercel, and set the SasPay
-   webhook URL to the deployed `/api/webhooks/saspay` endpoint.
+The live pilot costs 280 XOF and is restricted to the verified `SKILLFLOW_ADMIN_EMAIL`
+account. It approximates USD 0.50; verify conversion and provider minimum with SasPay.
+`BOOST` is disabled during the pilot. After it succeeds, set
+`INITIAL_LIVE_TRIAL_PRICE_XOF` to `null` in `src/lib/pricing.ts` to restore the
+39 EUR price and `BOOST` discount. Keep `SKILLFLOW_ADMIN_EMAIL` set: `ADMIN` grants
+admin access only to that verified account after successful payment. Complete the
+seller identity, terms, licence, refund policy, and privacy notice before public sales.
+
+## MCP connection
+
+The read-only MCP endpoint is `/api/mcp`. It uses Streamable HTTP and exposes the
+published catalogue through `list_skills` and `get_skill`; it does not expose checkout,
+private downloads, or unpublished products.
+
+- For a local desktop MCP client, use `http://localhost:3000/api/mcp` while `npm run dev`
+  is running.
+- For Claude or ChatGPT connecting to a deployed service, use the public HTTPS URL
+  `https://<your-domain>/api/mcp`. A localhost URL is not reachable by hosted services.
+- Start with the client’s remote MCP/custom connector flow and add that URL. The exact
+  setup screens depend on the client and account configuration.
+
+The catalogue is public, so this initial MCP endpoint does not require authentication.
+Do not add customer-specific actions or private data without implementing authentication
+and authorization first.
+
+## Pre-deployment validation
+
+1. Run `npm test`, `npm run lint`, and `npm run build`.
+2. Verify sign-up, email confirmation, and sign-in using the deployed Supabase Auth URLs.
+3. Run one authorized live payment, then verify webhook reconciliation, account order status,
+   and the short-lived signed download.
+
+Do not treat a redirect to the completion page as proof of payment. Only the verified
+SasPay webhook changes order status and unlocks a download.

@@ -1,7 +1,7 @@
 create extension if not exists pgcrypto;
 
 create table if not exists profiles (
-  id uuid primary key default gen_random_uuid(),
+  id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
   role text not null default 'customer' check (role in ('customer', 'admin')),
   created_at timestamptz not null default now()
@@ -54,9 +54,15 @@ alter table orders enable row level security;
 alter table downloads enable row level security;
 
 create policy "Users can view own profile" on profiles for select using (auth.uid() = id);
-create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
 create policy "Public product read access" on products for select using (status = 'published');
-create policy "Admins manage products" on products for all using (auth.jwt() ->> 'role' = 'admin') with check (auth.jwt() ->> 'role' = 'admin');
+create policy "Admins manage products" on products for all
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
+create policy "Public product version read access" on product_versions for select using (status = 'published');
+create policy "Admins manage product versions" on product_versions for all
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 create policy "Customers view own orders" on orders for select using (auth.uid() = user_id);
-create policy "Admins view all orders" on orders for select using (auth.jwt() ->> 'role' = 'admin');
+create policy "Admins view all orders" on orders for select
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 create policy "Users can view own downloads" on downloads for select using (auth.uid() = user_id);

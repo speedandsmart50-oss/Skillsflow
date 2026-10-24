@@ -12,6 +12,7 @@ export type Product = {
   stack: string[];
   installSteps: string[];
   price: number;
+  priceXof: number;
   version: string;
   status: ProductStatus;
   zipFile: string;

@@ -21,13 +21,13 @@ export default async function ProductDetailPage({
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       <Link href="/shop" className="mb-6 inline-flex text-sm font-medium text-slate-600 hover:text-slate-900">
-        ← Back to catalog
+        ← Retour au catalogue
       </Link>
       <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-4 flex items-center justify-between gap-4">
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-              {product.status}
+              Disponible
             </span>
             <span className="text-sm font-medium text-slate-500">v{product.version}</span>
           </div>
@@ -37,11 +37,11 @@ export default async function ProductDetailPage({
 
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Problem solved</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Le besoin</h2>
               <p className="mt-3 text-slate-600">{product.problem}</p>
             </div>
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Compatible agents</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Compatibilité</h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 {product.compatibleAgents.map((agent) => (
                   <span key={agent} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">
@@ -53,7 +53,7 @@ export default async function ProductDetailPage({
           </div>
 
           <div className="mt-8">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Install checklist</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Installation</h2>
             <ol className="mt-3 list-decimal space-y-2 pl-6 text-slate-600">
               {product.installSteps.map((step) => (
                 <li key={step}>{step}</li>
@@ -63,13 +63,15 @@ export default async function ProductDetailPage({
         </section>
 
         <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Purchase</div>
-          <div className="mt-4 text-4xl font-semibold text-slate-900">€{product.price}</div>
-          <button disabled className="mt-6 w-full cursor-not-allowed rounded-full bg-slate-300 px-4 py-3 text-sm font-semibold text-slate-600">
-            Purchases opening soon
-          </button>
+          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Prix</div>
+          <div className="mt-4 text-4xl font-semibold text-slate-900">€{product.price.toFixed(2)}</div>
+          <div className="mt-1 text-sm font-medium text-slate-600">{new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF</div>
+          <p className="mt-4 text-sm leading-6 text-slate-600">Paiement sécurisé par SasPay. Le lien de téléchargement est disponible dans votre compte après confirmation du paiement.</p>
+          <Link href="/checkout" className="mt-6 block w-full rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white">
+            Acheter avec SasPay
+          </Link>
           <div className="mt-6">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Version history</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Historique des versions</h3>
             <ul className="mt-3 space-y-3 text-sm text-slate-600">
               {product.versions.map((release) => (
                 <li key={release.version} className="border-b border-slate-200 pb-2 last:border-0">

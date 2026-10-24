@@ -42,5 +42,7 @@ next-env.d.ts
 
 .vercel
 .env*
+!.env.example
+product-packs/
 _reference/
 /supabase/.temp/

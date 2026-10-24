@@ -4,5 +4,6 @@
 .next
 node_modules
 _reference
+product-packs
 supabase/.temp
 *.tsbuildinfo

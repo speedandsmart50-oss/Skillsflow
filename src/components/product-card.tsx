@@ -5,8 +5,13 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="rounded-xl border border-cyan-400/15 bg-slate-900/60 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-1 hover:border-cyan-400/35">
       <div className="mb-5 flex items-center justify-between gap-4">
-        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-300">{product.status}</span>
-        <span className="text-xl font-black text-white">€{product.price}</span>
+        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-300">Disponible</span>
+        <span className="text-right text-lg font-black text-white">
+          €{product.price.toFixed(2)}
+          <span className="block text-xs font-medium text-cyan-200">
+            {new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF
+          </span>
+        </span>
       </div>
       <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">✦</div>
       <h3 className="mt-5 text-xl font-semibold text-white">{product.name}</h3>
