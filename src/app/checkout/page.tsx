@@ -78,10 +78,9 @@ export default function CheckoutPage() {
           <section className="rounded-2xl border border-cyan-400/15 bg-slate-900/60 p-6 sm:p-8">
             <h2 className="text-xl font-semibold">Prospection éthique avec l’IA</h2>
             <p className="mt-2 text-sm text-slate-400">Compte SkillFlow obligatoire pour suivre l’achat.</p>
-            <label htmlFor="coupon" className="mt-8 block text-sm font-medium text-slate-200">Code de réduction</label>
+            <label htmlFor="coupon" className="mt-8 block text-sm font-medium text-slate-200">Code promo (optionnel)</label>
             <div className="mt-2 flex gap-2">
-              <input id="coupon" value={coupon} onChange={(event) => setCoupon(event.target.value)} autoCapitalize="characters" autoComplete="off" className="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-950 px-3 py-2.5 text-white outline-none focus:border-cyan-300" placeholder="BOOST" />
-              <span className="rounded-xl border border-slate-700 px-3 py-2.5 text-sm text-slate-300">BOOST : −10 € après l’offre pilote</span>
+              <input id="coupon" value={coupon} onChange={(event) => setCoupon(event.target.value)} autoCapitalize="characters" autoComplete="off" className="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-950 px-3 py-2.5 text-white outline-none focus:border-cyan-300" />
             </div>
             {coupon.trim() && price.couponCode !== coupon.trim().toUpperCase() && (
               <p className="mt-2 text-sm text-amber-300">Code invalide ou non autorisé pour ce compte.</p>
