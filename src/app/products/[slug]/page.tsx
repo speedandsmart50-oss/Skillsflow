@@ -1,22 +1,40 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProductBySlug, products } from "@/features/products/products";
+import { connection } from "next/server";
+import { Suspense } from "react";
+import { getCatalogProductBySlug } from "@/features/products/catalog";
 
-export function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
+const catalogStatusLabels = {
+  a_venir: "À venir",
+  en_preparation: "En préparation",
+  disponible: "Disponible",
+} as const;
+
+export default function ProductDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-white" aria-busy="true" />}>
+      <ProductDetailContent params={params} />
+    </Suspense>
+  );
 }
 
-export default async function ProductDetailPage({
+async function ProductDetailContent({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  await connection();
+  const product = await getCatalogProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
+  const canPurchase = product.catalogStatus === "disponible" && Boolean(product.zipFile);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
@@ -27,11 +45,12 @@ export default async function ProductDetailPage({
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-4 flex items-center justify-between gap-4">
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-              Disponible
+              {catalogStatusLabels[product.catalogStatus]}
             </span>
             <span className="text-sm font-medium text-slate-500">v{product.version}</span>
           </div>
           <h1 className="text-4xl font-semibold tracking-tight text-slate-900">{product.name}</h1>
+          <p className="mt-2 text-sm font-semibold text-slate-500">{product.domain}</p>
           <p className="mt-4 text-lg text-slate-600">{product.tagline}</p>
           <p className="mt-6 text-base leading-7 text-slate-600">{product.description}</p>
 
@@ -66,10 +85,16 @@ export default async function ProductDetailPage({
           <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Prix</div>
           <div className="mt-4 text-4xl font-semibold text-slate-900">€{product.price.toFixed(2)}</div>
           <div className="mt-1 text-sm font-medium text-slate-600">{new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF</div>
-          <p className="mt-4 text-sm leading-6 text-slate-600">Paiement sécurisé par SasPay. Le lien de téléchargement est disponible dans votre compte après confirmation du paiement.</p>
-          <Link href="/checkout" className="mt-6 block w-full rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white">
-            Acheter avec SasPay
-          </Link>
+          {canPurchase ? (
+            <>
+              <p className="mt-4 text-sm leading-6 text-slate-600">Le paiement est sécurisé par SasPay. Votre téléchargement sera disponible dans votre compte après confirmation du paiement.</p>
+              <Link href={`/checkout?product=${encodeURIComponent(product.slug)}`} className="mt-6 block w-full rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white">
+                Acheter avec SasPay
+              </Link>
+            </>
+          ) : (
+            <p className="mt-4 text-sm leading-6 text-slate-600">Ce skill n’est pas encore disponible à l’achat. Revenez bientôt pour découvrir sa sortie.</p>
+          )}
           <div className="mt-6">
             <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Historique des versions</h3>
             <ul className="mt-3 space-y-3 text-sm text-slate-600">

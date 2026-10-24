@@ -7,6 +7,8 @@ export const products: Product[] = [
     id: "skill-prospection-ethique",
     slug: "prospection-ethique",
     name: "Prospection éthique avec l’IA",
+    domain: "Vente & marketing",
+    catalogStatus: "disponible",
     tagline: "Préparez des prises de contact utiles, honnêtes et sans pression.",
     description:
       "Une compétence originale pour qualifier une audience, rédiger une invitation commerciale claire et préparer une relance respectueuse, sur Claude ou ChatGPT.",

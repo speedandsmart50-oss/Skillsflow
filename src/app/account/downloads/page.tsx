@@ -1,5 +1,5 @@
-import { AccountOrders } from "@/components/account-orders";
+import { redirect } from "next/navigation";
 
 export default function DownloadPage() {
-  return <AccountOrders />;
+  redirect("/account?section=skills");
 }

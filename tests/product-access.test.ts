@@ -5,12 +5,12 @@ import { canAccessDownload, hasAdminAccess, validateSlug } from "../src/lib/secu
 
 test("admins always have access to protected actions", () => {
   assert.equal(hasAdminAccess("admin"), true);
-  assert.equal(hasAdminAccess("customer"), false);
+  assert.equal(hasAdminAccess("client"), false);
 });
 
-test("customer purchase grants download access", () => {
-  assert.equal(canAccessDownload("customer", true), true);
-  assert.equal(canAccessDownload("customer", false), false);
+test("a client purchase grants download access", () => {
+  assert.equal(canAccessDownload("client", true), true);
+  assert.equal(canAccessDownload("client", false), false);
 });
 
 test("slug validation rejects invalid values", () => {

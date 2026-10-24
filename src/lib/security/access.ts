@@ -5,7 +5,7 @@ export function hasAdminAccess(role: UserRole): boolean {
 }
 
 export function canAccessDownload(role: UserRole, hasPurchase: boolean): boolean {
-  return role === "admin" || (role === "customer" && hasPurchase);
+  return role === "admin" || (role === "client" && hasPurchase);
 }
 
 export function validateSlug(slug: string): boolean {

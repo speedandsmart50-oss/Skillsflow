@@ -1,163 +1,210 @@
 import Link from "next/link";
-import { products } from "@/features/products/products";
+import { AnimatedShowcase } from "@/components/landing/animated-showcase";
+import { ScrollReveal } from "@/components/landing/scroll-reveal";
+import { products as bundledProducts } from "@/features/products/products";
 
-const sectors = [
-  { number: "01", title: "Vente & marketing", detail: "Prospection, relation client, communication" },
-  { number: "02", title: "Éducation & formation", detail: "Pédagogie, préparation, accompagnement" },
-  { number: "03", title: "Commerce & services", detail: "Accueil, organisation, suivi des demandes" },
-  { number: "04", title: "Création & contenu", detail: "Idées, rédaction, structuration" },
-  { number: "05", title: "Entrepreneurs", detail: "Gestion quotidienne, offres, productivité" },
-  { number: "06", title: "Métiers spécialisés", detail: "Des assistants adaptés à chaque contexte" },
+const steps = [
+  {
+    number: "01",
+    title: "Choisissez un skill",
+    description: "Partez d’un besoin concret et consultez le contenu, la compatibilité et les formats proposés.",
+  },
+  {
+    number: "02",
+    title: "Ajoutez-le à votre assistant",
+    description: "Suivez le guide fourni pour utiliser les instructions avec les outils compatibles.",
+  },
+  {
+    number: "03",
+    title: "Travaillez avec votre contexte",
+    description: "Votre assistant s’appuie sur des consignes ciblées pour vous aider dans vos tâches.",
+  },
+];
+
+const benefits = [
+  { mark: "01", title: "Un usage précis", text: "Des instructions conçues autour d’une tâche ou d’un métier." },
+  { mark: "02", title: "Des formats pratiques", text: "Des fichiers et un guide pour faciliter la prise en main." },
+  { mark: "03", title: "Connexion MCP", text: "Après l’achat, reliez votre clé personnelle à votre client MCP pour retrouver le pack." },
 ];
 
 export default function HomePage() {
-  const firstProduct = products[0];
+  const featuredProduct = bundledProducts.find((product) => product.catalogStatus === "disponible") ?? bundledProducts[0];
+  const salesEnabled = process.env.SKILLFLOW_COMMERCE_ENABLED === "true";
 
   return (
-    <main className="overflow-hidden bg-[#0d1321] text-white">
+    <main className="overflow-hidden bg-[#0b1020] text-white">
       <section className="relative isolate">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_78%_30%,rgba(34,211,238,0.12),transparent_38%),radial-gradient(ellipse_at_20%_80%,rgba(59,130,246,0.10),transparent_40%)]" />
-        <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-32">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[0.07] px-3 py-1.5 text-xs font-semibold tracking-wide text-cyan-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
-              Des skills IA pensés pour les métiers
-            </p>
-            <h1 className="mt-7 max-w-2xl text-4xl font-semibold leading-[1.08] tracking-[-0.045em] sm:text-6xl lg:text-[4.2rem]">
-              Votre métier a ses défis.
-              <span className="block bg-gradient-to-r from-cyan-200 to-blue-400 bg-clip-text text-transparent">
-                Votre IA devrait le savoir.
+        <div className="hero-grid pointer-events-none absolute inset-0 -z-20 opacity-40" />
+        <div className="pointer-events-none absolute -right-40 -top-32 -z-10 h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-[110px]" />
+        <div className="pointer-events-none absolute -bottom-40 -left-40 -z-10 h-[30rem] w-[30rem] rounded-full bg-violet-500/10 blur-[110px]" />
+
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-16 sm:px-8 sm:pb-24 sm:pt-20 lg:grid-cols-[1.03fr_0.97fr] lg:gap-16 lg:px-10 lg:pb-32 lg:pt-28">
+          <div className="animate-rise relative z-10">
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-cyan-300/20 bg-cyan-300/[0.07] px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-[0_0_28px_rgba(34,211,238,0.08)] sm:text-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-300 opacity-50" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-300" />
               </span>
+              Des skills IA pour le travail réel
+            </div>
+
+            <h1 className="mt-7 max-w-3xl font-[family-name:var(--font-bricolage)] text-[2.8rem] font-semibold leading-[1.02] tracking-[-0.055em] sm:text-6xl lg:text-[4.4rem]">
+              Donnez à votre IA les bons
+              <span className="hero-gradient block pb-2">réflexes métier.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-              SkillFlow crée des skills pratiques pour aider les assistants IA à mieux
-              comprendre le travail réel — que vous soyez dans la vente, l’éducation,
-              le commerce, la création ou un autre secteur.
+              Des compétences prêtes à l’emploi qui aident votre assistant à mieux comprendre
+              vos méthodes, vos objectifs et les tâches que vous voulez accomplir.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="#secteurs" className="rounded-full bg-cyan-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">
-                Explorer les secteurs
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                href="/shop"
+                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-cyan-300 px-6 py-3 text-sm font-bold text-[#07111e] shadow-[0_8px_34px_rgba(34,211,238,0.2)] transition duration-300 hover:-translate-y-0.5 hover:bg-cyan-200 hover:shadow-[0_12px_42px_rgba(34,211,238,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
+              >
+                Explorer les skills
+                <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </Link>
-              <Link href="/shop" className="rounded-full border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-300/60 hover:text-cyan-100">
-                Voir le catalogue
+              <Link
+                href="#comment-ca-marche"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:border-cyan-200/40 hover:bg-white/[0.04] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
+              >
+                Comment ça marche
               </Link>
             </div>
-            <p className="mt-5 text-xs leading-5 text-slate-500">
-              Conçus pour Claude et ChatGPT · Guide d’utilisation inclus · Pack disponible
-            </p>
+
+            <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-slate-400 sm:text-sm">
+              <span className="inline-flex items-center gap-2"><span className="text-cyan-300">✓</span> Des instructions ciblées</span>
+              <span className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block" />
+              <span className="inline-flex items-center gap-2"><span className="text-cyan-300">✓</span> Des guides d’installation</span>
+            </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-md">
-            <div className="absolute -inset-5 rounded-[2rem] bg-cyan-300/10 blur-3xl" />
-            <div className="relative rounded-[1.6rem] border border-white/10 bg-[#111b2e]/90 p-5 shadow-[0_28px_100px_rgba(0,0,0,0.4)] sm:p-7">
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">La méthode SkillFlow</p>
-                  <p className="mt-1 text-sm font-semibold text-white">Du métier à l’assistant</p>
-                </div>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10 text-lg text-cyan-200">✳</span>
-              </div>
-              <div className="space-y-3 py-5">
-                {[
-                  ["Le contexte", "Comprendre les besoins et les contraintes du métier"],
-                  ["Le skill", "Transformer les bonnes pratiques en instructions claires"],
-                  ["Le résultat", "Un assistant plus utile dans les tâches du quotidien"],
-                ].map(([title, description], index) => (
-                  <div key={title} className="flex gap-4 rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-xs font-bold text-cyan-200">
-                      0{index + 1}
-                    </span>
-                    <div>
-                      <h2 className="text-sm font-semibold text-white">{title}</h2>
-                      <p className="mt-1 text-xs leading-5 text-slate-400">{description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="border-t border-white/[0.08] pt-4 text-xs text-slate-500">
-                Un assistant généraliste. Des compétences adaptées à votre réalité.
-              </p>
-            </div>
-          </div>
+          <AnimatedShowcase />
         </div>
       </section>
 
-      <section id="secteurs" className="border-y border-white/[0.07] bg-[#090f1b]/70">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Un skill pour chaque usage</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              Plusieurs secteurs. Des besoins bien différents.
+      <ScrollReveal>
+      <section className="border-y border-white/[0.07] bg-white/[0.02]">
+        <div className="mx-auto grid max-w-7xl gap-4 px-5 py-6 sm:grid-cols-3 sm:px-8 lg:px-10">
+          {benefits.map((benefit) => (
+            <div key={benefit.mark} className="flex items-start gap-3 rounded-xl px-2 py-2 sm:px-4">
+              <span className="mt-0.5 font-mono text-xs font-semibold text-cyan-300">{benefit.mark}</span>
+              <div>
+                <h2 className="text-sm font-semibold text-slate-100">{benefit.title}</h2>
+                <p className="mt-1 text-xs leading-5 text-slate-400">{benefit.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      </ScrollReveal>
+
+      <ScrollReveal>
+      <section id="comment-ca-marche" className="scroll-mt-24">
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-24 lg:px-10 lg:py-28">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Simple à prendre en main</p>
+            <h2 className="mt-4 font-[family-name:var(--font-bricolage)] text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">
+              Du besoin à l’usage, en trois étapes.
             </h2>
-            <p className="mt-4 text-sm leading-6 text-slate-400 sm:text-base">
-              Chaque domaine a ses méthodes, son vocabulaire et ses priorités.
-              SkillFlow développe des compétences ciblées, plutôt qu’une solution unique pour tout le monde.
+            <p className="mt-4 text-sm leading-6 text-slate-400 sm:text-base sm:leading-7">
+              Chaque fiche vous aide à savoir à quoi sert le skill, quels outils il prend en charge et comment commencer.
             </p>
           </div>
 
-          <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sectors.map((sector) => (
-              <article key={sector.number} className="group rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition hover:border-cyan-300/30 hover:bg-cyan-300/[0.035]">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold tracking-[0.16em] text-cyan-300/80">{sector.number}</span>
-                  <span className="h-px w-10 bg-slate-700 transition group-hover:w-14 group-hover:bg-cyan-300/50" />
-                </div>
-                <h3 className="mt-5 text-lg font-semibold text-white">{sector.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{sector.detail}</p>
+          <div className="relative mt-12 grid gap-4 md:grid-cols-3 md:gap-5">
+            <div className="absolute left-[16%] right-[16%] top-8 hidden h-px bg-gradient-to-r from-transparent via-cyan-300/30 to-transparent md:block" />
+            {steps.map((step, index) => (
+              <article key={step.number} className="animate-rise group relative rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.045] to-white/[0.015] p-6 transition duration-300 hover:-translate-y-1 hover:border-cyan-300/25 hover:bg-cyan-300/[0.035] sm:p-7" style={{ animationDelay: `${index * 0.1}s` }}>
+                <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-300/20 bg-[#111b2c] font-mono text-sm font-bold text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,0.1)]">{step.number}</span>
+                <h3 className="mt-6 text-lg font-semibold text-white">{step.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-400">{step.description}</p>
               </article>
             ))}
           </div>
-          <p className="mt-5 text-xs text-slate-500">
-            Ces domaines illustrent les secteurs visés ; les skills sont publiés progressivement dans le catalogue.
-          </p>
         </div>
       </section>
+      </ScrollReveal>
 
-      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 md:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Disponible maintenant</p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            On commence par un besoin concret.
-          </h2>
-          <p className="mt-4 text-sm leading-6 text-slate-400">
-            Le catalogue s’élargira à plusieurs domaines. Le premier pack aide à rendre
-            la prospection plus claire, utile et respectueuse.
-          </p>
-          <Link href="/shop" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-cyan-200 transition hover:text-white">
-            Parcourir le catalogue <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-
-        {firstProduct ? (
-          <article className="rounded-2xl border border-cyan-300/15 bg-gradient-to-br from-[#142238] to-[#101827] p-6 sm:p-8">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="rounded-full border border-amber-300/20 bg-amber-300/[0.07] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
-                Disponible
-              </span>
-              <span className="text-xs text-slate-500">Vente & marketing</span>
-            </div>
-            <h3 className="mt-5 text-2xl font-semibold text-white">{firstProduct.name}</h3>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">{firstProduct.tagline}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {firstProduct.compatibleAgents.map((agent) => (
-                <span key={agent} className="rounded-full border border-slate-700 bg-slate-950/30 px-3 py-1 text-xs text-slate-300">
-                  {agent}
-                </span>
-              ))}
-            </div>
-            <Link href={`/products/${firstProduct.slug}`} className="mt-7 inline-flex rounded-full border border-cyan-300/25 px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/10">
-              Découvrir le premier pack
-            </Link>
-            <p className="mt-4 text-xs leading-5 text-slate-500">
-              Achetez le pack et retrouvez son téléchargement sécurisé dans votre compte.
+      <ScrollReveal>
+      <section className="border-y border-white/[0.07] bg-[#080d18]">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-8 sm:py-24 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:px-10">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Le catalogue SkillFlow</p>
+            <h2 className="mt-4 font-[family-name:var(--font-bricolage)] text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">
+              Des solutions ciblées, pas des réponses génériques.
+            </h2>
+            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-400 sm:text-base sm:leading-7">
+              Explorez les compétences disponibles et choisissez celle qui correspond à votre façon de travailler.
+              Le catalogue évolue au fil des nouveaux besoins traités.
             </p>
-          </article>
-        ) : (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-sm text-slate-400">
-            Les premiers skills seront bientôt présentés dans le catalogue.
+            <Link href="/shop" className="group mt-7 inline-flex items-center gap-2 text-sm font-semibold text-cyan-200 transition hover:text-white">
+              Parcourir le catalogue <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+            </Link>
           </div>
-        )}
+
+          {featuredProduct ? (
+            <article className="relative overflow-hidden rounded-[1.6rem] border border-cyan-300/15 bg-gradient-to-br from-[#14233a] via-[#101a2d] to-[#111827] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:p-8">
+              <div className="pointer-events-none absolute -right-14 -top-14 h-48 w-48 rounded-full bg-cyan-300/10 blur-3xl" />
+              <div className="relative flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  {salesEnabled ? "Disponible" : "Dans le catalogue"}
+                </span>
+                <span className="text-xs text-slate-500">{featuredProduct.domain} · v{featuredProduct.version}</span>
+              </div>
+              <div className="relative mt-6 flex items-start gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-300/15 bg-violet-300/[0.08] text-lg text-violet-200">✳</span>
+                <div>
+                  <h3 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">{featuredProduct.name}</h3>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">{featuredProduct.tagline}</p>
+                </div>
+              </div>
+              <div className="relative mt-6 flex flex-wrap gap-2">
+                {featuredProduct.compatibleAgents.map((agent) => (
+                  <span key={agent} className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs font-medium text-slate-300">{agent}</span>
+                ))}
+                <span className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs font-medium text-slate-300">Pack numérique</span>
+              </div>
+              <div className="relative mt-7 flex flex-col gap-4 border-t border-white/[0.08] pt-6 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs text-slate-500">Prix du pack</p>
+                  <p className="mt-1 text-xl font-semibold text-white">€{featuredProduct.price.toFixed(2)} <span className="text-sm font-medium text-slate-400">· {new Intl.NumberFormat("fr-FR").format(featuredProduct.priceXof)} XOF</span></p>
+                </div>
+                <Link href={`/products/${featuredProduct.slug}`} className="group inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-bold text-[#07111e] transition hover:-translate-y-0.5 hover:bg-cyan-200">
+                  Découvrir le skill <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+                </Link>
+              </div>
+            </article>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-8 text-sm text-slate-400">
+              Le catalogue se prépare. Revenez bientôt découvrir les premiers skills.
+            </div>
+          )}
+        </div>
       </section>
+      </ScrollReveal>
+
+      <ScrollReveal>
+      <section className="px-5 py-16 sm:px-8 sm:py-20 lg:px-10">
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[1.75rem] border border-cyan-300/15 bg-gradient-to-r from-[#13233a] via-[#111b2d] to-[#18152c] px-6 py-10 sm:px-10 sm:py-12 lg:px-14">
+          <div className="pointer-events-none absolute -right-10 -top-28 h-72 w-72 rounded-full bg-cyan-300/10 blur-[80px]" />
+          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">À vous de choisir</p>
+              <h2 className="mt-3 font-[family-name:var(--font-bricolage)] text-2xl font-semibold tracking-[-0.035em] text-white sm:text-3xl">
+                Trouvez le skill qui vous fait gagner en clarté.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-400">Parcourez les fiches, comparez les usages et avancez à votre rythme.</p>
+            </div>
+            <Link href="/shop" className="group inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-100">
+              Voir les skills <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+      </ScrollReveal>
     </main>
   );
 }

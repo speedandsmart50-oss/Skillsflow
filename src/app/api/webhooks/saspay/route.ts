@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { ADMIN_COUPON_CODE } from "@/lib/pricing";
 import { isSasPayLiveReady, saspayRequest, verifySasPayWebhook } from "@/lib/payments/saspay";
-import { isAllowlistedAdmin } from "@/lib/security/admin";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
 type SasPayWebhook = {
@@ -99,29 +97,10 @@ export async function POST(request: Request) {
   }
 
   const paid = payload.event === "transaction.success";
-  if (paid && order.coupon_code === ADMIN_COUPON_CODE) {
-    const adminEmail = process.env.SKILLFLOW_ADMIN_EMAIL;
-    if (!adminEmail || !order.user_id) {
-      console.error("Admin coupon order has no configured allowlisted account.");
-      return NextResponse.json({ error: "Le compte administrateur n'est pas configuré." }, { status: 503 });
-    }
-
-    const { data: authResult, error: authError } = await supabase.auth.admin.getUserById(order.user_id);
-    const paidUser = authResult.user;
-    if (
-      authError
-      || !isAllowlistedAdmin(paidUser?.email, Boolean(paidUser?.email_confirmed_at), adminEmail)
-    ) {
-      console.error("Admin coupon order does not match the verified allowlisted account.");
-      return NextResponse.json({ error: "Le compte ne peut pas recevoir le rôle administrateur." }, { status: 403 });
-    }
-  }
-
   const { error: updateError } = paid
     ? await supabase.rpc("complete_saspay_order", {
       p_order_id: order.id,
       p_provider_payment_id: payload.data.id,
-      p_grant_admin: order.coupon_code === ADMIN_COUPON_CODE,
     })
     : await supabase
       .from("orders")

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-cyan-400/10 bg-[#070e1b]">
+    <footer className="app-shell-chrome border-t border-cyan-400/10 bg-[#070e1b]">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-3 lg:px-8">
         <div>
           <div className="mb-3 text-[2rem] font-bold tracking-[-0.06em] text-white">SkillFlow</div>

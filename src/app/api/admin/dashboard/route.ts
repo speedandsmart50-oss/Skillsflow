@@ -1,37 +1,26 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
+import { requireAdminApiUser } from "@/lib/security/admin-api";
 
 export async function GET(request: Request) {
-  const user = await getAuthenticatedUser(request);
-  if (!user) {
-    return NextResponse.json({ error: "Connectez-vous pour accéder à l’administration." }, { status: 401 });
+  const access = await requireAdminApiUser(request);
+  if (!access.ok) return access.response;
+
+  const now = Date.now();
+  const since7Days = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const since30Days = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const [weekResult, monthResult] = await Promise.all([
+    access.supabase.rpc("admin_dashboard_metrics", { p_since: since7Days }),
+    access.supabase.rpc("admin_dashboard_metrics", { p_since: since30Days }),
+  ]);
+
+  const error = weekResult.error ?? monthResult.error;
+  if (error) {
+    console.error("Could not load admin dashboard metrics:", error.message);
+    return NextResponse.json({ error: "Impossible de charger les indicateurs." }, { status: 500 });
   }
 
-  const supabase = getSupabaseAdminClient();
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profileError) {
-    console.error("Could not verify admin access:", profileError.message);
-    return NextResponse.json({ error: "Impossible de vérifier vos droits." }, { status: 500 });
-  }
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Accès réservé aux administrateurs." }, { status: 403 });
-  }
-
-  const { data: orders, error: ordersError } = await supabase
-    .from("orders")
-    .select("id, total, total_xof, currency, coupon_code, payment_status, created_at, paid_at, products(name, slug)")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  if (ordersError) {
-    console.error("Could not load admin orders:", ordersError.message);
-    return NextResponse.json({ error: "Impossible de charger les commandes." }, { status: 500 });
-  }
-
-  return NextResponse.json({ orders });
+  return NextResponse.json({
+    sevenDays: weekResult.data,
+    thirtyDays: monthResult.data,
+  }, { headers: { "Cache-Control": "private, no-store" } });
 }

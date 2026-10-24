@@ -2,12 +2,10 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isSasPayLiveReady, saspayRequest } from "@/lib/payments/saspay";
 import {
-  ADMIN_COUPON_CODE,
   calculateProductPrice,
-  INITIAL_LIVE_TRIAL_PRICE_XOF,
   InvalidCouponError,
+  PRODUCT_SLUG,
 } from "@/lib/pricing";
-import { isAllowlistedAdmin } from "@/lib/security/admin";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -17,6 +15,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export async function POST(request: Request) {
+  if (process.env.SKILLFLOW_COMMERCE_ENABLED !== "true") {
+    return NextResponse.json(
+      { error: "Les ventes sont temporairement fermées." },
+      { status: 503 },
+    );
+  }
+
   const user = await getAuthenticatedUser(request);
   if (!user || !user.email) {
     return NextResponse.json({ error: "Connectez-vous avant de payer." }, { status: 401 });
@@ -25,6 +30,21 @@ export async function POST(request: Request) {
   if (!isSasPayLiveReady()) {
     return NextResponse.json(
       { error: "Le paiement SasPay n'est pas encore configuré pour la production." },
+      { status: 503 },
+    );
+  }
+
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  let appOrigin: string;
+  try {
+    const appUrl = new URL(configuredAppUrl ?? "");
+    if (appUrl.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && appUrl.hostname === "localhost")) {
+      throw new Error("The public application URL must use HTTPS.");
+    }
+    appOrigin = appUrl.origin;
+  } catch {
+    return NextResponse.json(
+      { error: "L'adresse publique du site n'est pas correctement configurée." },
       { status: 503 },
     );
   }
@@ -46,10 +66,51 @@ export async function POST(request: Request) {
   if (body.coupon !== undefined && typeof body.coupon !== "string") {
     return NextResponse.json({ error: "Code de réduction invalide." }, { status: 400 });
   }
+  const productSlug = body.productSlug === undefined ? PRODUCT_SLUG : body.productSlug;
+  if (typeof productSlug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(productSlug)) {
+    return NextResponse.json({ error: "Le skill choisi est invalide." }, { status: 400 });
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const { data: product, error: productError } = await supabase
+    .from("products")
+    .select("id, slug, status, catalog_status, archived_at, zip_path, price_eur, price_xof")
+    .eq("slug", productSlug)
+    .maybeSingle();
+  if (productError) {
+    console.error("Could not load checkout product:", productError.message);
+    return NextResponse.json({ error: "Impossible de vérifier le skill choisi." }, { status: 500 });
+  }
+  if (!product || product.status !== "published" || product.archived_at) {
+    return NextResponse.json({ error: "Ce skill n’est pas disponible dans le catalogue." }, { status: 404 });
+  }
+  if (product.catalog_status !== "disponible") {
+    return NextResponse.json({ error: "Ce skill n’est pas encore disponible à l’achat." }, { status: 409 });
+  }
+  if (!product.zip_path) {
+    return NextResponse.json({ error: "Le pack n’est pas encore prêt pour le paiement." }, { status: 503 });
+  }
+
+  const productPriceEur = Number(product.price_eur);
+  const productPriceXof = Number(product.price_xof);
+  if (
+    !Number.isFinite(productPriceEur)
+    || productPriceEur < 0
+    || !Number.isSafeInteger(productPriceXof)
+    || productPriceXof < 0
+  ) {
+    console.error("Checkout product has invalid prices:", product.id);
+    return NextResponse.json({ error: "Le prix de ce skill n’est pas correctement configuré." }, { status: 503 });
+  }
 
   let price: ReturnType<typeof calculateProductPrice>;
   try {
-    price = calculateProductPrice(typeof body.coupon === "string" ? body.coupon : "");
+    price = calculateProductPrice(
+      typeof body.coupon === "string" ? body.coupon : "",
+      product.slug,
+      productPriceEur,
+      productPriceXof,
+    );
   } catch (error) {
     if (error instanceof InvalidCouponError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -57,24 +118,9 @@ export async function POST(request: Request) {
     throw error;
   }
 
-  const adminEmail = process.env.SKILLFLOW_ADMIN_EMAIL;
-  if (price.couponCode === ADMIN_COUPON_CODE && !adminEmail) {
-    return NextResponse.json({ error: "Le compte administrateur n'est pas configuré." }, { status: 503 });
-  }
-  if (
-    (price.couponCode === ADMIN_COUPON_CODE || INITIAL_LIVE_TRIAL_PRICE_XOF !== null)
-    && !isAllowlistedAdmin(user.email, Boolean(user.email_confirmed_at), adminEmail)
-  ) {
-    return NextResponse.json(
-      { error: "Cette offre est réservée au compte autorisé." },
-      { status: 403 },
-    );
-  }
-
-  const supabase = getSupabaseAdminClient();
   const { data: existingOrder, error: existingError } = await supabase
     .from("orders")
-    .select("id, user_id, payment_status, checkout_url, coupon_code")
+    .select("id, user_id, product_id, payment_status, checkout_url, coupon_code")
     .eq("request_id", body.requestId)
     .maybeSingle();
 
@@ -84,27 +130,15 @@ export async function POST(request: Request) {
   }
 
   if (existingOrder) {
-    if (existingOrder.user_id !== user.id || existingOrder.coupon_code !== price.couponCode) {
+    if (existingOrder.user_id !== user.id
+      || existingOrder.product_id !== product.id
+      || existingOrder.coupon_code !== price.couponCode) {
       return NextResponse.json({ error: "Identifiant de tentative déjà utilisé." }, { status: 409 });
     }
     if (existingOrder.payment_status === "pending" && existingOrder.checkout_url) {
       return NextResponse.json({ checkoutUrl: existingOrder.checkout_url });
     }
     return NextResponse.json({ error: "Cette tentative de paiement a déjà été traitée." }, { status: 409 });
-  }
-
-  const { data: product, error: productError } = await supabase
-    .from("products")
-    .select("id, status, zip_path")
-    .eq("slug", price.productSlug)
-    .maybeSingle();
-
-  if (productError || !product || product.status !== "published" || !product.zip_path) {
-    console.error("Live product is not ready:", productError?.message ?? "not found or not published");
-    return NextResponse.json(
-      { error: "Le pack n'est pas encore publié dans le catalogue de production." },
-      { status: 503 },
-    );
   }
 
   const pathParts = product.zip_path.split("/");
@@ -162,7 +196,7 @@ export async function POST(request: Request) {
         description: orderReference,
         customer_email: user.email,
         customer_name: customerName,
-        return_url: `${new URL(request.url).origin}/checkout/complete?order=${order.id}`,
+        return_url: `${appOrigin}/checkout/complete?order=${order.id}`,
         metadata: { skillflow_order_id: order.id },
       }),
     });

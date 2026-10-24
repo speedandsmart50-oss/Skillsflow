@@ -29,6 +29,113 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+body:has(.auth-page) .app-shell-chrome,
+body:has(.app-shell-bare) .app-shell-chrome {
+  display: none;
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr) minmax(13rem, 15rem);
+  align-items: start;
+  gap: 1rem;
+}
+
+.account-side-nav {
+  position: sticky;
+  top: 1.5rem;
+  animation: account-nav-in 460ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.account-side-nav:last-child {
+  animation-delay: 90ms;
+}
+
+.account-content {
+  min-width: 0;
+  animation: account-content-in 360ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.account-card {
+  border-color: rgba(148, 163, 184, 0.15);
+  background-color: rgba(17, 26, 43, 0.9);
+  color: #f8fafc;
+}
+
+.app-shell-bare [class~="text-[#52645E]"],
+.app-shell-bare [class~="text-[#66766F]"],
+.app-shell-bare [class~="text-[#6E524E]"] {
+  color: #cbd5e1;
+}
+
+.app-shell-bare [class~="text-[#0B6A5A]"],
+.app-shell-bare [class~="text-[#16473D]"] {
+  color: #a5f3fc;
+}
+
+.app-shell-bare [class~="bg-[#0B6A5A]"] {
+  background-color: #67e8f9;
+  color: #07111e;
+}
+
+.app-shell-bare [class~="bg-[#EAF5F0]"],
+.app-shell-bare [class~="bg-[#F1F6F4]"],
+.app-shell-bare [class~="bg-[#EFF6F3]"] {
+  background-color: rgba(34, 211, 238, 0.1);
+}
+
+.app-shell-bare [class~="border-[#DCE7E3]"],
+.app-shell-bare [class~="border-[#D5E1DC]"],
+.app-shell-bare [class~="divide-[#E4ECE8]"] {
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+.app-shell-bare input:not([type="file"]),
+.app-shell-bare textarea,
+.app-shell-bare select {
+  color-scheme: dark;
+}
+
+@media (max-width: 1100px) {
+  .account-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .account-content {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .account-side-nav {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .account-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-content {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .account-side-nav:last-child {
+    grid-row: 3;
+  }
+}
+
+@keyframes account-nav-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes account-content-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -39,4 +146,195 @@ a {
 
 ::selection {
   background: rgba(37, 99, 235, 0.18);
+}
+
+.hero-grid {
+  background-image: linear-gradient(rgba(148, 163, 184, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.055) 1px, transparent 1px);
+  background-position: center top;
+  background-size: 68px 68px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+  animation: skillflow-grid-drift 48s linear infinite;
+}
+
+.auth-page {
+  background: radial-gradient(ellipse at 12% 20%, rgba(6, 182, 212, 0.1), transparent 35%),
+    linear-gradient(130deg, #07101e 0%, #091425 52%, #07101d 100%);
+}
+
+.auth-grid {
+  background-image: linear-gradient(rgba(125, 211, 252, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 211, 252, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse at 35% 35%, black, transparent 76%);
+}
+
+.auth-page::after {
+  position: absolute;
+  z-index: -1;
+  bottom: -10rem;
+  left: -14rem;
+  width: min(75vw, 850px);
+  height: 25rem;
+  border-radius: 50%;
+  background: repeating-radial-gradient(ellipse at 18% 110%, transparent 0 21px, rgba(34, 211, 238, 0.22) 22px, transparent 23px 30px);
+  content: "";
+  opacity: 0.5;
+  mask-image: linear-gradient(25deg, black, transparent 72%);
+  animation: skillflow-wave 14s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.auth-orb-one {
+  animation: skillflow-orb-drift 12s ease-in-out infinite alternate;
+}
+
+.auth-orb-two {
+  animation: skillflow-orb-drift 15s ease-in-out -4s infinite alternate-reverse;
+}
+
+.auth-form-card {
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.auth-input {
+  color-scheme: dark;
+}
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc;
+  box-shadow: 0 0 0 1000px #0a1423 inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.hero-gradient {
+  background: linear-gradient(100deg, #a5f3fc 5%, #67e8f9 42%, #a5b4fc 88%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.animate-rise {
+  animation: skillflow-rise 720ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.animate-delay-2 {
+  animation-delay: 160ms;
+}
+
+.animate-float {
+  animation: skillflow-float 7s ease-in-out 900ms infinite;
+}
+
+.animate-glow {
+  animation: skillflow-glow 5s ease-in-out infinite alternate;
+}
+
+.showcase-panel {
+  animation: skillflow-panel-in 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.scroll-reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-reveal.reveal-ready {
+  transition: opacity 720ms cubic-bezier(0.2, 0.75, 0.25, 1), transform 720ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.scroll-reveal.reveal-ready:not(.is-visible) {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes skillflow-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skillflow-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes skillflow-glow {
+  from {
+    opacity: 0.55;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes skillflow-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes skillflow-grid-drift {
+  to {
+    background-position: center 136px;
+  }
+}
+
+@keyframes skillflow-orb-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(24px, 20px, 0) scale(1.06);
+  }
+}
+
+@keyframes skillflow-wave {
+  from {
+    transform: translateX(-2%) translateY(0) rotate(-2deg);
+  }
+
+  to {
+    transform: translateX(4%) translateY(-12px) rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .scroll-reveal.reveal-ready:not(.is-visible) {
+    opacity: 1;
+    transform: none;
+  }
 }

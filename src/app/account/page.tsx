@@ -1,5 +1,11 @@
-import { AccountOrders } from "@/components/account-orders";
+import { requirePageUser } from "@/lib/security/page-auth";
+import { AccountDashboard } from "@/components/account-dashboard";
+import { connection } from "next/server";
 
-export default function AccountPage() {
-  return <AccountOrders />;
+export const instant = false;
+
+export default async function AccountPage() {
+  await connection();
+  await requirePageUser("/account");
+  return <AccountDashboard />;
 }

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient, type User } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 
 function getSupabaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,6 +25,21 @@ export async function getAuthenticatedUser(request: Request): Promise<User | nul
   const { data, error } = await supabase.auth.getUser(token);
   if (error) return null;
   return data.user;
+}
+
+export function getSupabaseUserClient(request: Request): SupabaseClient | null {
+  const token = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!token || !anonKey) return null;
+
+  return createClient(getSupabaseUrl(), anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  });
 }
 
 export function getSupabaseAdminClient() {

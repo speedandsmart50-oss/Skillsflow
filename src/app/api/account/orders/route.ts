@@ -31,5 +31,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Impossible de charger vos commandes." }, { status: 500 });
   }
 
-  return NextResponse.json({ orders: data, role: profile?.role ?? "customer" });
+  return NextResponse.json({ orders: data, role: profile?.role ?? "client" }, {
+    headers: { "Cache-Control": "private, no-store" },
+  });
 }

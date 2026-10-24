@@ -1,11 +1,14 @@
-export type UserRole = "guest" | "customer" | "admin";
+export type UserRole = "guest" | "client" | "admin";
 export type ProductStatus = "draft" | "published";
+export type CatalogStatus = "a_venir" | "en_preparation" | "disponible";
 export type PaymentState = "pending" | "paid" | "failed";
 
 export type Product = {
   id: string;
   slug: string;
   name: string;
+  domain: string;
+  catalogStatus: CatalogStatus;
   tagline: string;
   description: string;
   problem: string;
