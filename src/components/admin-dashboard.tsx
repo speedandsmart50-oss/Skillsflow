@@ -109,6 +109,9 @@ type AdminData = {
   tickets?: SupportTicket[];
   profiles?: Profile[];
   audit?: AuditEntry[];
+  recentOrders?: AdminOrder[];
+  revenueByDay?: { date: string; revenue_xof: number; sales: number }[];
+  revenueByDay30?: { date: string; revenue_xof: number; sales: number }[];
 };
 
 const sections: { id: Section; label: string }[] = [
@@ -436,21 +439,21 @@ export function AdminDashboard() {
   }
 
   return (
-    <main className="admin-shell min-h-screen bg-[#F5F8F7] text-[#13211E]">
+    <main className="admin-shell min-h-screen bg-[#070D18] text-[#EAF4FF]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/" className="flex min-h-11 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B6A5A]">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0B6A5A] font-[family-name:var(--font-bricolage)] text-lg font-bold text-white">S</span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-cyan-600 font-[family-name:var(--font-bricolage)] text-lg font-bold text-slate-950">S</span>
             <span>
               <span className="block font-[family-name:var(--font-bricolage)] text-lg font-bold">SkillFlow</span>
-              <span className="block text-xs text-[#52645E]">Espace d’administration</span>
+              <span className="block text-xs text-slate-400">ADMIN CONSOLE</span>
             </span>
           </Link>
-          <Link href="/account" className={secondaryButtonClass}>Voir l’espace client</Link>
+          <Link href="/account" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 hover:border-cyan-400">Voir l’espace client</Link>
         </header>
 
         <nav aria-label="Navigation de l’administration" className="mt-6 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <div className="flex min-w-max gap-2 border-b border-[#DCE7E3] pb-3">
+          <div className="flex min-w-max gap-2 border-b border-slate-800 pb-4">
             {sections.map((item) => (
               <button
                 key={item.id}
@@ -461,8 +464,8 @@ export function AdminDashboard() {
                   setNotice("");
                 }}
                 aria-current={section === item.id ? "page" : undefined}
-                className={`admin-nav-link min-h-11 rounded-full px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B6A5A] ${
-                  section === item.id ? "bg-[#0B6A5A] text-white" : "text-[#52645E] hover:bg-[#EAF5F0] hover:text-[#16473D]"
+                className={`admin-nav-link min-h-11 rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 ${
+                  section === item.id ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-300" : "border-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-900 hover:text-slate-100"
                 }`}
               >
                 {item.label}
@@ -472,7 +475,7 @@ export function AdminDashboard() {
         </nav>
 
         <div className="mt-7">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0B6A5A]">Administration SkillFlow</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">SkillFlow / {section}</p>
           <h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-3xl font-bold tracking-tight sm:text-4xl">
             {sections.find((item) => item.id === section)?.label}
           </h1>
@@ -480,7 +483,7 @@ export function AdminDashboard() {
           {notice && <p role="status" className="mt-5 rounded-2xl border border-[#B9D6CC] bg-[#EAF5F0] p-4 text-sm text-[#16473D]">{notice}</p>}
           {loading ? <p className="mt-8 text-[#52645E]" role="status">Chargement des données…</p> : (
             <section className="admin-panel mt-6 space-y-5" key={section}>
-              {section === "overview" && <Overview data={data} />}
+              {section === "overview" && <Overview data={data} onRefresh={() => void loadData()} onViewOrders={() => setSection("orders")} />}
 
               {section === "catalog" && (
                 <>
@@ -678,30 +681,28 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   return <p className={`${cardClass} text-sm leading-6 text-[#52645E]`} role="status">{children}</p>;
 }
 
-function Overview({ data }: { data: AdminData }) {
+function Overview({ data, onRefresh, onViewOrders }: { data: AdminData; onRefresh: () => void; onViewOrders: () => void }) {
+  const [period, setPeriod] = useState<7 | 30>(7);
   const week = data.sevenDays;
-  const month = data.thirtyDays;
-  return (
-    <>
-      <p className="text-sm leading-6 text-[#52645E]">Indicateurs calculés sur les paiements confirmés et les comptes créés pendant chaque période.</p>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <MetricCard title="Ventes sur 7 jours" metric={week} />
-        <MetricCard title="Revenus sur 7 jours" metric={week} revenue />
-        <MetricCard title="Nouveaux comptes sur 7 jours" metric={week} accounts />
-        <MetricCard title="Ventes sur 30 jours" metric={month} />
-        <MetricCard title="Revenus sur 30 jours" metric={month} revenue />
-        <MetricCard title="Nouveaux comptes sur 30 jours" metric={month} accounts />
-      </div>
-      <section className={cardClass}>
-        <h2 className="text-xl font-bold">Liste d’attente</h2>
-        <p className="mt-2 text-sm text-[#52645E]">Nouvelles inscriptions sur 7 jours : <strong>{week?.waitlist_signups ?? 0}</strong></p>
-        <p className="mt-1 text-sm text-[#52645E]">Nouvelles inscriptions sur 30 jours : <strong>{month?.waitlist_signups ?? 0}</strong></p>
-      </section>
-    </>
-  );
+  const metric = period === 7 ? week : data.thirtyDays;
+  const points = period === 7 ? data.revenueByDay ?? [] : data.revenueByDay30 ?? [];
+  const max = Math.max(1, ...points.map((point) => point.revenue_xof));
+  const chartPoints = points.map((point, index) => `${index * (700 / Math.max(1, points.length - 1))},${150 - (point.revenue_xof / max) * 125}`).join(" ");
+  return <div className="space-y-5">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-3xl font-bold tracking-tight text-white">Vue d’ensemble<span className="text-cyan-300">.</span></h2><p className="mt-2 text-sm text-slate-400">Les performances de ta plateforme, calculées à partir des données réelles.</p></div><div className="flex items-center gap-2"><label className="sr-only" htmlFor="admin-period">Période</label><select id="admin-period" value={period} onChange={(event) => setPeriod(Number(event.target.value) as 7 | 30)} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200"><option value={7}>7 derniers jours</option><option value={30}>30 derniers jours</option></select><button type="button" onClick={onRefresh} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">↻ Actualiser</button></div></div>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><MetricCard title={`Revenus encaissés · ${period} jours`} metric={metric} revenue /><MetricCard title={`Ventes confirmées · ${period} jours`} metric={metric} /><MetricCard title={`Nouveaux clients · ${period} jours`} metric={metric} accounts /><MetricCard title={`Liste d’attente · ${period} jours`} metric={metric} waiting /></div>
+    <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
+      <section className="admin-dash-card rounded-3xl border border-slate-800 bg-slate-900/70 p-5 sm:p-7"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-white">Flux de revenus <span className="text-cyan-300">↗</span></h3><p className="mt-1 text-sm text-slate-400">Évolution des paiements confirmés · FCFA · {period} jours</p></div><span className="rounded-lg border border-slate-700 px-3 py-2 text-xs uppercase text-slate-400">Données réelles</span></div>
+        {points.some((point) => point.revenue_xof > 0) ? <><svg viewBox="0 0 700 175" role="img" aria-label="Courbe des revenus quotidiens en francs CFA" className="mt-6 h-56 w-full overflow-visible"><defs><linearGradient id="revenue-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#39e6f5" stopOpacity=".25"/><stop offset="100%" stopColor="#39e6f5" stopOpacity="0"/></linearGradient></defs>{[25,67,109,151].map((y) => <line key={y} x1="0" x2="700" y1={y} y2={y} stroke="#243348" strokeDasharray="4 8"/>)}<polygon points={`0,175 ${chartPoints} 700,175`} fill="url(#revenue-fill)"/><polyline points={chartPoints} fill="none" stroke="#39e6f5" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"/>{points.map((point, index) => <circle key={point.date} cx={index * (700 / Math.max(1, points.length - 1))} cy={150 - (point.revenue_xof / max) * 125} r="4" fill="#a78bfa"><title>{point.date} · {formatMoney(point.revenue_xof, "XOF")}</title></circle>)}</svg><div className="flex justify-between text-xs text-slate-500">{points.map((point) => <span key={point.date}>{new Intl.DateTimeFormat("fr-FR", { weekday: "short", timeZone: "UTC" }).format(new Date(`${point.date}T12:00:00Z`))}</span>)}</div></> : <p className="mt-8 rounded-2xl border border-dashed border-slate-700 p-8 text-center text-sm text-slate-400">Aucun paiement confirmé sur cette période.</p>}
+        <div className="mt-5 flex justify-between border-t border-slate-800 pt-4 text-sm"><span className="text-slate-400">Total encaissé sur {period} jours</span><strong className="text-xl text-cyan-300">{formatMoney(metric?.revenue_xof ?? 0, "XOF")}</strong></div></section>
+      <section className="admin-dash-card rounded-3xl border border-slate-800 bg-slate-900/70 p-5 sm:p-7"><h3 className="text-lg font-bold text-white">Activité récente</h3><p className="mt-1 text-sm text-slate-400">Comptes et liste d’attente</p><div className="mt-6 space-y-4">{[["Nouveaux comptes · 7 j", week?.new_accounts], ["Nouveaux comptes · 30 j", data.thirtyDays?.new_accounts], ["Liste d’attente · 7 j", week?.waitlist_signups], ["Liste d’attente · 30 j", data.thirtyDays?.waitlist_signups]].map(([label, count]) => <p key={String(label)} className="flex items-center justify-between border-b border-slate-800 pb-4 text-sm"><span className="text-slate-300">{label}</span><strong className="text-cyan-300">{count ?? 0}</strong></p>)}</div></section>
+    </div>
+    <section className="admin-dash-card overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70"><div className="flex flex-wrap items-center justify-between gap-3 p-5 sm:p-6"><div><h3 className="text-lg font-bold text-white">Commandes récentes</h3><p className="mt-1 text-sm text-slate-400">Dernières commandes enregistrées</p></div><button type="button" onClick={onViewOrders} className="rounded-xl border border-slate-700 px-4 py-3 text-sm text-slate-200 hover:border-cyan-400">Tout voir →</button></div>
+      {(data.recentOrders ?? []).length ? <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="border-y border-slate-800 text-xs uppercase tracking-wide text-slate-500"><tr>{["Référence", "Client", "Produit", "Montant", "Statut", "Date"].map((heading) => <th key={heading} className="px-5 py-3 font-semibold">{heading}</th>)}</tr></thead><tbody>{data.recentOrders?.map((order) => <tr key={order.id} className="border-b border-slate-800/80 transition hover:bg-slate-800/50"><td className="px-5 py-4 font-bold text-cyan-300">{order.id.slice(0, 8).toUpperCase()}</td><td className="px-5 py-4 text-slate-300">{order.profiles?.email ?? "Compte supprimé"}</td><td className="px-5 py-4 text-slate-200">{order.products?.name ?? "Skill"}</td><td className="px-5 py-4 font-bold text-white">{formatMoney(order.currency === "XOF" ? (order.total_xof ?? order.total) : order.total, order.currency === "XOF" ? "XOF" : "EUR")}</td><td className="px-5 py-4"><span className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${order.payment_status === "paid" ? "bg-emerald-400/10 text-emerald-300" : order.payment_status === "pending" ? "bg-amber-400/10 text-amber-300" : "bg-rose-400/10 text-rose-300"}`}>{statusText(order.payment_status)}</span></td><td className="px-5 py-4 text-slate-400">{formatDate(order.created_at)}</td></tr>)}</tbody></table></div> : <p className="p-6 text-sm text-slate-400">Aucune commande enregistrée pour le moment.</p>}</section>
+  </div>;
 }
 
-function MetricCard({ title, metric, revenue = false, accounts = false }: { title: string; metric?: Metric; revenue?: boolean; accounts?: boolean }) {
+function MetricCard({ title, metric, revenue = false, accounts = false, waiting = false }: { title: string; metric?: Metric; revenue?: boolean; accounts?: boolean; waiting?: boolean }) {
   let value = "Indisponible";
   let extra = "";
   if (metric) {
@@ -710,9 +711,11 @@ function MetricCard({ title, metric, revenue = false, accounts = false }: { titl
       extra = formatMoney(metric.revenue_xof, "XOF");
     } else if (accounts) {
       value = new Intl.NumberFormat("fr-FR").format(metric.new_accounts);
+    } else if (waiting) {
+      value = new Intl.NumberFormat("fr-FR").format(metric.waitlist_signups);
     } else {
       value = new Intl.NumberFormat("fr-FR").format(metric.sales);
     }
   }
-  return <article className={cardClass}><h2 className="text-sm font-semibold text-[#52645E]">{title}</h2><p className="mt-3 text-3xl font-bold tracking-tight">{value}</p>{extra && <p className="mt-1 text-sm text-[#52645E]">{extra}</p>}</article>;
+  return <article className="admin-dash-card rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-[0_16px_40px_rgba(0,0,0,.15)] transition hover:-translate-y-0.5 hover:border-cyan-400/50"><div className="flex items-center justify-between"><h2 className="text-sm font-medium text-slate-400">{title}</h2><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/10 text-lg text-cyan-300">{revenue ? "◇" : accounts ? "♙" : "▤"}</span></div><p className="mt-5 text-3xl font-bold tracking-tight text-white">{value}</p>{extra && <p className="mt-1 text-sm text-slate-400">{extra}</p>}<div aria-hidden="true" className={`mt-5 h-1 rounded-full ${revenue ? "bg-cyan-300" : "bg-violet-400"}`} /></article>;
 }
