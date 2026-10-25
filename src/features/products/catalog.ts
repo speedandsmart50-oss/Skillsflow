@@ -167,6 +167,7 @@ export type CatalogSkillPreview = {
   slug: string;
   name: string;
   short_description: string;
+  price_cents: number;
   skill_categories: { name: string; slug: string } | { name: string; slug: string }[] | null;
 };
 
@@ -180,7 +181,7 @@ export async function getUpcomingCatalogSkills(): Promise<CatalogSkillPreview[]>
   });
   const { data, error } = await supabase
     .from("skills")
-    .select("id,slug,name,short_description,product_id,skill_categories(name,slug)")
+    .select("id,slug,name,short_description,price_cents,product_id,skill_categories(name,slug)")
     .eq("is_active", true)
     .is("product_id", null)
     .order("name");

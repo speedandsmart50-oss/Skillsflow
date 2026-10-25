@@ -57,6 +57,11 @@ async function ShopContent() {
                     <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-cyan-200">{category?.name ?? "Skill IA"}</p>
                     <h3 className="mt-2 text-lg font-semibold text-white">{skill.name}</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-300">{skill.short_description}</p>
+                    <div className="mt-5 border-t border-slate-700 pt-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Prix prévu</p>
+                      <p className="mt-1 font-bold text-white">€{(skill.price_cents / 100).toFixed(2)}</p>
+                      <p className="text-xs text-cyan-200">{new Intl.NumberFormat("fr-FR").format(Math.round((skill.price_cents / 100) * 655.957))} XOF</p>
+                    </div>
                   </article>
                 );
               })}
