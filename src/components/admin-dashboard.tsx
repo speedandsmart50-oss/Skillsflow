@@ -125,11 +125,11 @@ const sections: { id: Section; label: string }[] = [
   { id: "settings", label: "Paramètres" },
 ];
 
-const cardClass = "admin-card rounded-3xl border border-[#DCE7E3] bg-white p-5 shadow-[0_12px_32px_rgba(19,33,30,0.045)] sm:p-7";
+const cardClass = "admin-card rounded-3xl border border-[#D4E0DC] bg-white p-5 text-[#13211E] shadow-[0_12px_32px_rgba(19,33,30,0.08)] sm:p-7";
 const buttonClass = "inline-flex min-h-11 items-center justify-center rounded-full bg-[#0B6A5A] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#07594B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#0B6A5A] disabled:cursor-wait disabled:opacity-60";
 const secondaryButtonClass = "inline-flex min-h-11 items-center justify-center rounded-full border border-[#B9CEC7] bg-white px-4 py-2 text-sm font-semibold text-[#16473D] transition hover:bg-[#EFF6F3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#0B6A5A] disabled:cursor-wait disabled:opacity-60";
 const dangerButtonClass = "inline-flex min-h-11 items-center justify-center rounded-full border border-[#B9655A] bg-white px-4 py-2 text-sm font-semibold text-[#762E25] transition hover:bg-[#FFF3F1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#8A2F25] disabled:opacity-60";
-const inputClass = "min-h-11 w-full rounded-xl border border-[#B9CEC7] bg-white px-3.5 py-2.5 text-base text-[#13211E] outline-none focus-visible:ring-2 focus-visible:ring-[#0B6A5A] focus-visible:ring-offset-2";
+const inputClass = "min-h-11 w-full rounded-xl border border-[#8FA79F] bg-white px-3.5 py-2.5 text-base text-[#13211E] outline-none placeholder:text-[#687A74] focus-visible:border-[#087F8C] focus-visible:ring-2 focus-visible:ring-[#087F8C] focus-visible:ring-offset-2";
 const labelClass = "mb-1.5 block text-sm font-semibold text-[#29413A]";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
