@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { buildPersonalAgentSkill } from "@/lib/agent/personal-skill";
+import { matchesFileContentType } from "@/lib/security/file-content";
 
 type ConversationExample = {
   id: string;
@@ -66,9 +68,16 @@ export function AccountConversations() {
     if (files.length > 6 || files.some((file) => !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 7 * 1024 * 1024)) {
       setError("Ajoutez au maximum 6 images JPEG, PNG ou WebP de 7 Mo chacune."); setSaving(false); return;
     }
+    const imageSignaturesMatch = await Promise.all(files.map(async (file) => (
+      matchesFileContentType(new Uint8Array(await file.slice(0, 12).arrayBuffer()), file.type)
+    )));
+    if (imageSignaturesMatch.some((matches) => !matches)) {
+      setError("Le contenu d’une capture ne correspond pas à son format d’image."); setSaving(false); return;
+    }
     const client = getSupabaseClient();
+    const { data: sessionData, error: sessionError } = await client.auth.getSession();
     const { data: auth, error: authError } = await client.auth.getUser();
-    if (authError || !auth.user) { setError("Reconnectez-vous pour envoyer un exemple."); setSaving(false); return; }
+    if (sessionError || authError || !auth.user || !sessionData.session?.access_token) { setError("Reconnectez-vous pour envoyer un exemple."); setSaving(false); return; }
     const id = crypto.randomUUID();
     const uploaded: string[] = [];
     try {
@@ -79,10 +88,16 @@ export function AccountConversations() {
         if (uploadError) throw new Error("Une capture n’a pas pu être envoyée. Vérifiez que la migration Supabase 010 est appliquée.");
         uploaded.push(path);
       }
-      const { error: insertError } = await client.from("agent_conversations").insert({
-        id, user_id: auth.user.id, title, conversation_text: anonymizedConversation, screenshot_paths: uploaded,
+      const response = await fetch("/api/account/conversations", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + sessionData.session.access_token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, title, conversation: anonymizedConversation, screenshotPaths: uploaded }),
       });
-      if (insertError) throw new Error("Votre exemple n’a pas pu être enregistré. Vérifiez que la migration Supabase 010 est appliquée.");
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error ?? "Votre exemple n?a pas pu ?tre v?rifi? et enregistr?.");
       formElement.reset();
       await load();
       setNotice("Exemple privé enregistré dans votre espace agent.");
@@ -102,12 +117,26 @@ export function AccountConversations() {
     setNotice("Exemple supprimé.");
   }
 
+  function downloadPersonalSkill() {
+    const content = buildPersonalAgentSkill(items);
+    const url = URL.createObjectURL(new Blob([content], { type: "text/markdown;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "skillflow-agent-personnel.md";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    setNotice("Votre skill personnel a été exporté. Il contient jusqu’à 8 conversations textuelles, sans les captures.");
+  }
+
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Votre agent personnel</p>
-        <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold text-white">Exemples de conversations</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Ajoutez une conversation et ses captures pour constituer votre bibliothèque privée. Ces exemples ne déclenchent pas encore d’entraînement automatique.</p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Votre agent personnel</p>
+          <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold text-white">Exemples de conversations</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Ajoutez des exemples privés, puis exportez un skill Markdown réutilisable qui reprend votre style. L’export ne lance pas d’entraînement automatique.</p>
+        </div>
+        <button type="button" onClick={downloadPersonalSkill} disabled={loading || items.length === 0} className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-200/30 px-5 py-2.5 text-sm font-bold text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-50">Exporter mon skill</button>
       </header>
       {(error || notice) && <p role={error ? "alert" : "status"} className={`rounded-2xl border p-4 text-sm ${error ? "border-rose-300/25 bg-rose-300/10 text-rose-100" : "border-cyan-300/25 bg-cyan-300/10 text-cyan-100"}`}>{error || notice}</p>}
       <form onSubmit={(event) => void submit(event)} className="account-card space-y-4 rounded-3xl p-5 sm:p-7">

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Audit sécurité SaaS"
+  short_description: "Vérifier les risques de sécurité avant lancement"

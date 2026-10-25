@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
+import { isIP } from "node:net";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
@@ -6,12 +7,14 @@ import { z } from "zod";
 import { getCatalogProductBySlug, getCatalogProducts } from "@/features/products/catalog";
 import mcpSkills from "@/features/mcp/skills.json";
 import { hashMcpKey, parseMcpBearerToken } from "@/lib/security/mcp-keys";
+import { consumeApiRateLimit } from "@/lib/security/api-rate-limit";
+import { matchesFileContentType } from "@/lib/security/file-content";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import type { Product } from "@/types/skillflow";
 
-type McpCaller = { userId: string } | null;
+type McpCaller = { userId: string; keyId: string } | null;
 
-async function authenticateMcpKey(request: Request): Promise<McpCaller | Response> {
+async function authenticateMcpKey(request: Request, supabase: ReturnType<typeof getSupabaseAdminClient>): Promise<McpCaller | Response> {
   const authorization = request.headers.get("authorization");
   if (!authorization) return null;
 
@@ -21,7 +24,6 @@ async function authenticateMcpKey(request: Request): Promise<McpCaller | Respons
   }
 
   try {
-    const supabase = getSupabaseAdminClient();
     const { data, error } = await supabase
       .from("mcp_keys")
       .select("id, user_id")
@@ -37,13 +39,7 @@ async function authenticateMcpKey(request: Request): Promise<McpCaller | Respons
       return Response.json({ error: "ClÃ© MCP invalide ou rÃ©voquÃ©e." }, { status: 401 });
     }
 
-    const { error: updateError } = await supabase
-      .from("mcp_keys")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("id", data.id);
-    if (updateError) console.error("Could not update MCP key usage:", updateError.message);
-
-    return { userId: data.user_id };
+    return { userId: data.user_id, keyId: data.id };
   } catch (error) {
     console.error("MCP key authentication is unavailable:", error instanceof Error ? error.message : "Unknown error");
     return Response.json({ error: "Lâ€™authentification MCP est temporairement indisponible." }, { status: 503 });
@@ -52,6 +48,30 @@ async function authenticateMcpKey(request: Request): Promise<McpCaller | Respons
 
 function isResponse(value: McpCaller | Response): value is Response {
   return value instanceof Response;
+}
+
+function getMcpIpSubject(request: Request): string | null {
+  const forwardedIp = request.headers.get("x-vercel-forwarded-for")?.split(",", 1)[0]?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!forwardedIp || !serviceRoleKey || !isIP(forwardedIp)) return null;
+  return `ip:${createHmac("sha256", serviceRoleKey).update(forwardedIp).digest("hex")}`;
+}
+
+function rateLimitedMcpResponse(retryAfterSeconds: number) {
+  return Response.json(
+    {
+      jsonrpc: "2.0",
+      id: null,
+      error: { code: -32000, message: "Limite MCP atteinte. Réessayez après le délai indiqué." },
+    },
+    {
+      status: 429,
+      headers: {
+        "Cache-Control": "no-store",
+        "Retry-After": String(Math.max(1, retryAfterSeconds)),
+      },
+    },
+  );
 }
 
 function createMcpServer(caller: McpCaller) {
@@ -284,9 +304,6 @@ function createMcpServer(caller: McpCaller) {
   const withMember = async (skillId: string | undefined, toolName: string, input: Record<string, unknown>, operation: (supabase: ReturnType<typeof getSupabaseAdminClient>, userId: string) => Promise<unknown>) => {
     if (!caller) return { content: [{ type: "text" as const, text: "Authentification requise. Connectez une clé MCP personnelle depuis votre espace SkillFlow." }], isError: true };
     const supabase = getSupabaseAdminClient();
-    const { count, error: limitError } = await supabase.from("mcp_tool_usage").select("id", { count: "exact", head: true }).eq("user_id", caller.userId).gte("created_at", new Date(Date.now() - 60_000).toISOString());
-    if (limitError) return { content: [{ type: "text" as const, text: "Journal MCP indisponible. Appliquez la migration 011 avant les outils privés." }], isError: true };
-    if ((count ?? 0) >= 60) return { content: [{ type: "text" as const, text: "Limite temporaire atteinte : 60 appels MCP par minute." }], isError: true };
     if (skillId) {
       const { data: access, error } = await supabase.rpc("can_access_skill", { p_user_id: caller.userId, p_skill_id: skillId });
       if (error || !access) return { content: [{ type: "text" as const, text: "Accès à ce skill requis ou migration 011 non appliquée." }], isError: true };
@@ -368,6 +385,7 @@ function createMcpServer(caller: McpCaller) {
   server.registerTool("upload_skill_file", { title: "Importer un fichier", description: "Stocke un fichier privé dans le bucket du membre pour un skill accessible.", inputSchema: { skill_id: z.string().uuid(), file_name: z.string().trim().min(1).max(180), mime_type: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain", "application/json"]), content_base64: z.string().min(1).max(10_000_000) } }, async ({ skill_id, file_name, mime_type, content_base64 }) => withMember(skill_id, "upload_skill_file", { skill_id, file_name, mime_type, encoded_chars: content_base64.length }, async (supabase, userId) => {
     const bytes = Buffer.from(content_base64, "base64");
     if (!bytes.length || bytes.length > 7 * 1024 * 1024 || bytes.toString("base64").replace(/=+$/, "") !== content_base64.replace(/=+$/, "")) throw new Error("Invalid or oversized file");
+    if (!matchesFileContentType(bytes, mime_type)) throw new Error("File content does not match its declared type");
     const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf", "text/plain": "txt", "application/json": "json" };
     const storagePath = `${userId}/${skill_id}/${randomUUID()}.${extensions[mime_type]}`;
     const { error: uploadError } = await supabase.storage.from("skill-files").upload(storagePath, bytes, { contentType: mime_type, upsert: false });
@@ -407,8 +425,6 @@ function createMcpServer(caller: McpCaller) {
     const section = String(variables.section);
     if (!["configuration", "profile", "files", "outputs"].includes(section)) throw new Error("Section invalide.");
     const supabase = getSupabaseAdminClient();
-    const { count, error: rateError } = await supabase.from("mcp_tool_usage").select("id", { count: "exact", head: true }).eq("user_id", caller.userId).gte("created_at", new Date(Date.now() - 60_000).toISOString());
-    if (rateError || (count ?? 0) >= 60) throw new Error("Limite d’utilisation MCP atteinte ou journal indisponible.");
     const { data: access, error: accessError } = await supabase.rpc("can_access_skill", { p_user_id: caller.userId, p_skill_id: skillId });
     if (accessError || !access) throw new Error("Accès au skill requis.");
     const tables: Record<string, string> = { configuration: "skill_configurations", profile: "communication_profiles", files: "uploaded_files", outputs: "generated_outputs" };
@@ -422,8 +438,43 @@ function createMcpServer(caller: McpCaller) {
 }
 
 export async function POST(request: Request) {
-  const caller = await authenticateMcpKey(request);
+  let supabase: ReturnType<typeof getSupabaseAdminClient>;
+  try {
+    supabase = getSupabaseAdminClient();
+  } catch {
+    return Response.json({ error: "Le service MCP est temporairement indisponible." }, { status: 503 });
+  }
+
+  const ipSubject = getMcpIpSubject(request);
+  if (ipSubject) {
+    try {
+      const ipLimit = await consumeApiRateLimit(supabase, "mcp_ip", ipSubject);
+      if (!ipLimit.allowed) return rateLimitedMcpResponse(ipLimit.retryAfterSeconds);
+    } catch (error) {
+      console.error("MCP IP rate limit check failed:", error instanceof Error ? error.message : "Unknown error");
+      return Response.json({ error: "Le service MCP est temporairement indisponible." }, { status: 503 });
+    }
+  }
+
+  const caller = await authenticateMcpKey(request, supabase);
   if (isResponse(caller)) return caller;
+
+  if (caller) {
+    let decision;
+    try {
+      decision = await consumeApiRateLimit(supabase, "mcp_user", `user:${caller.userId}`);
+    } catch (error) {
+      console.error("MCP rate limit check failed:", error instanceof Error ? error.message : "Unknown error");
+      return Response.json({ error: "Le service MCP est temporairement indisponible." }, { status: 503 });
+    }
+    if (!decision.allowed) return rateLimitedMcpResponse(decision.retryAfterSeconds);
+
+    const { error: updateError } = await supabase
+      .from("mcp_keys")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("id", caller.keyId);
+    if (updateError) console.error("Could not update MCP key usage:", updateError.message);
+  }
 
   const server = createMcpServer(caller);
   const transport = new WebStandardStreamableHTTPServerTransport({

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Fabric Pattern Workflows"
+  short_description: "Build reusable Markdown prompt patterns for SkillFlow agents"

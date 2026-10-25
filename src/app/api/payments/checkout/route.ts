@@ -7,6 +7,7 @@ import {
   PRODUCT_SLUG,
 } from "@/lib/pricing";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
+import { consumeApiRateLimit } from "@/lib/security/api-rate-limit";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -152,6 +153,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cette tentative de paiement a déjà été traitée." }, { status: 409 });
   }
 
+  const { data: pendingOrder, error: pendingOrderError } = await supabase
+    .from("orders")
+    .select("checkout_url, coupon_code")
+    .eq("user_id", user.id)
+    .eq("product_id", product.id)
+    .eq("payment_status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (pendingOrderError) {
+    console.error("Could not check pending checkout:", pendingOrderError.message);
+    return NextResponse.json({ error: "Impossible de vérifier vos tentatives de paiement." }, { status: 500 });
+  }
+  if (pendingOrder) {
+    if (pendingOrder.coupon_code === price.couponCode && pendingOrder.checkout_url) {
+      return NextResponse.json({ checkoutUrl: pendingOrder.checkout_url });
+    }
+    return NextResponse.json(
+      { error: "Une tentative de paiement est déjà en cours pour ce skill. Terminez-la avant d’en créer une autre." },
+      { status: 409 },
+    );
+  }
+
+  let checkoutLimit;
+  try {
+    checkoutLimit = await consumeApiRateLimit(supabase, "checkout_user", `user:${user.id}`);
+  } catch (error) {
+    console.error("Checkout rate limit check failed:", error instanceof Error ? error.message : "Unknown error");
+    return NextResponse.json({ error: "Le paiement est temporairement indisponible." }, { status: 503 });
+  }
+  if (!checkoutLimit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives de paiement. Réessayez plus tard." },
+      {
+        status: 429,
+        headers: { "Cache-Control": "no-store", "Retry-After": String(Math.max(1, checkoutLimit.retryAfterSeconds)) },
+      },
+    );
+  }
+
   if (product.zip_path) {
     const pathParts = product.zip_path.split("/");
     const fileName = pathParts.pop();
@@ -191,6 +232,21 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !order) {
+    if (insertError?.code === "23505") {
+      const { data: racedPendingOrder } = await supabase
+        .from("orders")
+        .select("checkout_url")
+        .eq("user_id", user.id)
+        .eq("product_id", product.id)
+        .eq("payment_status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (racedPendingOrder?.checkout_url) return NextResponse.json({ checkoutUrl: racedPendingOrder.checkout_url });
+      if (racedPendingOrder) {
+        return NextResponse.json({ error: "Une session de paiement est déjà en cours de création." }, { status: 409 });
+      }
+    }
     console.error("Could not create checkout order:", insertError?.message ?? "no order returned");
     return NextResponse.json({ error: "Impossible de créer la commande." }, { status: 500 });
   }
