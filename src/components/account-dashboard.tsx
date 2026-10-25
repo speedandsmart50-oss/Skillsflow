@@ -23,6 +23,7 @@ type AccountSkill = {
   entitlementId: string;
   productId: string;
   slug: string;
+  memberSkillSlug: string | null;
   name: string;
   description: string;
   domain: string;
@@ -508,15 +509,20 @@ export function AccountDashboard() {
                               {downloadPending === `${skill.productId}:archive` ? "Préparation…" : "Télécharger le pack complet"}
                             </button>
                           )}
+                          {!skill.hasArchive && skill.memberSkillSlug && (
+                            <Link href={`/member/skills/${encodeURIComponent(skill.memberSkillSlug)}`} className={secondaryButtonClass}>
+                              Configurer mon agent
+                            </Link>
+                          )}
                         </div>
-                        <div className="mt-5 rounded-2xl bg-[#F1F6F4] p-4">
+                        {skill.hasArchive && <div className="mt-5 rounded-2xl bg-[#F1F6F4] p-4">
                           <h3 className="text-sm font-semibold">Guide d’installation</h3>
                           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-6 text-[#52645E]">
                             <li>Choisissez le format adapté à votre assistant.</li>
                             <li>Importez le fichier dans les réglages de votre assistant, ou copiez son contenu dans un projet.</li>
                             <li>Suivez le guide inclus dans le pack pour terminer l’installation.</li>
                           </ol>
-                        </div>
+                        </div>}
                       </li>
                     ))}
                   </ul>

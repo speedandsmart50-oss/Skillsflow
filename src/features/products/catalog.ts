@@ -16,6 +16,7 @@ type CatalogRow = {
   price_xof?: number | string | null;
   version: string | null;
   zip_path: string | null;
+  is_member_skill?: boolean;
 };
 
 type VersionRow = {
@@ -84,6 +85,13 @@ export async function getCatalogProducts(): Promise<Product[]> {
 
   const rows = (productData ?? []) as CatalogRow[];
   const productIds = rows.map((product) => product.id);
+  const linkedSkillsResult = productIds.length
+    ? await supabase.from("skills").select("product_id").in("product_id", productIds).eq("is_active", true)
+    : { data: [], error: null };
+  if (linkedSkillsResult.error && !isSchemaCompatibilityError(linkedSkillsResult.error)) {
+    console.error("Could not load catalog skill links:", linkedSkillsResult.error.message);
+  }
+  const memberSkillProductIds = new Set((linkedSkillsResult.data ?? []).map((skill) => skill.product_id));
   let versions: VersionRow[] = [];
 
   if (productIds.length) {
@@ -156,6 +164,7 @@ export async function getCatalogProducts(): Promise<Product[]> {
       version: row.version ?? existingProduct?.version ?? "1.0.0",
       status: row.status,
       zipFile,
+      isMemberSkill: memberSkillProductIds.has(row.id),
       compatibleAgents: existingProduct?.compatibleAgents ?? ["Claude", "ChatGPT"],
       versions: publishedVersions.length ? publishedVersions : existingProduct?.versions ?? [],
     };

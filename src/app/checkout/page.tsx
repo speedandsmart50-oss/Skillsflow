@@ -27,7 +27,7 @@ async function CheckoutContent({
   const productSlug = typeof params.product === "string" ? params.product : PRODUCT_SLUG;
   const product = await getCatalogProductBySlug(productSlug);
 
-  if (!product || product.catalogStatus !== "disponible" || !product.zipFile) {
+  if (!product || product.catalogStatus !== "disponible" || (!product.zipFile && !product.isMemberSkill)) {
     notFound();
   }
 

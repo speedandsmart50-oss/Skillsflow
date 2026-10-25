@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   }
 
   const productIds = [...new Set(entitlements.map((item) => item.product_id))];
-  const [productsResult, versionsResult] = productIds.length
+  const [productsResult, versionsResult, memberSkillsResult] = productIds.length
     ? await Promise.all([
       supabase
         .from("products")
@@ -67,16 +67,22 @@ export async function GET(request: Request) {
         .in("product_id", productIds)
         .eq("status", "published")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("skills")
+        .select("slug,product_id")
+        .in("product_id", productIds)
+        .eq("is_active", true),
     ])
-    : [{ data: [], error: null }, { data: [], error: null }];
+    : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }];
 
-  const catalogError = productsResult.error ?? versionsResult.error;
+  const catalogError = productsResult.error ?? versionsResult.error ?? memberSkillsResult.error;
   if (catalogError) {
     console.error("Could not load entitled skill details:", catalogError.message);
     return NextResponse.json({ error: "Impossible de charger vos skills." }, { status: 500 });
   }
 
   const productsById = new Map((productsResult.data ?? []).map((product) => [product.id, product]));
+  const memberSkillSlugByProductId = new Map((memberSkillsResult.data ?? []).map((skill) => [skill.product_id, skill.slug]));
   const versionsByProduct = new Map<string, NonNullable<typeof versionsResult.data>[number]>();
   for (const version of versionsResult.data ?? []) {
     if (!versionsByProduct.has(version.product_id)) {
@@ -94,6 +100,7 @@ export async function GET(request: Request) {
       productId: product.id,
       slug: product.slug,
       name: product.name,
+      memberSkillSlug: memberSkillSlugByProductId.get(product.id) ?? null,
       description: product.description,
       domain: product.domain,
       grantedAt: entitlement.granted_at,

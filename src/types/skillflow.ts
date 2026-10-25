@@ -19,6 +19,7 @@ export type Product = {
   version: string;
   status: ProductStatus;
   zipFile: string;
+  isMemberSkill?: boolean;
   compatibleAgents: string[];
   versions: VersionEntry[];
 };

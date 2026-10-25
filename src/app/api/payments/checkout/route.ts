@@ -87,8 +87,19 @@ export async function POST(request: Request) {
   if (product.catalog_status !== "disponible") {
     return NextResponse.json({ error: "Ce skill n’est pas encore disponible à l’achat." }, { status: 409 });
   }
-  if (!product.zip_path) {
-    return NextResponse.json({ error: "Le pack n’est pas encore prêt pour le paiement." }, { status: 503 });
+  const { data: linkedSkill, error: linkedSkillError } = await supabase
+    .from("skills")
+    .select("id")
+    .eq("product_id", product.id)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (linkedSkillError) {
+    console.error("Could not verify member skill product:", linkedSkillError.message);
+    return NextResponse.json({ error: "Impossible de vérifier le contenu de ce skill." }, { status: 500 });
+  }
+  const grantsMemberSkillAccess = Boolean(linkedSkill);
+  if (!product.zip_path && !grantsMemberSkillAccess) {
+    return NextResponse.json({ error: "Le pack n'est pas encore prêt pour le paiement." }, { status: 503 });
   }
 
   const productPriceEur = Number(product.price_eur);
@@ -141,19 +152,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cette tentative de paiement a déjà été traitée." }, { status: 409 });
   }
 
-  const pathParts = product.zip_path.split("/");
-  const fileName = pathParts.pop();
-  const folder = pathParts.join("/");
-  if (!fileName) {
-    console.error("Published product has an invalid storage path:", product.id);
-    return NextResponse.json({ error: "Le fichier du pack n'est pas correctement configuré." }, { status: 503 });
-  }
-  const { data: storedFiles, error: storageError } = await supabase.storage
-    .from("product-packs")
-    .list(folder, { search: fileName, limit: 10 });
-  if (storageError || !storedFiles?.some((file) => file.name === fileName)) {
-    console.error("Published product archive is not available:", storageError?.message ?? product.zip_path);
-    return NextResponse.json({ error: "Le fichier du pack n'est pas encore disponible." }, { status: 503 });
+  if (product.zip_path) {
+    const pathParts = product.zip_path.split("/");
+    const fileName = pathParts.pop();
+    const folder = pathParts.join("/");
+    if (!fileName) {
+      console.error("Published product has an invalid storage path:", product.id);
+      return NextResponse.json({ error: "Le fichier du pack n'est pas correctement configuré." }, { status: 503 });
+    }
+    const { data: storedFiles, error: storageError } = await supabase.storage
+      .from("product-packs")
+      .list(folder, { search: fileName, limit: 10 });
+    if (storageError || !storedFiles?.some((file) => file.name === fileName)) {
+      console.error("Published product archive is not available:", storageError?.message ?? product.zip_path);
+      return NextResponse.json({ error: "Le fichier du pack n'est pas encore disponible." }, { status: 503 });
+    }
   }
 
   const orderId = randomUUID();

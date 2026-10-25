@@ -34,7 +34,7 @@ async function ProductDetailContent({
   if (!product) {
     notFound();
   }
-  const canPurchase = product.catalogStatus === "disponible" && Boolean(product.zipFile);
+  const canPurchase = product.catalogStatus === "disponible" && (Boolean(product.zipFile) || Boolean(product.isMemberSkill));
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
@@ -72,12 +72,16 @@ async function ProductDetailContent({
           </div>
 
           <div className="mt-8">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Installation</h2>
-            <ol className="mt-3 list-decimal space-y-2 pl-6 text-slate-600">
-              {product.installSteps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">{product.isMemberSkill ? "Après votre achat" : "Installation"}</h2>
+            {product.isMemberSkill ? (
+              <p className="mt-3 text-slate-600">L’achat active l’accès privé à ce skill dans votre espace membre, où vous pourrez configurer votre agent personnalisé.</p>
+            ) : (
+              <ol className="mt-3 list-decimal space-y-2 pl-6 text-slate-600">
+                {product.installSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            )}
           </div>
         </section>
 
@@ -87,7 +91,7 @@ async function ProductDetailContent({
           <div className="mt-1 text-sm font-medium text-slate-600">{new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF</div>
           {canPurchase ? (
             <>
-              <p className="mt-4 text-sm leading-6 text-slate-600">Le paiement est sécurisé par SasPay. Votre téléchargement sera disponible dans votre compte après confirmation du paiement.</p>
+              <p className="mt-4 text-sm leading-6 text-slate-600">{product.isMemberSkill ? "Le paiement est sécurisé par SasPay. Votre accès au skill sera activé dans votre espace membre après confirmation du paiement." : "Le paiement est sécurisé par SasPay. Votre téléchargement sera disponible dans votre compte après confirmation du paiement."}</p>
               <Link href={`/checkout?product=${encodeURIComponent(product.slug)}`} className="mt-6 block w-full rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white">
                 Acheter avec SasPay
               </Link>
