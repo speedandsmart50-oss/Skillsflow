@@ -3,10 +3,11 @@ import test from "node:test";
 import { hasAcceptedCheckoutTerms } from "../src/lib/checkout-acceptance";
 import { canCheckout, isCommerceOpen } from "../src/lib/commerce";
 
-test("commerce cannot open when the production flag is false or legal placeholders remain", () => {
-  assert.equal(isCommerceOpen("false", true), false);
-  assert.equal(isCommerceOpen("true", false), false);
-  assert.equal(isCommerceOpen("true", true), true);
+test("commerce is controlled by the explicit production flag", () => {
+  assert.equal(isCommerceOpen("false"), false);
+  assert.equal(isCommerceOpen(undefined), false);
+  assert.equal(isCommerceOpen("true"), true);
+  assert.equal(canCheckout("true"), true);
   assert.equal(canCheckout("false"), false);
 });
 

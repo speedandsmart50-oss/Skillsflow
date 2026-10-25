@@ -5,7 +5,9 @@
 Checkout uses published catalogue prices and SasPay live credentials. Orders are
 reconciled from verified webhooks, and paid customers can download the published
 pack through short-lived signed URLs. Keep `SKILLFLOW_COMMERCE_ENABLED=false`
-until all launch requirements below are complete.
+until you are ready to accept orders. Setting it to `true` opens checkout; it
+does not complete legal information. Replace visible `[À COMPLÉTER]` markers
+with verified details as soon as they are available.
 Configure Supabase Auth with the production site URL and allowed redirect URLs.
 
 ### Google sign-in and account recovery
@@ -73,7 +75,10 @@ licence, refund policy, and privacy notice. Have the wording checked for the
 seller's jurisdiction and the countries served. Confirm
 SasPay's fees, supported markets, settlement currency, minimum payment, and webhook
 configuration with the provider. Confirm the displayed price and tax treatment.
-Only then set `SKILLFLOW_COMMERCE_ENABLED=true` in production.
+The site owner controls when to open checkout by setting
+`SKILLFLOW_COMMERCE_ENABLED=true` in production. This switch does not validate
+or fill in legal information; visible `[À COMPLÉTER]` markers remain the owner's
+responsibility to replace with verified details.
 
 ## MCP connection
 
@@ -118,8 +123,10 @@ Production environment variables: `NEXT_PUBLIC_APP_URL`, `SASPAY_API_URL`,
 `SASPAY_CHECKOUT_SESSION_STATUS_PATH` (GET path template; default
 `/checkout-sessions/{id}/`),
 live `SASPAY_API_KEY`, `SASPAY_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`,
-`CRON_SECRET`, and `SKILLFLOW_COMMERCE_ENABLED`. Keep the commerce flag `false`
-until all legal markers are completed and the owner has verified a live purchase.
+`CRON_SECRET`, and `SKILLFLOW_COMMERCE_ENABLED`. The commerce flag controls
+whether checkout is open. Keep it `false` until the owner is ready to accept
+orders; setting it to `true` does not complete legal markers or verify a live
+purchase.
 The checkout records the server timestamp in `orders.terms_accepted_at` after
 the buyer accepts the conditions of sale, skill licence, and refund policy.
 

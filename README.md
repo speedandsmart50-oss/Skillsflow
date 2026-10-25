@@ -35,9 +35,10 @@ the Supabase service-role key, and `NEXT_PUBLIC_APP_URL` in the deployment
 environment. Never expose server-only values with a `NEXT_PUBLIC_` prefix.
 
 `BOOST` deducts 10 EUR where the product price permits it. Keep
-`SKILLFLOW_COMMERCE_ENABLED=false` until the seller details, terms, licence,
-refund policy, privacy notice, Supabase setup, SasPay webhook, and private
-product archive are ready. Set it to `true` only after those launch checks pass.
+`SKILLFLOW_COMMERCE_ENABLED=false` until you are ready to accept orders. Setting
+it to `true` opens checkout; it does not complete legal information. Any visible
+`[À COMPLÉTER]` marker in the legal pages must be replaced with verified details
+by the site owner.
 
 Administrator access is assigned manually by a trusted operator. A public
 checkout or coupon can never grant this role. `BOOST` leaves the purchaser with
@@ -76,9 +77,9 @@ the signed webhook and server-side transaction verification do.
 - Le formulaire de paiement exige l’acceptation des conditions de vente, de la
   licence et de la politique de remboursement. Le serveur vérifie ce choix et
   enregistre `terms_accepted_at` sur la commande.
-- Gardez `SKILLFLOW_COMMERCE_ENABLED=false` tant que les pages légales affichent
-  un marqueur `[À COMPLÉTER]`. La valeur `true` ne suffit pas à ouvrir les ventes
-  si un renseignement légal requis manque.
+- `SKILLFLOW_COMMERCE_ENABLED` contrôle l'ouverture du checkout : `false` le
+  bloque et `true` l'ouvre. Ce réglage ne complète pas les mentions légales ;
+  remplacez chaque marqueur `[À COMPLÉTER]` par une information vérifiée.
 - Pour l’inspection ou le secours, utilisez un jeton Supabase de courte durée
   appartenant à un administrateur : placez-le dans
   `SKILLFLOW_ADMIN_ACCESS_TOKEN` de `.env.local`, puis lancez :

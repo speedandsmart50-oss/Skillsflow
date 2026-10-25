@@ -91,7 +91,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
             )}
             {!salesEnabled && (
               <div role="status" className="mt-8 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-amber-100">
-                Ouverture imminente. Les ventes ouvriront dès que les informations requises seront complétées.
+                Les ventes ne sont pas disponibles pour le moment.
               </div>
             )}
             {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}
