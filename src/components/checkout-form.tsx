@@ -92,7 +92,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
             )}
             {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}
             <button disabled={!salesEnabled || pending || (coupon.trim() !== "" && price.couponCode !== coupon.trim().toUpperCase())} type="submit" className="mt-6 w-full rounded-full bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
-              {!salesEnabled ? "Ventes fermées" : pending ? "Préparation du paiement…" : "Payer avec SasPay"}
+              {!salesEnabled ? "Ventes fermées" : pending ? "Préparation du paiement…" : "Payer"}
             </button>
           </section>
 
