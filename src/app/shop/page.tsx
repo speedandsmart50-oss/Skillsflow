@@ -1,4 +1,4 @@
-import { ProductCard } from "@/components/product-card";
+import { CatalogSearch } from "@/components/catalog-search";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { getCatalogProducts, getUpcomingCatalogSkills } from "@/features/products/catalog";
@@ -32,11 +32,7 @@ async function ShopContent() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <CatalogSearch products={products} />
 
         {upcomingSkills.length > 0 && (
           <section className="mt-16 border-t border-slate-800 pt-10" aria-labelledby="upcoming-skills-title">

@@ -73,6 +73,9 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
         <p className="mt-4 max-w-2xl leading-7 text-slate-300">
           Le paiement est traité par SasPay. Votre commande et l’accès au pack seront confirmés après vérification du paiement.
         </p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+          Le montant en XOF correspond au prix SkillFlow. SasPay peut afficher des frais opérateur supplémentaires avant votre autorisation ; vérifiez le montant débité sur la page SasPay avant de confirmer.
+        </p>
 
         <form onSubmit={startCheckout} className="mt-8 grid gap-8 lg:grid-cols-[1fr_0.8fr]">
           <section className="rounded-2xl border border-cyan-400/15 bg-slate-900/60 p-6 sm:p-8">
@@ -110,6 +113,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
               <span>Total</span><span>€{price.totalEur.toFixed(2)}</span>
             </div>
             <p className="mt-2 text-sm text-slate-400">{formatXof(price.totalXof)} XOF</p>
+            <p className="mt-4 border-t border-slate-700 pt-4 text-xs leading-5 text-slate-500">L’accès est activé uniquement après confirmation du paiement. <Link href="/legal" className="text-cyan-200 underline underline-offset-2">Conditions de vente</Link></p>
             <Link href="/shop" className="mt-6 block text-center text-sm font-medium text-slate-400 hover:text-cyan-300">Retour au catalogue</Link>
           </aside>
         </form>

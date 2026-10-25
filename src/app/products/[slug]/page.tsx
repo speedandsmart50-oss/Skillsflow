@@ -93,7 +93,7 @@ async function ProductDetailContent({
             <>
               <p className="mt-4 text-sm leading-6 text-slate-600">{product.isMemberSkill ? "Le paiement est sécurisé par SasPay. Votre accès au skill sera activé dans votre espace membre après confirmation du paiement." : "Le paiement est sécurisé par SasPay. Votre téléchargement sera disponible dans votre compte après confirmation du paiement."}</p>
               <Link href={`/checkout?product=${encodeURIComponent(product.slug)}`} className="mt-6 block w-full rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white">
-                Acheter avec SasPay
+                Payer
               </Link>
             </>
           ) : (
