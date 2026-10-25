@@ -19,16 +19,10 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         </span>
       </div>
-      <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">✦</div>
       <h3 className="mt-5 text-xl font-semibold text-white">{product.name}</h3>
-      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">{product.domain}</p>
-      <p className="mt-2 min-h-12 text-sm leading-6 text-slate-300">{product.tagline}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {product.stack.map((tool) => <span key={tool} className="rounded-full border border-slate-700 bg-slate-950/60 px-2.5 py-1 text-[11px] text-slate-300">{tool}</span>)}
-      </div>
       <div className="mt-6 flex items-center justify-between border-t border-slate-800 pt-4">
-        <span className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">v{product.version}</span>
-        <Link href={`/products/${product.slug}`} className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Voir le skill</Link>
+        <span className="text-sm text-slate-300">Connectable à Claude</span>
+        <Link href={`/products/${product.slug}`} className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Continuer</Link>
       </div>
     </article>
   );

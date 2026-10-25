@@ -440,8 +440,8 @@ export function AdminDashboard() {
 
   return (
     <main className="admin-shell min-h-screen bg-[#070D18] text-[#EAF4FF]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
+      <div className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <header className="admin-brand-bar flex flex-wrap items-center justify-between gap-4 rounded-[2rem] border border-cyan-400/20 bg-slate-950/90 p-4 shadow-[0_18px_60px_rgba(0,190,255,.08)] sm:p-5">
           <Link href="/" className="flex min-h-11 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B6A5A]">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-cyan-600 font-[family-name:var(--font-bricolage)] text-lg font-bold text-slate-950">S</span>
             <span>
@@ -452,8 +452,8 @@ export function AdminDashboard() {
           <Link href="/account" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 hover:border-cyan-400">Voir l’espace client</Link>
         </header>
 
-        <nav aria-label="Navigation de l’administration" className="mt-6 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <div className="flex min-w-max gap-2 border-b border-slate-800 pb-4">
+        <nav aria-label="Navigation de l’administration" className="admin-main-nav mt-4 overflow-x-auto rounded-[1.75rem] border border-cyan-400/15 bg-slate-950/75 px-3 py-3 shadow-[0_16px_45px_rgba(0,0,0,.18)] sm:px-4">
+          <div className="flex min-w-max gap-2">
             {sections.map((item) => (
               <button
                 key={item.id}
@@ -475,7 +475,7 @@ export function AdminDashboard() {
         </nav>
 
         <div className="mt-7">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">SkillFlow / {section}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">SkillFlow / {section}</p>
           <h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-3xl font-bold tracking-tight sm:text-4xl">
             {sections.find((item) => item.id === section)?.label}
           </h1>
@@ -689,7 +689,7 @@ function Overview({ data, onRefresh, onViewOrders }: { data: AdminData; onRefres
   const max = Math.max(1, ...points.map((point) => point.revenue_xof));
   const chartPoints = points.map((point, index) => `${index * (700 / Math.max(1, points.length - 1))},${150 - (point.revenue_xof / max) * 125}`).join(" ");
   return <div className="space-y-5">
-    <div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-3xl font-bold tracking-tight text-white">Vue d’ensemble<span className="text-cyan-300">.</span></h2><p className="mt-2 text-sm text-slate-400">Les performances de ta plateforme, calculées à partir des données réelles.</p></div><div className="flex items-center gap-2"><label className="sr-only" htmlFor="admin-period">Période</label><select id="admin-period" value={period} onChange={(event) => setPeriod(Number(event.target.value) as 7 | 30)} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200"><option value={7}>7 derniers jours</option><option value={30}>30 derniers jours</option></select><button type="button" onClick={onRefresh} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">↻ Actualiser</button></div></div>
+    <section className="admin-overview-hero relative isolate overflow-hidden rounded-[2rem] border border-cyan-400/25 bg-[radial-gradient(ellipse_at_78%_15%,rgba(0,210,255,.17),transparent_38%),radial-gradient(ellipse_at_96%_100%,rgba(124,58,237,.16),transparent_32%),linear-gradient(115deg,#07111e,#0b1c2b_58%,#07111e)] p-5 shadow-[0_20px_70px_rgba(0,190,255,.09)] sm:p-8"><div className="relative z-10 flex flex-wrap items-end justify-between gap-5"><div><p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">Aperçu des performances</p><h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Vue d’ensemble<span className="text-cyan-300">.</span></h2><p className="mt-2 text-sm text-slate-300">Les performances de ta plateforme, calculées à partir des données réelles.</p></div><div className="flex items-center gap-2"><label className="sr-only" htmlFor="admin-period">Période</label><select id="admin-period" value={period} onChange={(event) => setPeriod(Number(event.target.value) as 7 | 30)} className="rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-slate-200"><option value={7}>7 derniers jours</option><option value={30}>30 derniers jours</option></select><button type="button" onClick={onRefresh} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">↻ Actualiser</button></div></div><div aria-hidden="true" className="admin-hero-orbit pointer-events-none absolute -bottom-24 right-8 h-64 w-[48%] rounded-[50%] border border-cyan-400/15 sm:right-20" /></section>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><MetricCard title={`Revenus encaissés · ${period} jours`} metric={metric} revenue /><MetricCard title={`Ventes confirmées · ${period} jours`} metric={metric} /><MetricCard title={`Nouveaux clients · ${period} jours`} metric={metric} accounts /><MetricCard title={`Liste d’attente · ${period} jours`} metric={metric} waiting /></div>
     <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
       <section className="admin-dash-card rounded-3xl border border-slate-800 bg-slate-900/70 p-5 sm:p-7"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-white">Flux de revenus <span className="text-cyan-300">↗</span></h3><p className="mt-1 text-sm text-slate-400">Évolution des paiements confirmés · FCFA · {period} jours</p></div><span className="rounded-lg border border-slate-700 px-3 py-2 text-xs uppercase text-slate-400">Données réelles</span></div>

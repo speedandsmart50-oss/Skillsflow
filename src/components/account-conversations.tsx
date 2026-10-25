@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { buildPersonalAgentSkill } from "@/lib/agent/personal-skill";
 import { matchesFileContentType } from "@/lib/security/file-content";
 
 type ConversationExample = {
@@ -56,7 +55,14 @@ export function AccountConversations() {
     setError(""); setNotice(""); setSaving(true);
     const form = new FormData(event.currentTarget);
     const title = String(form.get("title") ?? "").trim();
-    const conversationText = String(form.get("conversation") ?? "").trim();
+    const tone = String(form.get("tone") ?? "").trim();
+    const responseStyle = String(form.get("responseStyle") ?? "").trim();
+    const example = String(form.get("conversation") ?? "").trim();
+    const conversationText = [
+      tone && `Ton souhaité : ${tone}`,
+      responseStyle && `Manière de répondre : ${responseStyle}`,
+      `Situation et exemple : ${example}`,
+    ].filter(Boolean).join("\n\n");
     const anonymizedConversation = conversationText
       .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[EMAIL]")
       .replace(/(?:\+?\d[\d .()/-]{7,}\d)/g, "[TÉLÉPHONE]")
@@ -117,40 +123,30 @@ export function AccountConversations() {
     setNotice("Exemple supprimé.");
   }
 
-  function downloadPersonalSkill() {
-    const content = buildPersonalAgentSkill(items);
-    const url = URL.createObjectURL(new Blob([content], { type: "text/markdown;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "skillflow-agent-personnel.md";
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
-    setNotice("Votre skill personnel a été exporté. Il contient jusqu’à 8 conversations textuelles, sans les captures.");
-  }
-
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Votre agent personnel</p>
-          <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold text-white">Exemples de conversations</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Ajoutez des exemples privés, puis exportez un skill Markdown réutilisable qui reprend votre style. L’export ne lance pas d’entraînement automatique.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Repères de communication</p>
+          <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold text-white">Montrez à votre agent comment vous échangez</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Ajoutez quelques situations et réponses qui vous ressemblent. Des exemples concrets l’aideront à mieux comprendre le ton et la manière que vous souhaitez retrouver dans votre agent.</p>
         </div>
-        <button type="button" onClick={downloadPersonalSkill} disabled={loading || items.length === 0} className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-200/30 px-5 py-2.5 text-sm font-bold text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-50">Exporter mon skill</button>
       </header>
       {(error || notice) && <p role={error ? "alert" : "status"} className={`rounded-2xl border p-4 text-sm ${error ? "border-rose-300/25 bg-rose-300/10 text-rose-100" : "border-cyan-300/25 bg-cyan-300/10 text-cyan-100"}`}>{error || notice}</p>}
-      <form onSubmit={(event) => void submit(event)} className="account-card space-y-4 rounded-3xl p-5 sm:p-7">
-        <div><label htmlFor="example-title" className="mb-1.5 block text-sm font-semibold text-white">Nom de l’exemple</label><input id="example-title" name="title" required minLength={1} maxLength={120} className={inputClass} placeholder="Ex. Réponse à une demande client" /></div>
-        <div><label htmlFor="example-conversation" className="mb-1.5 block text-sm font-semibold text-white">Conversation à partager</label><textarea id="example-conversation" name="conversation" required minLength={20} maxLength={30000} rows={8} className={`${inputClass} resize-y`} placeholder="Collez la conversation; les e-mails, téléphones et liens seront masqués avant l’enregistrement." /><p className="mt-2 text-xs text-slate-400">Les captures sont stockées dans votre espace privé. L’extraction OCR n’est pas activée pour le moment.</p></div>
-        <div><label htmlFor="example-screenshots" className="mb-1.5 block text-sm font-semibold text-white">Captures d’écran (facultatif)</label><input id="example-screenshots" name="screenshots" type="file" multiple accept="image/jpeg,image/png,image/webp" className="block w-full text-sm text-slate-300 file:mr-4 file:min-h-10 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:font-semibold file:text-slate-950" /><p className="mt-2 text-xs text-slate-400">6 images maximum · JPEG, PNG ou WebP · 7 Mo par image</p></div>
-        <button type="submit" disabled={saving} className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60">{saving ? "Enregistrement…" : "Envoyer à mon espace agent"}</button>
+      <form onSubmit={(event) => void submit(event)} className="account-card space-y-5 rounded-3xl border border-white/10 p-5 sm:p-7">
+        <div><h3 className="text-lg font-semibold text-white">Ajouter un repère</h3><p className="mt-1 text-sm text-slate-400">Choisissez une situation qui montre bien votre façon de répondre.</p></div>
+        <div><label htmlFor="example-title" className="mb-1.5 block text-sm font-semibold text-white">Situation</label><input id="example-title" name="title" required minLength={1} maxLength={120} className={inputClass} placeholder="Ex. Répondre à une question d’un client" /></div>
+        <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="agent-tone" className="mb-1.5 block text-sm font-semibold text-white">Ton souhaité <span className="font-normal text-slate-400">(facultatif)</span></label><input id="agent-tone" name="tone" maxLength={500} className={inputClass} placeholder="Ex. chaleureux, direct, rassurant" /></div><div><label htmlFor="agent-style" className="mb-1.5 block text-sm font-semibold text-white">Votre manière de répondre <span className="font-normal text-slate-400">(facultatif)</span></label><input id="agent-style" name="responseStyle" maxLength={500} className={inputClass} placeholder="Ex. phrases courtes, exemples concrets" /></div></div>
+        <div><label htmlFor="example-conversation" className="mb-1.5 block text-sm font-semibold text-white">Exemple d’échange</label><textarea id="example-conversation" name="conversation" required minLength={20} maxLength={30000} rows={8} className={`${inputClass} resize-y`} placeholder="Décrivez le contexte et ajoutez un exemple de réponse qui vous ressemble." /><p className="mt-2 text-xs text-slate-400">Retirez les noms, coordonnées et informations privées avant de partager un échange.</p></div>
+        <details className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><summary className="cursor-pointer text-sm font-semibold text-cyan-100">Ajouter un support visuel (facultatif)</summary><div className="mt-3"><label htmlFor="example-screenshots" className="mb-1.5 block text-sm font-medium text-slate-200">Image de contexte</label><input id="example-screenshots" name="screenshots" type="file" multiple accept="image/jpeg,image/png,image/webp" className="block w-full text-sm text-slate-300 file:mr-4 file:min-h-10 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:font-semibold file:text-slate-950" /><p className="mt-2 text-xs text-slate-400">Ajoutez uniquement des images que vous êtes autorisé à partager.</p></div></details>
+        <button type="submit" disabled={saving} className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60">{saving ? "Enregistrement…" : "Enregistrer ce repère"}</button>
       </form>
       <section className="space-y-3">
-        <h3 className="text-lg font-semibold text-white">Mes exemples enregistrés</h3>
+        <div><h3 className="text-lg font-semibold text-white">Mes repères</h3><p className="mt-1 text-sm text-slate-400">Vous pouvez les consulter ou les supprimer à tout moment.</p></div>
         {loading ? <p className="text-sm text-slate-400">Chargement…</p> : items.length === 0 ? <p className="account-card rounded-2xl p-5 text-sm text-slate-300">Aucun exemple pour le moment.</p> : items.map((item) => (
           <article key={item.id} className="account-card rounded-2xl p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="font-semibold text-white">{item.title}</h4><p className="mt-1 text-xs text-slate-400">Ajouté le {new Date(item.created_at).toLocaleDateString("fr-FR")} · {item.screenshot_paths.length} capture(s)</p></div><button type="button" onClick={() => void remove(item)} className="text-sm font-semibold text-rose-200 underline underline-offset-4">Supprimer</button></div>
-            <details className="mt-4"><summary className="cursor-pointer text-sm font-semibold text-cyan-200">Afficher la conversation</summary><pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-xl bg-[#0b1524] p-4 font-sans text-sm leading-6 text-slate-200">{item.conversation_text}</pre></details>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="font-semibold text-white">{item.title}</h4><p className="mt-1 text-xs text-slate-400">Ajouté le {new Date(item.created_at).toLocaleDateString("fr-FR")}{item.screenshot_paths.length ? " · support visuel joint" : ""}</p></div><button type="button" onClick={() => void remove(item)} className="text-sm font-semibold text-rose-200 underline underline-offset-4">Supprimer</button></div>
+            <details className="mt-4"><summary className="cursor-pointer text-sm font-semibold text-cyan-200">Voir cet exemple</summary><pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-xl bg-[#0b1524] p-4 font-sans text-sm leading-6 text-slate-200">{item.conversation_text}</pre></details>
             {(screenshots[item.id]?.length ?? 0) > 0 && <div className="mt-4 flex flex-wrap gap-3">{screenshots[item.id].map((src, index) => <a key={src} href={src} target="_blank" rel="noreferrer"><Image unoptimized width={128} height={96} src={src} alt={`Capture ${index + 1} de ${item.title}`} className="h-24 w-32 rounded-xl border border-white/10 object-cover" /></a>)}</div>}
           </article>
         ))}

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { AccountCatalog } from "@/components/account-catalog";
-import { AccountConversations } from "@/components/account-conversations";
 
 type AccountOrder = {
   id: string;
@@ -59,14 +58,13 @@ type AccountData = {
   tickets: SupportTicket[];
 };
 
-type Section = "overview" | "skills" | "catalog" | "mcp" | "agent" | "billing" | "privacy" | "help";
+type Section = "overview" | "skills" | "catalog" | "mcp" | "billing" | "privacy" | "help";
 
 const sections: { id: Section; label: string }[] = [
   { id: "overview", label: "Vue d’ensemble" },
   { id: "skills", label: "Mes skills" },
   { id: "catalog", label: "Catalogue" },
-  { id: "mcp", label: "Connexion MCP" },
-  { id: "agent", label: "Mon agent IA" },
+  { id: "mcp", label: "Tutoriel Claude" },
   { id: "billing", label: "Facturation" },
   { id: "privacy", label: "Données et confidentialité" },
   { id: "help", label: "Aide" },
@@ -155,9 +153,6 @@ export function AccountDashboard() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
-  const [downloadPending, setDownloadPending] = useState("");
-  const [newKey, setNewKey] = useState("");
-  const [keyCopied, setKeyCopied] = useState(false);
   const [mcpUrlCopied, setMcpUrlCopied] = useState(false);
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deleteWord, setDeleteWord] = useState("");
@@ -205,9 +200,7 @@ export function AccountDashboard() {
 
   async function refreshAccount() {
     const response = await accountRequest("/api/account/dashboard");
-    if (!response.ok) {
-      throw new Error(await responseError(response, "Impossible d’actualiser votre espace."));
-    }
+    if (!response.ok) throw new Error(await responseError(response, "Impossible d’actualiser votre espace."));
     setAccount(parseAccountData(await response.json()));
   }
 
@@ -220,91 +213,6 @@ export function AccountDashboard() {
     }
     router.replace("/");
     router.refresh();
-  }
-
-  async function downloadSkill(skill: AccountSkill, format: "claude" | "chatgpt" | "archive") {
-    clearFeedback();
-    setDownloadPending(`${skill.productId}:${format}`);
-    try {
-      const params = new URLSearchParams({
-        productId: skill.productId,
-        version: skill.version,
-        format,
-      });
-      const response = await accountRequest(`/api/account/download?${params}`);
-      const payload: unknown = await response.json();
-      if (
-        !response.ok
-        || !isRecord(payload)
-        || typeof payload.downloadUrl !== "string"
-      ) {
-        throw new Error(isRecord(payload) && typeof payload.error === "string"
-          ? payload.error
-          : "Impossible de préparer le téléchargement.");
-      }
-      window.location.assign(payload.downloadUrl);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Impossible de préparer le téléchargement.");
-    } finally {
-      setDownloadPending("");
-    }
-  }
-
-  async function rotateKey() {
-    clearFeedback();
-    if (
-      account?.mcpKeys.some((key) => key.status === "active")
-      && !window.confirm("L’ancienne clé sera immédiatement révoquée. Continuer ?")
-    ) {
-      return;
-    }
-
-    setPending(true);
-    try {
-      const response = await accountRequest("/api/account/mcp-keys", { method: "POST" });
-      const payload: unknown = await response.json();
-      if (!response.ok || !isRecord(payload) || !isRecord(payload.key) || typeof payload.key.value !== "string") {
-        throw new Error(isRecord(payload) && typeof payload.error === "string"
-          ? payload.error
-          : "Impossible de créer votre clé MCP.");
-      }
-      setNewKey(payload.key.value);
-      setKeyCopied(false);
-      setNotice("Votre nouvelle clé est prête. Copiez-la maintenant, elle ne sera plus affichée ensuite.");
-      await refreshAccount();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Impossible de créer votre clé MCP.");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function revokeKey() {
-    clearFeedback();
-    if (!window.confirm("Révoquer la clé MCP ? Les connexions qui l’utilisent cesseront de fonctionner.")) return;
-
-    setPending(true);
-    try {
-      const response = await accountRequest("/api/account/mcp-keys", { method: "DELETE" });
-      if (!response.ok) throw new Error(await responseError(response, "Impossible de révoquer la clé."));
-      setNewKey("");
-      setNotice("La clé MCP a été révoquée.");
-      await refreshAccount();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Impossible de révoquer la clé.");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function copyKey() {
-    if (!newKey) return;
-    try {
-      await navigator.clipboard.writeText(newKey);
-      setKeyCopied(true);
-    } catch {
-      setError("La copie automatique n’a pas fonctionné. Sélectionnez la clé et copiez-la.");
-    }
   }
 
   async function copyMcpUrl() {
@@ -394,7 +302,6 @@ export function AccountDashboard() {
     }
   }
 
-  const activeKey = account?.mcpKeys.find((key) => key.status === "active");
 
   return (
     <main className={`app-shell-bare ${pageClass} font-[family-name:var(--font-instrument-sans)]`}>
@@ -406,7 +313,7 @@ export function AccountDashboard() {
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden max-w-60 truncate text-sm text-[#52645E] sm:inline">{account?.user.email}</span>
-            <Link href="/member/skills" className={secondaryButtonClass}>Bibliothèque IA</Link>
+            <button type="button" onClick={() => setSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
             <button type="button" onClick={() => void signOut()} className={secondaryButtonClass}>Se déconnecter</button>
           </div>
         </header>
@@ -436,16 +343,15 @@ export function AccountDashboard() {
           </section>
         ) : (
           <div className="account-layout mt-7" aria-live="polite">
-            <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} selected={section} onSelect={(id) => { clearFeedback(); setSection(id); if (id !== "mcp") setNewKey(""); }} />
+            <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} selected={section} onSelect={(id) => { clearFeedback(); setSection(id); }} />
             <section className="account-content" key={section}>
             {section === "catalog" && <AccountCatalog />}
-            {section === "agent" && <AccountConversations />}
             {section === "overview" && (
               <div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <SummaryCard label="Skills accessibles" value={account.skills.length} detail="Vos accès actifs" />
                   <SummaryCard label="Commandes" value={account.orders.length} detail="Votre historique complet" />
-                  <SummaryCard label="Connexion MCP" value="Disponible" detail={activeKey ? "Accès achats activé" : "Sans clé pour les skills gratuits"} />
+                  <SummaryCard label="Tutoriel Claude" value="Disponible" detail="Connexion MCP" />
                 </div>
                 <section className={`${cardClass} mt-5`}>
                   <p className="text-sm font-semibold text-[#0B6A5A]">Bienvenue</p>
@@ -453,7 +359,7 @@ export function AccountDashboard() {
                     {account.user.email}
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#52645E]">
-                    Gérez ici vos accès, vos téléchargements et la connexion MCP. Vous pouvez aussi demander de l’aide ou exporter vos données.
+                    Retrouvez vos skills et le tutoriel pour les connecter à Claude.
                   </p>
                   {account.skills.length === 0 && (
                     <div className="mt-5 rounded-2xl bg-[#F1F6F4] p-4">
@@ -485,44 +391,15 @@ export function AccountDashboard() {
 
             {section === "skills" && (
               <div>
-                <SectionHeading title="Mes skills" description="Téléchargez les formats disponibles et retrouvez les conseils d’installation." />
+                <SectionHeading title="Mes skills" description="Vos accès disponibles dans votre compte." />
                 {account.skills.length === 0 ? (
                   <EmptyState title="Aucun skill pour le moment" description="Vos accès apparaîtront ici après confirmation d’un paiement ou attribution d’un accès." href="/shop" linkLabel="Voir le catalogue" />
                 ) : (
                   <ul className="mt-5 grid gap-4 lg:grid-cols-2">
                     {account.skills.map((skill) => (
-                      <li key={skill.entitlementId} className={cardClass}>
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0B6A5A]">{skill.domain}</p>
-                            <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold">{skill.name}</h2>
-                          </div>
-                          <span className="rounded-full bg-[#EAF5F0] px-3 py-1 text-xs font-semibold text-[#16473D]">v{skill.version}</span>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-[#52645E]">{skill.description}</p>
-                        <p className="mt-3 text-xs text-[#66766F]">Accès accordé le {new Date(skill.grantedAt).toLocaleDateString("fr-FR")}</p>
-                        <div className="mt-5 flex flex-wrap gap-2">
-                          <FormatButton label="Télécharger pour Claude" available={skill.hasClaudeFile} pending={downloadPending === `${skill.productId}:claude`} onClick={() => void downloadSkill(skill, "claude")} />
-                          <FormatButton label="Télécharger pour ChatGPT" available={skill.hasChatGptFile} pending={downloadPending === `${skill.productId}:chatgpt`} onClick={() => void downloadSkill(skill, "chatgpt")} />
-                          {skill.hasArchive && (
-                            <button type="button" disabled={Boolean(downloadPending)} onClick={() => void downloadSkill(skill, "archive")} className={secondaryButtonClass}>
-                              {downloadPending === `${skill.productId}:archive` ? "Préparation…" : "Télécharger le pack complet"}
-                            </button>
-                          )}
-                          {!skill.hasArchive && skill.memberSkillSlug && (
-                            <Link href={`/member/skills/${encodeURIComponent(skill.memberSkillSlug)}`} className={secondaryButtonClass}>
-                              Configurer mon agent
-                            </Link>
-                          )}
-                        </div>
-                        {skill.hasArchive && <div className="mt-5 rounded-2xl bg-[#F1F6F4] p-4">
-                          <h3 className="text-sm font-semibold">Guide d’installation</h3>
-                          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-6 text-[#52645E]">
-                            <li>Choisissez le format adapté à votre assistant.</li>
-                            <li>Importez le fichier dans les réglages de votre assistant, ou copiez son contenu dans un projet.</li>
-                            <li>Suivez le guide inclus dans le pack pour terminer l’installation.</li>
-                          </ol>
-                        </div>}
+                      <li key={skill.entitlementId} className={`${cardClass} flex flex-wrap items-center justify-between gap-4`}>
+                        <h2 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold">{skill.name}</h2>
+                        <button type="button" onClick={() => setSection("mcp")} className={buttonClass}>Tutoriel de connexion</button>
                       </li>
                     ))}
                   </ul>
@@ -532,45 +409,12 @@ export function AccountDashboard() {
 
             {section === "mcp" && (
               <section className={cardClass}>
-                <SectionHeading title="Connexion MCP" description="Ajoutez SkillFlow à votre assistant avec le nom et l’adresse du serveur. Aucune clé n’est nécessaire pour démarrer." />
-                <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1524] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Serveur MCP</p>
-                  <label className="mt-4 block text-sm font-semibold text-slate-200" htmlFor="mcp-server-name">Nom</label>
-                  <input id="mcp-server-name" aria-label="Nom du serveur MCP" readOnly value="SkillFlow" className={`${inputClass} mt-2`} onFocus={(event) => event.currentTarget.select()} />
-                  <label className="mt-4 block text-sm font-semibold text-slate-200" htmlFor="mcp-server-url">Adresse de connexion</label>
-                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                    <input id="mcp-server-url" aria-label="Adresse du serveur MCP" readOnly value={mcpUrl} placeholder="Chargement de l’adresse…" className={`${inputClass} font-mono text-sm`} onFocus={(event) => event.currentTarget.select()} />
-                    <button type="button" onClick={() => void copyMcpUrl()} disabled={!mcpUrl} className={secondaryButtonClass}>{mcpUrlCopied ? "Adresse copiée" : "Copier l’adresse"}</button>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-300">Dans les réglages MCP de Claude ou de votre autre assistant, ajoutez un serveur distant avec cette adresse. La connexion utilise Streamable HTTP.</p>
-                </div>
-                <div className="mt-4 rounded-2xl border border-cyan-200/20 bg-cyan-200/[0.06] p-4 text-sm leading-6 text-slate-200">
-                  <p><strong className="text-cyan-100">Sans clé :</strong> rechercher le catalogue et consulter les skills gratuits.</p>
-                  <p className="mt-1"><strong className="text-cyan-100">Après un achat :</strong> pour télécharger un pack privé depuis MCP, une clé liée à votre compte vérifie vos droits. Elle est facultative pour connecter le serveur.</p>
-                </div>
-                {false && activeKey && <details className="mt-5 rounded-2xl border border-white/10 p-4">
-                  <summary className="min-h-10 cursor-pointer font-semibold text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">Options avancées : accès aux achats</summary>
-                  <div className="mt-3 rounded-2xl bg-white/[0.04] p-4">
-                    <p className="font-semibold">{activeKey ? "Votre clé d’accès aux achats est active" : "Aucune clé d’accès aux achats"}</p>
-                    {activeKey && <p className="mt-1 text-sm text-slate-300">Dernière utilisation : {activeKey?.last_used_at ? new Date(activeKey?.last_used_at ?? 0).toLocaleString("fr-FR") : "pas encore utilisée"}</p>}
-                    {newKey && <div className="mt-3 flex flex-col gap-2 sm:flex-row"><input aria-label="Nouvelle clé MCP" readOnly value={newKey} className={`${inputClass} font-mono text-sm`} onFocus={(event) => event.currentTarget.select()} /><button type="button" onClick={() => void copyKey()} className={secondaryButtonClass}>{keyCopied ? "Clé copiée" : "Copier la clé"}</button></div>}
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <button type="button" disabled={pending} onClick={() => void rotateKey()} className={buttonClass}>{pending ? "Création…" : activeKey ? "Régénérer la clé" : "Créer une clé d’accès"}</button>
-                      {activeKey && <button type="button" disabled={pending} onClick={() => void revokeKey()} className={secondaryButtonClass}>Révoquer la clé</button>}
-                    </div>
-                    {activeKey && <p className="mt-3 text-xs text-slate-400">Créée le {new Date(activeKey?.created_at ?? 0).toLocaleString("fr-FR")}. Le lien de téléchargement MCP expire après 10 minutes.</p>}
-                  </div>
-                </details>}
-                {account.mcpKeys.some((key) => key.status === "revoked") && (
-                  <details className="mt-5">
-                    <summary className="min-h-10 cursor-pointer font-semibold text-[#16473D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B6A5A]">Afficher les anciennes clés révoquées</summary>
-                    <ul className="mt-2 space-y-2 text-sm text-[#66766F]">
-                      {account.mcpKeys.filter((key) => key.status === "revoked").map((key) => (
-                        <li key={key.id}>Révoquée le {key.revoked_at ? new Date(key.revoked_at).toLocaleString("fr-FR") : "date inconnue"}</li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
+                <SectionHeading title="Tutoriel de connexion à Claude" description="Connectez SkillFlow à votre compte Claude en quelques étapes." />
+                <ol className="mt-6 space-y-5">
+                  <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">1</span><div><h3 className="font-semibold">Ouvrez les connecteurs Claude</h3><a href="https://claude.ai/settings/connectors" target="_blank" rel="noreferrer" className="mt-1 inline-flex text-sm font-semibold text-[#087F8C] underline underline-offset-4">Ouvrir les paramètres Claude ↗</a></div></li>
+                  <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">2</span><div className="min-w-0 flex-1"><h3 className="font-semibold">Ajoutez SkillFlow</h3><p className="mt-1 text-sm leading-6 text-[#52645E]">Choisissez « Ajouter un connecteur personnalisé », puis indiquez le nom et l’adresse ci-dessous.</p><div className="mt-3 grid gap-3 sm:grid-cols-[10rem_1fr]"><input aria-label="Nom du connecteur" readOnly value="SkillFlow" className={inputClass} onFocus={(event) => event.currentTarget.select()} /><div className="flex flex-col gap-2 sm:flex-row"><input aria-label="Adresse du connecteur SkillFlow" readOnly value={mcpUrl} placeholder="Chargement…" className={`${inputClass} min-w-0 font-mono text-sm`} onFocus={(event) => event.currentTarget.select()} /><button type="button" onClick={() => void copyMcpUrl()} disabled={!mcpUrl} className={secondaryButtonClass}>{mcpUrlCopied ? "Copiée" : "Copier l’adresse"}</button></div></div></div></li>
+                  <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">3</span><div><h3 className="font-semibold">Activez SkillFlow dans une conversation</h3><p className="mt-1 text-sm leading-6 text-[#52645E]">Dans Claude, ouvrez « Recherche et outils », puis sélectionnez SkillFlow.</p></div></li>
+                </ol>
               </section>
             )}
 
@@ -699,7 +543,7 @@ export function AccountDashboard() {
               </div>
             )}
             </section>
-            <AccountSideNav title="Votre espace" ids={["agent", "billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); setSection(id); setNewKey(""); }} />
+            <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); setSection(id); }} />
           </div>
         )}
       </div>
@@ -751,13 +595,5 @@ function EmptyState({ title, description, href, linkLabel }: { title: string; de
         {linkLabel}
       </Link>
     </section>
-  );
-}
-
-function FormatButton({ label, available, pending, onClick }: { label: string; available: boolean; pending: boolean; onClick: () => void }) {
-  return (
-    <button type="button" disabled={!available || pending} onClick={onClick} className={secondaryButtonClass} title={available ? undefined : "Ce format n’a pas encore été ajouté."}>
-      {pending ? "Préparation…" : available ? label : `${label} · bientôt disponible`}
-    </button>
   );
 }
