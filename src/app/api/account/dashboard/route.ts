@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUser, getSupabaseUserClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser, getSupabaseAdminClient, getSupabaseUserClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser(request);
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
         .from("products")
         .select("id, slug, name, description, domain, catalog_status, version, zip_path")
         .in("id", productIds),
-      supabase
+      getSupabaseAdminClient()
         .from("skill_versions")
         .select("id, product_id, version, release_notes, claude_file_path, chatgpt_file_path, archive_path, created_at")
         .in("product_id", productIds)
