@@ -163,9 +163,6 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="relative mt-6 flex flex-wrap gap-2">
-                {featuredProduct.compatibleAgents.map((agent) => (
-                  <span key={agent} className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs font-medium text-slate-300">{agent}</span>
-                ))}
                 <span className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs font-medium text-slate-300">Pack numérique</span>
               </div>
               <div className="relative mt-7 flex flex-col gap-4 border-t border-white/[0.08] pt-6 sm:flex-row sm:items-end sm:justify-between">

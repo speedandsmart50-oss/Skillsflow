@@ -154,6 +154,7 @@ export function AccountDashboard() {
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
   const [mcpUrlCopied, setMcpUrlCopied] = useState(false);
+  const [newMcpKey, setNewMcpKey] = useState("");
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deleteWord, setDeleteWord] = useState("");
   const [deleteEmail, setDeleteEmail] = useState("");
@@ -198,6 +199,11 @@ export function AccountDashboard() {
     setNotice("");
   }
 
+  function changeSection(next: Section) {
+    if (next !== "mcp") setNewMcpKey("");
+    setSection(next);
+  }
+
   async function refreshAccount() {
     const response = await accountRequest("/api/account/dashboard");
     if (!response.ok) throw new Error(await responseError(response, "Impossible d’actualiser votre espace."));
@@ -222,6 +228,42 @@ export function AccountDashboard() {
       setMcpUrlCopied(true);
     } catch {
       setError("La copie automatique n’a pas fonctionné. Sélectionnez l’adresse du serveur et copiez-la.");
+    }
+  }
+
+  async function createMcpKey() {
+    clearFeedback();
+    if (account?.mcpKeys.some((key) => key.status === "active") && !window.confirm("Créer une nouvelle clé révoquera l’ancienne. Continuer ?")) return;
+    setPending(true);
+    try {
+      const response = await accountRequest("/api/account/mcp-keys", { method: "POST" });
+      if (!response.ok) throw new Error(await responseError(response, "Impossible de créer la clé MCP."));
+      const payload: unknown = await response.json();
+      if (!isRecord(payload) || !isRecord(payload.key) || typeof payload.key.value !== "string") throw new Error("La clé reçue est invalide.");
+      setNewMcpKey(payload.key.value);
+      await refreshAccount();
+      setNotice("Clé créée. Copiez-la maintenant : elle ne sera plus affichée après cette étape.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Impossible de créer la clé MCP.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function revokeMcpKey() {
+    clearFeedback();
+    if (!window.confirm("Révoquer votre clé MCP ? Les connexions actuelles cesseront de fonctionner.")) return;
+    setPending(true);
+    try {
+      const response = await accountRequest("/api/account/mcp-keys", { method: "DELETE" });
+      if (!response.ok) throw new Error(await responseError(response, "Impossible de révoquer la clé MCP."));
+      setNewMcpKey("");
+      await refreshAccount();
+      setNotice("Clé MCP révoquée.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Impossible de révoquer la clé MCP.");
+    } finally {
+      setPending(false);
     }
   }
 
@@ -335,7 +377,7 @@ export function AccountDashboard() {
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden max-w-60 truncate text-sm text-[#52645E] sm:inline">{account?.user.email}</span>
-            <button type="button" onClick={() => setSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
+            <button type="button" onClick={() => changeSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
             <button type="button" onClick={() => void signOut()} className={secondaryButtonClass}>Se déconnecter</button>
           </div>
         </header>
@@ -365,7 +407,7 @@ export function AccountDashboard() {
           </section>
         ) : (
           <div className="account-layout mt-7" aria-live="polite">
-            <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} selected={section} onSelect={(id) => { clearFeedback(); setSection(id); }} />
+            <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
             <section className="account-content" key={section}>
             {section === "catalog" && <AccountCatalog />}
             {section === "overview" && (
@@ -401,7 +443,7 @@ export function AccountDashboard() {
                           {account.orders[0].products?.name ?? "SkillFlow"}
                         </h2>
                       </div>
-                      <button type="button" onClick={() => setSection("billing")} className={secondaryButtonClass}>Voir la facturation</button>
+                      <button type="button" onClick={() => changeSection("billing")} className={secondaryButtonClass}>Voir la facturation</button>
                     </div>
                     <p className="mt-3 text-sm text-[#52645E]">
                       {statusLabel(account.orders[0].payment_status)} · {new Date(account.orders[0].created_at).toLocaleDateString("fr-FR")}
@@ -421,7 +463,7 @@ export function AccountDashboard() {
                     {account.skills.map((skill) => (
                       <li key={skill.entitlementId} className={`${cardClass} flex flex-wrap items-center justify-between gap-4`}>
                         <h2 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold">{skill.name}</h2>
-                        <button type="button" onClick={() => setSection("mcp")} className={buttonClass}>Tutoriel de connexion</button>
+                        <button type="button" onClick={() => changeSection("mcp")} className={buttonClass}>Tutoriel de connexion</button>
                       </li>
                     ))}
                   </ul>
@@ -432,6 +474,15 @@ export function AccountDashboard() {
             {section === "mcp" && (
               <section className={cardClass}>
                 <SectionHeading title="Tutoriel de connexion à Claude" description="Connectez SkillFlow à votre compte Claude en quelques étapes." />
+                <div className="mt-6 rounded-2xl border border-white/10 bg-[#0b1524] p-4">
+                  <h3 className="font-semibold">Clé de connexion</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">Une clé est nécessaire pour accéder à vos skills depuis MCP. Elle est affichée une seule fois à sa création.</p>
+                  {newMcpKey && <div className="mt-4 space-y-2"><label htmlFor="new-mcp-key" className="text-sm font-medium">Copiez cette clé dans la configuration de connexion Claude</label><input id="new-mcp-key" readOnly value={newMcpKey} onFocus={(event) => event.currentTarget.select()} className={`${inputClass} font-mono text-sm`} autoComplete="off" /><button type="button" className={secondaryButtonClass} onClick={() => void navigator.clipboard.writeText(newMcpKey).then(() => setNotice("Clé copiée."), () => setError("Copie impossible. Sélectionnez la clé et copiez-la."))}>Copier la clé</button><button type="button" className="ml-2 text-sm text-slate-400 underline" onClick={() => setNewMcpKey("")}>Masquer</button></div>}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button type="button" className={buttonClass} disabled={pending} onClick={() => void createMcpKey()}>{account?.mcpKeys.some((key) => key.status === "active") ? "Remplacer ma clé" : "Créer ma clé MCP"}</button>
+                    {account?.mcpKeys.some((key) => key.status === "active") && <button type="button" className={secondaryButtonClass} disabled={pending} onClick={() => void revokeMcpKey()}>Révoquer ma clé</button>}
+                  </div>
+                </div>
                 <ol className="mt-6 space-y-5">
                   <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">1</span><div><h3 className="font-semibold">Ouvrez les connecteurs Claude</h3><a href="https://claude.ai/settings/connectors" target="_blank" rel="noreferrer" className="mt-1 inline-flex text-sm font-semibold text-[#087F8C] underline underline-offset-4">Ouvrir les paramètres Claude ↗</a></div></li>
                   <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">2</span><div className="min-w-0 flex-1"><h3 className="font-semibold">Ajoutez SkillFlow</h3><p className="mt-1 text-sm leading-6 text-[#52645E]">Choisissez « Ajouter un connecteur personnalisé », puis indiquez le nom et l’adresse ci-dessous.</p><div className="mt-3 grid gap-3 sm:grid-cols-[10rem_1fr]"><input aria-label="Nom du connecteur" readOnly value="SkillFlow" className={inputClass} onFocus={(event) => event.currentTarget.select()} /><div className="flex flex-col gap-2 sm:flex-row"><input aria-label="Adresse du connecteur SkillFlow" readOnly value={mcpUrl} placeholder="Chargement…" className={`${inputClass} min-w-0 font-mono text-sm`} onFocus={(event) => event.currentTarget.select()} /><button type="button" onClick={() => void copyMcpUrl()} disabled={!mcpUrl} className={secondaryButtonClass}>{mcpUrlCopied ? "Copiée" : "Copier l’adresse"}</button></div></div></div></li>
@@ -564,7 +615,7 @@ export function AccountDashboard() {
               </div>
             )}
             </section>
-            <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); setSection(id); }} />
+            <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
           </div>
         )}
       </div>
@@ -593,7 +644,7 @@ function AccountSideNav({ title, ids, selected, onSelect }: {
     <ul className="space-y-1">{ids.map((id) => {
       const item = sections.find((entry) => entry.id === id);
       if (!item) return null;
-      return <li key={id}><button type="button" aria-current={selected === id ? "page" : undefined} onClick={() => onSelect(id)} className={`account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${selected === id ? "is-active bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"}`}><span aria-hidden="true" className="text-xs">{id === "overview" ? "◈" : id === "skills" ? "✳" : id === "catalog" ? "▦" : id === "mcp" ? "⌘" : id === "agent" ? "✦" : id === "billing" ? "＄" : id === "privacy" ? "◉" : "?"}</span>{item.label}</button></li>;
+      return <li key={id}><button type="button" aria-current={selected === id ? "page" : undefined} onClick={() => onSelect(id)} className={`account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${selected === id ? "is-active bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"}`}><span aria-hidden="true" className="text-xs">{id === "overview" ? "◈" : id === "skills" ? "✳" : id === "catalog" ? "▦" : id === "mcp" ? "⌘" : id === "billing" ? "＄" : id === "privacy" ? "◉" : "?"}</span>{item.label}</button></li>;
     })}</ul>
   </nav>;
 }

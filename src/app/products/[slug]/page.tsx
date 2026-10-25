@@ -54,21 +54,9 @@ async function ProductDetailContent({
           <p className="mt-4 text-lg text-slate-600">{product.tagline}</p>
           <p className="mt-6 text-base leading-7 text-slate-600">{product.description}</p>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <div>
+          <div className="mt-8">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Le besoin</h2>
               <p className="mt-3 text-slate-600">{product.problem}</p>
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Compatibilité</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {product.compatibleAgents.map((agent) => (
-                  <span key={agent} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">
-                    {agent}
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
 
           <div className="mt-8">

@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from "next/server";
-import { getAuthenticatedUser, getSupabaseUserClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser, getSupabaseAdminClient, getSupabaseUserClient } from "@/lib/supabase/server";
 
 type Context = { params: Promise<{ skillId: string }> };
 function isObject(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value); }
@@ -10,11 +10,12 @@ export async function GET(request: Request, context: Context) {
   const { skillId } = await context.params;
   const supabase = getSupabaseUserClient(request);
   if (!supabase) return NextResponse.json({ error: "Session expirée. Reconnectez-vous." }, { status: 401 });
-  const { data: skill, error } = await supabase.from("skills").select("id,slug,name,category_id,short_description,long_description,promise,required_inputs,output_types,workflow,price_cents,product_id,is_active,skill_categories(name,slug)").eq("id", skillId).eq("is_active", true).maybeSingle();
+  const { data: access, error: accessError } = await supabase.rpc("can_access_skill", { p_user_id: user.id, p_skill_id: skillId });
+  if (accessError) return NextResponse.json({ error: "Impossible de vérifier votre accès." }, { status: 503 });
+  if (!access) return NextResponse.json({ error: "Accès non inclus. Consultez le catalogue pour acheter ce skill." }, { status: 403 });
+  const { data: skill, error } = await getSupabaseAdminClient().from("skills").select("id,slug,name,category_id,short_description,long_description,promise,required_inputs,output_types,workflow,price_cents,product_id,is_active,skill_categories(name,slug)").eq("id", skillId).eq("is_active", true).maybeSingle();
   if (error) return NextResponse.json({ error: "Bibliothèque indisponible." }, { status: 503 });
   if (!skill) return NextResponse.json({ error: "Skill introuvable." }, { status: 404 });
-  const { data: access } = await supabase.rpc("can_access_skill", { p_user_id: user.id, p_skill_id: skill.id });
-  if (!access) return NextResponse.json({ error: "Accès non inclus. Consultez le catalogue pour acheter ce skill." }, { status: 403 });
   const [{ data: configuration }, { data: agentProfile }] = await Promise.all([
     supabase.from("skill_configurations").select("id,configuration_data,status,updated_at").eq("user_id", user.id).eq("skill_id", skill.id).maybeSingle(),
     supabase.from("communication_profiles").select("id,summary,version,is_active,updated_at").eq("user_id", user.id).eq("skill_id", skill.id).maybeSingle(),

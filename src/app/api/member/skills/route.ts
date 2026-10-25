@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const supabase = getSupabaseUserClient(request);
   if (!supabase) return NextResponse.json({ error: "Session expirée. Reconnectez-vous." }, { status: 401 });
   const { data: skills, error } = await supabase.from("skills")
-    .select("id,slug,name,category_id,short_description,long_description,promise,required_inputs,output_types,workflow,price_cents,product_id,is_active,skill_categories(name,slug)")
+    .select("id,slug,name,category_id,short_description,price_cents,product_id,is_active,skill_categories(name,slug)")
     .eq("is_active", true).order("name");
   if (error) {
     console.error("Could not load member skills:", error.message);

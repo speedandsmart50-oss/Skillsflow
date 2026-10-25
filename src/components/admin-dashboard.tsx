@@ -535,7 +535,7 @@ export function AdminDashboard() {
                           {(data.versions ?? []).filter((version) => version.product_id === skill.id).map((version) => (
                             <li key={version.id} className="rounded-xl bg-[#F1F6F4] p-3">
                               <span className="font-semibold text-[#13211E]">v{version.version}</span> · {statusText(version.status)}
-                              <span className="mt-1 block">Claude {version.claude_file_path ? "disponible" : "à ajouter"}, ChatGPT {version.chatgpt_file_path ? "disponible" : "à ajouter"}, pack complet {version.archive_path ? "disponible" : "à ajouter"}</span>
+                              <span className="mt-1 block">Fichiers ajoutés : {[version.claude_file_path, version.chatgpt_file_path, version.archive_path].filter(Boolean).length}/3</span>
                               {version.release_notes && <span className="mt-1 block">{version.release_notes}</span>}
                             </li>
                           ))}

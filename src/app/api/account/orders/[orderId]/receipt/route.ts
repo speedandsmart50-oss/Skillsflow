@@ -67,7 +67,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ orde
     `Reference : ${reference}`,
     `Date du paiement : ${new Date(order.paid_at ?? order.created_at).toLocaleDateString("fr-FR")}`,
     `Client : ${user.email ?? ""}`,
-    `Produit : ${order.products?.name ?? "SkillFlow"}`,
+    `Produit : ${order.products?.[0]?.name ?? "SkillFlow"}`,
     `Montant regle : ${amount}`,
     "Paiement traite par SasPay.",
     "Ce document confirme le paiement enregistre pour cette commande.",

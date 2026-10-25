@@ -4,16 +4,66 @@ import { processSasPayWebhook } from "@/lib/payments/flow";
 import { isSasPayLiveReady, verifySasPayTransaction, verifySasPayWebhook } from "@/lib/payments/saspay";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
+const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
+
+async function readBoundedBody(request: Request): Promise<string | null> {
+  const contentLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > MAX_WEBHOOK_BODY_BYTES) return null;
+  if (!request.body) return "";
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_WEBHOOK_BODY_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(body);
+  } catch {
+    return null;
+  }
+}
+
 function safeHeaders(request: Request) {
   const headers: Record<string, string> = {};
   request.headers.forEach((value, key) => {
-    if (!/^(authorization|cookie|set-cookie)$/i.test(key)) headers[key] = value;
+    if (!/^(authorization|cookie|set-cookie|x-webhook-signature)$/i.test(key)) headers[key] = value;
   });
   return headers;
 }
 
 export async function POST(request: Request) {
-  const rawBody = await request.text();
+  const rawBody = await readBoundedBody(request);
+  if (rawBody === null) {
+    return NextResponse.json({ error: "Le webhook dépasse la taille autorisée ou n'est pas en UTF-8 valide." }, { status: 413, headers: { "Cache-Control": "no-store" } });
+  }
+  const signatureValid = verifySasPayWebhook(
+    rawBody,
+    request.headers.get("x-webhook-signature"),
+    request.headers.get("x-webhook-timestamp"),
+  );
+  if (!signatureValid) {
+    return NextResponse.json({ error: "Signature de webhook invalide." }, { status: 401, headers: { "Cache-Control": "no-store" } });
+  }
+
   const supabase = getSupabaseAdminClient();
   const { data: log, error: logError } = await supabase.from("saspay_webhook_logs")
     .insert({ headers: safeHeaders(request), raw_body: rawBody })
@@ -39,15 +89,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
   };
 
-  const signatureValid = verifySasPayWebhook(
-    rawBody,
-    request.headers.get("x-webhook-signature"),
-    request.headers.get("x-webhook-timestamp"),
-  );
-  try { await supabase.from("saspay_webhook_logs").update({ signature_valid: signatureValid }).eq("id", log.id); }
+  try { await supabase.from("saspay_webhook_logs").update({ signature_valid: true }).eq("id", log.id); }
   catch (error) { console.error("Could not persist signature result:", error); }
 
-  if (!signatureValid) return reject(401, "Signature de webhook invalide.");
   if (!isSasPayLiveReady()) return reject(503, "Le service SasPay n'est pas configuré.");
 
   try {

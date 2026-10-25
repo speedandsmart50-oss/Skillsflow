@@ -20,8 +20,7 @@ export function ProductCard({ product }: { product: Product }) {
         </span>
       </div>
       <h3 className="mt-5 text-xl font-semibold text-white">{product.name}</h3>
-      <div className="mt-6 flex items-center justify-between border-t border-slate-800 pt-4">
-        <span className="text-sm text-slate-300">Connectable à Claude</span>
+      <div className="mt-6 flex justify-end border-t border-slate-800 pt-4">
         <Link href={`/products/${product.slug}`} className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Continuer</Link>
       </div>
     </article>
