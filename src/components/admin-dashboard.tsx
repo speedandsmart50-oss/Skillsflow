@@ -51,7 +51,7 @@ type Entitlement = {
   user_id: string;
   product_id: string;
   order_id: string | null;
-  source: "payment" | "manual";
+  source: "payment" | "manual" | "coupon";
   status: "active" | "revoked";
   granted_at: string;
   revoked_at: string | null;
@@ -601,7 +601,7 @@ export function AdminDashboard() {
                         <span className="rounded-full bg-[#EAF5F0] px-3 py-1 text-xs font-semibold text-[#16473D]">{customer.role === "admin" ? "Administrateur" : "Client"}</span>
                       </div>
                       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                        <div><h3 className="font-semibold">Accès aux skills</h3>{customer.entitlements.length === 0 ? <p className="mt-2 text-sm text-[#52645E]">Aucun accès enregistré.</p> : <ul className="mt-2 space-y-2">{customer.entitlements.map((entitlement) => <li key={entitlement.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#F1F6F4] p-3 text-sm"><span>{entitlement.products?.name ?? "Skill"} · {statusText(entitlement.status)} · {entitlement.source === "manual" ? "Ajout manuel" : "Paiement"}</span>{entitlement.status === "active" && <button className={dangerButtonClass} type="button" disabled={pending} onClick={() => void handleRevokeAccess(entitlement)}>Retirer</button>}</li>)}</ul>}</div>
+                        <div><h3 className="font-semibold">Accès aux skills</h3>{customer.entitlements.length === 0 ? <p className="mt-2 text-sm text-[#52645E]">Aucun accès enregistré.</p> : <ul className="mt-2 space-y-2">{customer.entitlements.map((entitlement) => <li key={entitlement.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#F1F6F4] p-3 text-sm"><span>{entitlement.products?.name ?? "Skill"} · {statusText(entitlement.status)} · {entitlement.source === "manual" ? "Ajout manuel" : entitlement.source === "coupon" ? "Coupon SMART" : "Paiement"}</span>{entitlement.status === "active" && <button className={dangerButtonClass} type="button" disabled={pending} onClick={() => void handleRevokeAccess(entitlement)}>Retirer</button>}</li>)}</ul>}</div>
                         <div><h3 className="font-semibold">Commandes récentes</h3>{customer.orders.length === 0 ? <p className="mt-2 text-sm text-[#52645E]">Aucune commande enregistrée.</p> : <ul className="mt-2 space-y-2">{customer.orders.slice(0, 5).map((order) => <li key={order.id} className="rounded-xl bg-[#F1F6F4] p-3 text-sm">{order.products?.name ?? "Skill"} · {statusText(order.payment_status)} · {formatDate(order.created_at)}</li>)}</ul>}</div>
                       </div>
                     </article>

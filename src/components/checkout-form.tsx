@@ -72,7 +72,9 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Catalogue SkillFlow</p>
         <h1 className="mt-3 text-4xl font-black tracking-[-0.04em]">Vérifier la commande</h1>
         <p className="mt-4 max-w-2xl leading-7 text-slate-300">
-          Le paiement est traité par SasPay. Votre commande et l’accès au pack seront confirmés après vérification du paiement.
+          {price.couponCode === "SMART"
+            ? "Le coupon SMART vous permet d’obtenir un skill gratuitement, une seule fois par compte."
+            : "Le paiement est traité par SasPay. Votre commande et l’accès au pack seront confirmés après vérification du paiement."}
         </p>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
           Le montant en XOF correspond au prix SkillFlow. SasPay peut afficher des frais opérateur supplémentaires avant votre autorisation ; vérifiez le montant débité sur la page SasPay avant de confirmer.
@@ -110,7 +112,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
               </span>
             </label>
             <button disabled={!salesEnabled || pending || (coupon.trim() !== "" && price.couponCode !== coupon.trim().toUpperCase())} type="submit" className="mt-6 w-full rounded-full bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
-              {!salesEnabled ? "Ouverture imminente" : pending ? "Préparation du paiement…" : "Payer"}
+              {!salesEnabled ? "Ouverture imminente" : pending ? "Préparation…" : price.couponCode === "SMART" ? "Obtenir gratuitement" : "Payer"}
             </button>
           </section>
 
@@ -121,14 +123,14 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
             </div>
             {price.discountEur > 0 && (
               <div className="mt-3 flex justify-between gap-4 text-sm text-emerald-300">
-                <span>Coupon BOOST</span><span>−€{price.discountEur.toFixed(2)}</span>
+                <span>Coupon {price.couponCode}</span><span>−€{price.discountEur.toFixed(2)}</span>
               </div>
             )}
             <div className="mt-5 flex justify-between border-t border-slate-700 pt-5 text-lg font-bold">
-              <span>Total</span><span>€{price.totalEur.toFixed(2)}</span>
+              <span>Total</span><span>{price.couponCode === "SMART" ? "Gratuit" : `€${price.totalEur.toFixed(2)}`}</span>
             </div>
             <p className="mt-2 text-sm text-slate-400">{formatXof(price.totalXof)} XOF</p>
-            <p className="mt-4 border-t border-slate-700 pt-4 text-xs leading-5 text-slate-500">L’accès est activé uniquement après confirmation du paiement. <Link href="/legal" className="text-cyan-200 underline underline-offset-2">Conditions de vente</Link></p>
+            <p className="mt-4 border-t border-slate-700 pt-4 text-xs leading-5 text-slate-500">{price.couponCode === "SMART" ? "L’accès est activé après validation du coupon." : "L’accès est activé uniquement après confirmation du paiement."} <Link href="/legal" className="text-cyan-200 underline underline-offset-2">Conditions de vente</Link></p>
             <Link href="/shop" className="mt-6 block text-center text-sm font-medium text-slate-400 hover:text-cyan-300">Retour au catalogue</Link>
           </aside>
         </form>

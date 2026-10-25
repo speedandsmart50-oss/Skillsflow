@@ -30,28 +30,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Connectez-vous avant de payer." }, { status: 401 });
   }
 
-  if (!isSasPayLiveReady()) {
-    return NextResponse.json(
-      { error: "Le paiement SasPay n'est pas encore configuré pour la production." },
-      { status: 503 },
-    );
-  }
-
-  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
-  let appOrigin: string;
-  try {
-    const appUrl = new URL(configuredAppUrl ?? "");
-    if (appUrl.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && appUrl.hostname === "localhost")) {
-      throw new Error("The public application URL must use HTTPS.");
-    }
-    appOrigin = appUrl.origin;
-  } catch {
-    return NextResponse.json(
-      { error: "L'adresse publique du site n'est pas correctement configurée." },
-      { status: 503 },
-    );
-  }
-
   if (!user.email_confirmed_at) {
     return NextResponse.json({ error: "Confirmez votre adresse e-mail avant de payer." }, { status: 403 });
   }
@@ -152,33 +130,38 @@ export async function POST(request: Request) {
       || existingOrder.coupon_code !== price.couponCode) {
       return NextResponse.json({ error: "Identifiant de tentative déjà utilisé." }, { status: 409 });
     }
+    if (existingOrder.coupon_code === "SMART" && existingOrder.payment_status === "paid") {
+      return NextResponse.json({ checkoutUrl: `/checkout/complete?order=${encodeURIComponent(existingOrder.id)}` });
+    }
     if (existingOrder.payment_status === "pending" && existingOrder.checkout_url) {
       return NextResponse.json({ checkoutUrl: existingOrder.checkout_url });
     }
     return NextResponse.json({ error: "Cette tentative de paiement a déjà été traitée." }, { status: 409 });
   }
 
-  const { data: pendingOrder, error: pendingOrderError } = await supabase
-    .from("orders")
-    .select("checkout_url, coupon_code")
-    .eq("user_id", user.id)
-    .eq("product_id", product.id)
-    .eq("payment_status", "pending")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (pendingOrderError) {
-    console.error("Could not check pending checkout:", pendingOrderError.message);
-    return NextResponse.json({ error: "Impossible de vérifier vos tentatives de paiement." }, { status: 500 });
-  }
-  if (pendingOrder) {
-    if (pendingOrder.coupon_code === price.couponCode && pendingOrder.checkout_url) {
-      return NextResponse.json({ checkoutUrl: pendingOrder.checkout_url });
+  if (price.couponCode !== "SMART") {
+    const { data: pendingOrder, error: pendingOrderError } = await supabase
+      .from("orders")
+      .select("checkout_url, coupon_code")
+      .eq("user_id", user.id)
+      .eq("product_id", product.id)
+      .eq("payment_status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (pendingOrderError) {
+      console.error("Could not check pending checkout:", pendingOrderError.message);
+      return NextResponse.json({ error: "Impossible de vérifier vos tentatives de paiement." }, { status: 500 });
     }
-    return NextResponse.json(
-      { error: "Une tentative de paiement est déjà en cours pour ce skill. Terminez-la avant d’en créer une autre." },
-      { status: 409 },
-    );
+    if (pendingOrder) {
+      if (pendingOrder.coupon_code === price.couponCode && pendingOrder.checkout_url) {
+        return NextResponse.json({ checkoutUrl: pendingOrder.checkout_url });
+      }
+      return NextResponse.json(
+        { error: "Une tentative de paiement est déjà en cours pour ce skill. Terminez-la avant d’en créer une autre." },
+        { status: 409 },
+      );
+    }
   }
 
   let checkoutLimit;
@@ -213,6 +196,51 @@ export async function POST(request: Request) {
       console.error("Published product archive is not available:", storageError?.message ?? product.zip_path);
       return NextResponse.json({ error: "Le fichier du pack n'est pas encore disponible." }, { status: 503 });
     }
+  }
+
+  if (price.couponCode === "SMART") {
+    const { data: orderId, error: redeemError } = await supabase.rpc("redeem_smart_coupon", {
+      p_user_id: user.id,
+      p_product_id: product.id,
+      p_request_id: body.requestId,
+    });
+    if (redeemError || typeof orderId !== "string") {
+      const message = redeemError?.message ?? "Coupon redemption failed";
+      if (message.includes("SMART coupon already redeemed")) {
+        return NextResponse.json({ error: "Le coupon SMART a déjà été utilisé sur ce compte. Il donne droit à un seul skill gratuit." }, { status: 409 });
+      }
+      if (message.includes("Skill is already available")) {
+        return NextResponse.json({ error: "Vous avez déjà accès à ce skill. Choisissez-en un autre, le coupon reste utilisable." }, { status: 409 });
+      }
+      if (message.includes("Skill is not available")) {
+        return NextResponse.json({ error: "Ce skill n’est plus disponible dans le catalogue." }, { status: 409 });
+      }
+      console.error("SMART coupon redemption failed:", message);
+      return NextResponse.json({ error: "Impossible d’activer le coupon SMART pour le moment." }, { status: 500 });
+    }
+    return NextResponse.json({ checkoutUrl: `/checkout/complete?order=${encodeURIComponent(orderId)}` });
+  }
+
+  if (!isSasPayLiveReady()) {
+    return NextResponse.json(
+      { error: "Le paiement SasPay n'est pas encore configuré pour la production." },
+      { status: 503 },
+    );
+  }
+
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  let appOrigin: string;
+  try {
+    const appUrl = new URL(configuredAppUrl ?? "");
+    if (appUrl.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && appUrl.hostname === "localhost")) {
+      throw new Error("The public application URL must use HTTPS.");
+    }
+    appOrigin = appUrl.origin;
+  } catch {
+    return NextResponse.json(
+      { error: "L'adresse publique du site n'est pas correctement configurée." },
+      { status: 503 },
+    );
   }
 
   const orderId = randomUUID();
