@@ -162,6 +162,36 @@ export async function getCatalogProducts(): Promise<Product[]> {
   });
 }
 
+export type CatalogSkillPreview = {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string;
+  skill_categories: { name: string; slug: string } | { name: string; slug: string }[] | null;
+};
+
+export async function getUpcomingCatalogSkills(): Promise<CatalogSkillPreview[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return [];
+
+  const supabase = createClient(url, anonKey, {
+    auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
+  });
+  const { data, error } = await supabase
+    .from("skills")
+    .select("id,slug,name,short_description,product_id,skill_categories(name,slug)")
+    .eq("is_active", true)
+    .is("product_id", null)
+    .order("name");
+
+  if (error) {
+    console.error("Could not load upcoming catalog skills:", error.message);
+    return [];
+  }
+  return (data ?? []) as CatalogSkillPreview[];
+}
+
 export async function getCatalogProductBySlug(slug: string): Promise<Product | undefined> {
   const products = await getCatalogProducts();
   return products.find((product) => product.slug === slug);

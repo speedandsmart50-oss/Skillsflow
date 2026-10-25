@@ -1,7 +1,7 @@
 import { ProductCard } from "@/components/product-card";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { getCatalogProducts } from "@/features/products/catalog";
+import { getCatalogProducts, getUpcomingCatalogSkills } from "@/features/products/catalog";
 import { SalesActivityPop } from "@/components/sales-activity-pop";
 
 export default function ShopPage() {
@@ -14,7 +14,7 @@ export default function ShopPage() {
 
 async function ShopContent() {
   await connection();
-  const products = await getCatalogProducts();
+  const [products, upcomingSkills] = await Promise.all([getCatalogProducts(), getUpcomingCatalogSkills()]);
 
   return (
     <main className="relative overflow-hidden bg-[#0d1321] px-4 py-12 text-white sm:px-6 lg:px-8 lg:py-16">
@@ -37,6 +37,32 @@ async function ShopContent() {
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+
+        {upcomingSkills.length > 0 && (
+          <section className="mt-16 border-t border-slate-800 pt-10" aria-labelledby="upcoming-skills-title">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">La bibliothèque s’agrandit</p>
+                <h2 id="upcoming-skills-title" className="mt-2 text-2xl font-bold text-white sm:text-3xl">D’autres skills arrivent au catalogue.</h2>
+                <p className="mt-2 max-w-2xl text-sm text-slate-300">Découvrez les compétences en préparation. Elles seront achetables depuis cette page dès leur publication.</p>
+              </div>
+              <span className="text-sm text-slate-400">{upcomingSkills.length} en préparation</span>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {upcomingSkills.map((skill) => {
+                const category = Array.isArray(skill.skill_categories) ? skill.skill_categories[0] : skill.skill_categories;
+                return (
+                  <article key={skill.id} className="rounded-xl border border-slate-700/80 bg-slate-900/50 p-5 transition duration-300 hover:-translate-y-1 hover:border-cyan-300/30">
+                    <span className="rounded-full border border-slate-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">En préparation</span>
+                    <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-cyan-200">{category?.name ?? "Skill IA"}</p>
+                    <h3 className="mt-2 text-lg font-semibold text-white">{skill.name}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">{skill.short_description}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <div className="mt-12 rounded-2xl border border-cyan-400/15 bg-gradient-to-r from-slate-900 to-slate-800/70 px-6 py-8 text-center sm:px-10">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Après votre achat</p>
