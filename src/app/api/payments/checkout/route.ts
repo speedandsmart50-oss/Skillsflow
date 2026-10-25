@@ -217,15 +217,15 @@ export async function POST(request: Request) {
     const checkoutUrl = typeof session.checkout_url === "string" ? session.checkout_url : "";
     const sessionId = typeof session.id === "string" ? session.id : "";
     const parsedCheckoutUrl = checkoutUrl ? new URL(checkoutUrl) : null;
-    if (!sessionId || !parsedCheckoutUrl || parsedCheckoutUrl.protocol !== "https:" || parsedCheckoutUrl.hostname !== "pay.saspay.me") {
+    const isSasPayHostedUrl = parsedCheckoutUrl?.protocol === "https:"
+      && (parsedCheckoutUrl.hostname === "saspay.me" || parsedCheckoutUrl.hostname.endsWith(".saspay.me"))
+      && !parsedCheckoutUrl.username
+      && !parsedCheckoutUrl.password;
+    if (!sessionId || !parsedCheckoutUrl || !isSasPayHostedUrl) {
       console.error("SasPay returned an unexpected checkout response shape:", {
         keys: Object.keys(session),
-        id: typeof session.id,
-        session_id: typeof session.session_id,
-        checkout_url: typeof session.checkout_url,
-        checkoutUrl: typeof session.checkoutUrl,
-        url: typeof session.url,
-        payment_url: typeof session.payment_url,
+        checkoutUrlProtocol: parsedCheckoutUrl?.protocol,
+        checkoutUrlHostname: parsedCheckoutUrl?.hostname,
       });
       throw new Error("SasPay did not return a valid hosted checkout URL.");
     }
