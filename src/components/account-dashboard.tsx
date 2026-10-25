@@ -248,6 +248,28 @@ export function AccountDashboard() {
     }
   }
 
+  async function downloadOrderReceipt(orderId: string) {
+    clearFeedback();
+    setPending(true);
+    try {
+      const response = await accountRequest(`/api/account/orders/${encodeURIComponent(orderId)}/receipt`);
+      if (!response.ok) throw new Error(await responseError(response, "Impossible de télécharger le reçu."));
+      const objectUrl = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `skillflow-recu-${orderId.slice(0, 8)}.pdf`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      setNotice("Le reçu de paiement a été téléchargé.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Impossible de télécharger le reçu.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function deleteAccount(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     clearFeedback();
@@ -421,9 +443,6 @@ export function AccountDashboard() {
             {section === "billing" && (
               <div>
                 <SectionHeading title="Facturation" description="Consultez le statut et le montant de chaque commande." />
-                <p className="mt-4 rounded-2xl border border-[#DCE7E3] bg-white p-4 text-sm leading-6 text-[#52645E]">
-                  Les factures PDF ne sont pas encore disponibles. Votre historique de commandes reste accessible ci-dessous.
-                </p>
                 {account.orders.length === 0 ? (
                   <EmptyState title="Aucune commande pour le moment" description="Vos achats confirmés apparaîtront ici." href="/shop" linkLabel="Voir le catalogue" />
                 ) : (
@@ -440,6 +459,8 @@ export function AccountDashboard() {
                             <p className="font-semibold">€{Number(order.total).toFixed(2)}</p>
                             <p className="text-sm text-[#52645E]">{new Intl.NumberFormat("fr-FR").format(order.total_xof ?? 0)} XOF</p>
                             <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${order.payment_status === "paid" ? "bg-[#EAF5F0] text-[#16473D]" : order.payment_status === "failed" ? "bg-[#FFF0EE] text-[#8A2F25]" : "bg-[#FFF8E6] text-[#705717]"}`}>{statusLabel(order.payment_status)}</span>
+                            {order.payment_status === "paid" && <button type="button" disabled={pending} onClick={() => void downloadOrderReceipt(order.id)} className={`${secondaryButtonClass} mt-3 w-full sm:w-auto`}>{pending ? "Préparation…" : "Télécharger le reçu PDF"}</button>}
+                            {order.payment_status !== "paid" && <p className="mt-3 text-xs text-[#52645E]">Reçu disponible après paiement confirmé.</p>}
                           </div>
                         </div>
                       </li>
