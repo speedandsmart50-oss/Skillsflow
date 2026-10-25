@@ -30,7 +30,8 @@ body {
 }
 
 body:has(.auth-page) .app-shell-chrome,
-body:has(.app-shell-bare) .app-shell-chrome {
+body:has(.app-shell-bare) .app-shell-chrome,
+body:has(.admin-shell) .app-shell-chrome {
   display: none;
 }
 
@@ -60,6 +61,52 @@ body:has(.app-shell-bare) .app-shell-chrome {
   border-color: rgba(148, 163, 184, 0.15);
   background-color: rgba(17, 26, 43, 0.9);
   color: #f8fafc;
+}
+
+.account-content .account-card {
+  animation: workspace-card-in 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.account-content .account-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(103, 232, 249, 0.28);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28);
+}
+
+.admin-shell > div > header {
+  animation: workspace-card-in 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.admin-shell [aria-label="Navigation de l’administration"] {
+  animation: workspace-card-in 460ms 60ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.admin-panel {
+  animation: workspace-card-in 380ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.admin-card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.admin-card:hover {
+  transform: translateY(-2px);
+  border-color: #b9cec7;
+  box-shadow: 0 18px 38px rgba(19, 33, 30, 0.09);
+}
+
+.admin-nav-link {
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.admin-nav-link:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes workspace-card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .app-shell-bare [class~="text-[#52645E]"],

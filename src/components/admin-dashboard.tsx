@@ -122,7 +122,7 @@ const sections: { id: Section; label: string }[] = [
   { id: "settings", label: "Paramètres" },
 ];
 
-const cardClass = "rounded-3xl border border-[#DCE7E3] bg-white p-5 shadow-[0_12px_32px_rgba(19,33,30,0.045)] sm:p-7";
+const cardClass = "admin-card rounded-3xl border border-[#DCE7E3] bg-white p-5 shadow-[0_12px_32px_rgba(19,33,30,0.045)] sm:p-7";
 const buttonClass = "inline-flex min-h-11 items-center justify-center rounded-full bg-[#0B6A5A] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#07594B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#0B6A5A] disabled:cursor-wait disabled:opacity-60";
 const secondaryButtonClass = "inline-flex min-h-11 items-center justify-center rounded-full border border-[#B9CEC7] bg-white px-4 py-2 text-sm font-semibold text-[#16473D] transition hover:bg-[#EFF6F3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#0B6A5A] disabled:cursor-wait disabled:opacity-60";
 const dangerButtonClass = "inline-flex min-h-11 items-center justify-center rounded-full border border-[#B9655A] bg-white px-4 py-2 text-sm font-semibold text-[#762E25] transition hover:bg-[#FFF3F1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#8A2F25] disabled:opacity-60";
@@ -436,7 +436,7 @@ export function AdminDashboard() {
   }
 
   return (
-    <main className="app-shell-bare min-h-screen bg-[#F5F8F7] text-[#13211E]">
+    <main className="admin-shell min-h-screen bg-[#F5F8F7] text-[#13211E]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/" className="flex min-h-11 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B6A5A]">
@@ -461,7 +461,7 @@ export function AdminDashboard() {
                   setNotice("");
                 }}
                 aria-current={section === item.id ? "page" : undefined}
-                className={`min-h-11 rounded-full px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B6A5A] ${
+                className={`admin-nav-link min-h-11 rounded-full px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B6A5A] ${
                   section === item.id ? "bg-[#0B6A5A] text-white" : "text-[#52645E] hover:bg-[#EAF5F0] hover:text-[#16473D]"
                 }`}
               >
@@ -479,7 +479,7 @@ export function AdminDashboard() {
           {error && <p role="alert" className="mt-5 rounded-2xl border border-[#E7B9B3] bg-[#FFF3F1] p-4 text-sm text-[#8A2F25]">{error}</p>}
           {notice && <p role="status" className="mt-5 rounded-2xl border border-[#B9D6CC] bg-[#EAF5F0] p-4 text-sm text-[#16473D]">{notice}</p>}
           {loading ? <p className="mt-8 text-[#52645E]" role="status">Chargement des données…</p> : (
-            <section className="mt-6 space-y-5">
+            <section className="admin-panel mt-6 space-y-5" key={section}>
               {section === "overview" && <Overview data={data} />}
 
               {section === "catalog" && (
