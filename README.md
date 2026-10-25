@@ -49,6 +49,50 @@ upload the archive to private Supabase Storage, configure the production webhook
 and validate the account and purchase flow. A redirect alone never confirms payment;
 the signed webhook and server-side transaction verification do.
 
+### Paiements SasPay : réconciliation et secours
+
+- URL du webhook à enregistrer :
+  `https://skillflow-sigma.vercel.app/api/webhooks/saspay` (utilisez le domaine
+  canonique correspondant à `NEXT_PUBLIC_APP_URL`).
+- Variables serveur requises : `SASPAY_API_KEY` (clé `sk_live_`),
+  `SASPAY_API_URL`, `SASPAY_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `NEXT_PUBLIC_APP_URL`, `CRON_SECRET` et `SKILLFLOW_COMMERCE_ENABLED=true`.
+  `SASPAY_CHECKOUT_SESSION_STATUS_PATH` configure le chemin GET de statut de
+  session SasPay (par défaut `/checkout-sessions/{id}/`) et doit contenir `{id}`.
+- Appliquez les migrations dans l’ordre numérique. Les migrations 017 et 018
+  ajoutent la réconciliation des paiements et l’horodatage de l’acceptation des
+  documents légaux. Le webhook attendu envoie `x-webhook-signature`,
+  `x-webhook-timestamp`, `x-webhook-event` et les événements
+  `transaction.success` / `transaction.failed` compatibles avec l’intégration.
+- Sur le plan Hobby, Vercel exécute le cron une fois par jour à 08:00 UTC
+  (l’heure réelle peut varier dans cette heure). Pour une vérification toutes les
+  cinq minutes, configurez un ordonnanceur externe, par exemple cron-job.org,
+  vers `https://skillflow-sigma.vercel.app/api/cron/saspay-reconcile` avec
+  l’en-tête `Authorization: Bearer <CRON_SECRET>`. Gardez cette valeur secrète
+  dans l’ordonnanceur et Vercel. Définissez `CRON_SECRET` en production. La tâche vérifie auprès de SasPay les
+  commandes en attente ou récemment clôturées âgées de 2 minutes à 48 heures,
+  afin de récupérer aussi les confirmations tardives du fournisseur. Un appel
+  sans le bon en-tête reçoit une réponse 401.
+- Le formulaire de paiement exige l’acceptation des conditions de vente, de la
+  licence et de la politique de remboursement. Le serveur vérifie ce choix et
+  enregistre `terms_accepted_at` sur la commande.
+- Gardez `SKILLFLOW_COMMERCE_ENABLED=false` tant que les pages légales affichent
+  un marqueur `[À COMPLÉTER]`. La valeur `true` ne suffit pas à ouvrir les ventes
+  si un renseignement légal requis manque.
+- Pour l’inspection ou le secours, utilisez un jeton Supabase de courte durée
+  appartenant à un administrateur : placez-le dans
+  `SKILLFLOW_ADMIN_ACCESS_TOKEN` de `.env.local`, puis lancez :
+
+  ```bash
+  npm run payments:reconcile -- --reference "SkillFlow order <UUID>"
+  npm run payments:reconcile -- --email client@example.com
+  npm run payments:reconcile -- --reference "SkillFlow order <UUID>" --activate
+  ```
+
+  `--activate` ne donne jamais accès sans confirmation du paiement par SasPay.
+  Les corps bruts reçus (et en-têtes non sensibles) ainsi que les décisions de
+  réconciliation sont conservés 90 jours dans des tables privées réservées au serveur.
+
 ## Lancer le projet
 
 Installez les dépendances, configurez les variables d’environnement décrites

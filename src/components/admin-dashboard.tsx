@@ -358,6 +358,32 @@ export function AdminDashboard() {
     }, "L’accès manuel a été accordé.");
   }
 
+  async function handleImpersonateCustomer(customer: Customer) {
+    const clientWindow = window.open("about:blank", "_blank");
+    if (!clientWindow) {
+      setError("Autorisez les fenêtres pop-up pour ouvrir l’espace client.");
+      return;
+    }
+    setPending(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await adminRequest("/api/admin/customers", {
+        method: "POST",
+        body: JSON.stringify({ action: "impersonate", userId: customer.id }),
+      });
+      const payload = await responsePayload(response);
+      if (typeof payload.actionLink !== "string") throw new Error("Le lien de connexion client est invalide.");
+      clientWindow.location.href = payload.actionLink;
+      setNotice(`L’espace de ${customer.email} s’ouvre dans un nouvel onglet.`);
+    } catch (caught) {
+      clientWindow.close();
+      setError(caught instanceof Error ? caught.message : "Impossible d’ouvrir l’espace client.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function handleRevokeAccess(entitlement: Entitlement) {
     if (!window.confirm("Retirer cet accès ? Le client ne pourra plus télécharger ce skill.")) return;
     await runAction("/api/admin/customers", "POST", {
@@ -568,6 +594,7 @@ export function AdminDashboard() {
                     <article key={customer.id} className={cardClass}>
                       <div className="flex flex-wrap justify-between gap-3">
                         <div><h2 className="break-all font-bold">{customer.email}</h2><p className="mt-1 text-sm text-[#52645E]">Compte créé le {formatDate(customer.created_at)}</p></div>
+                        {customer.role === "client" && <button className={secondaryButtonClass} type="button" disabled={pending} onClick={() => void handleImpersonateCustomer(customer)}>Ouvrir l’espace client</button>}
                         <span className="rounded-full bg-[#EAF5F0] px-3 py-1 text-xs font-semibold text-[#16473D]">{customer.role === "admin" ? "Administrateur" : "Client"}</span>
                       </div>
                       <div className="mt-4 grid gap-4 lg:grid-cols-2">

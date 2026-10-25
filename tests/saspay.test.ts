@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 
-import { isSasPayLiveReady, saspayRequest, verifySasPayWebhook } from "../src/lib/payments/saspay";
+import { isSasPayLiveReady, resolveSasPayTransaction, saspayRequest, verifySasPayWebhook } from "../src/lib/payments/saspay";
 
 test("only a fully configured SasPay live account is considered ready", () => {
   const original = {
@@ -92,5 +92,41 @@ test("sends live checkout requests with bearer authentication", async () => {
     else process.env.SASPAY_API_KEY = originalKey;
     if (originalApiUrl === undefined) delete process.env.SASPAY_API_URL;
     else process.env.SASPAY_API_URL = originalApiUrl;
+  }
+});
+
+test("resolves a checkout session, then verifies the provider transaction", async () => {
+  const originals = {
+    key: process.env.SASPAY_API_KEY,
+    url: process.env.SASPAY_API_URL,
+    path: process.env.SASPAY_CHECKOUT_SESSION_STATUS_PATH,
+    fetch: globalThis.fetch,
+  };
+  process.env.SASPAY_API_KEY = "sk_live_status";
+  process.env.SASPAY_API_URL = "https://api.example/api/v1";
+  process.env.SASPAY_CHECKOUT_SESSION_STATUS_PATH = "/checkout-sessions/{id}/";
+  const calls: string[] = [];
+  globalThis.fetch = async (input) => {
+    calls.push(String(input));
+    const payload = calls.length === 1
+      ? { success: true, data: { id: "session-id", payment_id: "payment-id" } }
+      : { success: true, data: { id: "payment-id", status: "SUCCESS" } };
+    return new Response(JSON.stringify(payload), { status: 200 });
+  };
+  try {
+    const result = await resolveSasPayTransaction("session-id");
+    assert.deepEqual(calls, [
+      "https://api.example/api/v1/checkout-sessions/session-id/",
+      "https://api.example/api/v1/payments/payment-id/verify/",
+    ]);
+    assert.deepEqual(result, { id: "payment-id", status: "SUCCESS" });
+  } finally {
+    globalThis.fetch = originals.fetch;
+    if (originals.key === undefined) delete process.env.SASPAY_API_KEY;
+    else process.env.SASPAY_API_KEY = originals.key;
+    if (originals.url === undefined) delete process.env.SASPAY_API_URL;
+    else process.env.SASPAY_API_URL = originals.url;
+    if (originals.path === undefined) delete process.env.SASPAY_CHECKOUT_SESSION_STATUS_PATH;
+    else process.env.SASPAY_CHECKOUT_SESSION_STATUS_PATH = originals.path;
   }
 });

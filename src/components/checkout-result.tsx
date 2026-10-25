@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 type PaymentResult = {
-  status: "pending" | "paid" | "failed" | "cancelled" | "refunded";
+  status: "pending" | "paid" | "failed" | "expired" | "cancelled" | "refunded";
   amountXof: number;
   currency: string;
   paidAt: string | null;
@@ -44,9 +44,9 @@ export function CheckoutResult({ orderId }: { orderId: string }) {
         if (!active) return;
         setResult(payload);
         setMessage("");
-        if (payload.status === "pending" && attempts < 20) {
+        if (payload.status === "pending" && attempts < 12) {
           attempts += 1;
-          timer = setTimeout(checkPayment, 3000);
+          timer = setTimeout(checkPayment, 5000);
         }
       } catch (error) {
         if (active) setMessage(error instanceof Error ? error.message : "Le statut du paiement est indisponible.");
@@ -63,7 +63,7 @@ export function CheckoutResult({ orderId }: { orderId: string }) {
   }, [orderId]);
 
   const paid = result?.status === "paid";
-  const failed = result?.status === "failed" || result?.status === "cancelled";
+  const failed = result?.status === "failed" || result?.status === "expired" || result?.status === "cancelled";
 
   return (
     <main className="grid min-h-[70vh] place-items-center bg-[#0d1321] px-4 py-12 text-white">
@@ -79,7 +79,7 @@ export function CheckoutResult({ orderId }: { orderId: string }) {
             : failed
               ? "Aucun accès n’a été activé. Vous pouvez reprendre la commande depuis sa fiche."
               : result?.status === "pending"
-                ? "SasPay traite encore la confirmation. Cette page vérifie automatiquement le statut ; ne relancez pas un paiement en attente."
+                ? "Paiement en cours de vérification, activation sous quelques minutes. Cette page vérifie automatiquement le statut ; ne relancez pas un paiement en attente."
                 : "Le statut est vérifié auprès de votre compte SkillFlow. Le retour de SasPay, à lui seul, ne valide jamais un paiement."}
         </p>
         {result && <p className="mt-4 text-sm text-slate-400">Commande {orderId.slice(0, 8)} · {new Intl.NumberFormat("fr-FR").format(result.amountXof)} {result.currency}</p>}

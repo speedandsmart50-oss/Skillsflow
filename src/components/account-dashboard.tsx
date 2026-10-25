@@ -548,19 +548,19 @@ export function AccountDashboard() {
                   <p><strong className="text-cyan-100">Sans clé :</strong> rechercher le catalogue et consulter les skills gratuits.</p>
                   <p className="mt-1"><strong className="text-cyan-100">Après un achat :</strong> pour télécharger un pack privé depuis MCP, une clé liée à votre compte vérifie vos droits. Elle est facultative pour connecter le serveur.</p>
                 </div>
-                <details className="mt-5 rounded-2xl border border-white/10 p-4">
+                {false && activeKey && <details className="mt-5 rounded-2xl border border-white/10 p-4">
                   <summary className="min-h-10 cursor-pointer font-semibold text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">Options avancées : accès aux achats</summary>
                   <div className="mt-3 rounded-2xl bg-white/[0.04] p-4">
                     <p className="font-semibold">{activeKey ? "Votre clé d’accès aux achats est active" : "Aucune clé d’accès aux achats"}</p>
-                    {activeKey && <p className="mt-1 text-sm text-slate-300">Dernière utilisation : {activeKey.last_used_at ? new Date(activeKey.last_used_at).toLocaleString("fr-FR") : "pas encore utilisée"}</p>}
+                    {activeKey && <p className="mt-1 text-sm text-slate-300">Dernière utilisation : {activeKey?.last_used_at ? new Date(activeKey?.last_used_at ?? 0).toLocaleString("fr-FR") : "pas encore utilisée"}</p>}
                     {newKey && <div className="mt-3 flex flex-col gap-2 sm:flex-row"><input aria-label="Nouvelle clé MCP" readOnly value={newKey} className={`${inputClass} font-mono text-sm`} onFocus={(event) => event.currentTarget.select()} /><button type="button" onClick={() => void copyKey()} className={secondaryButtonClass}>{keyCopied ? "Clé copiée" : "Copier la clé"}</button></div>}
                     <div className="mt-4 flex flex-wrap gap-3">
                       <button type="button" disabled={pending} onClick={() => void rotateKey()} className={buttonClass}>{pending ? "Création…" : activeKey ? "Régénérer la clé" : "Créer une clé d’accès"}</button>
                       {activeKey && <button type="button" disabled={pending} onClick={() => void revokeKey()} className={secondaryButtonClass}>Révoquer la clé</button>}
                     </div>
-                    {activeKey && <p className="mt-3 text-xs text-slate-400">Créée le {new Date(activeKey.created_at).toLocaleString("fr-FR")}. Le lien de téléchargement MCP expire après 10 minutes.</p>}
+                    {activeKey && <p className="mt-3 text-xs text-slate-400">Créée le {new Date(activeKey?.created_at ?? 0).toLocaleString("fr-FR")}. Le lien de téléchargement MCP expire après 10 minutes.</p>}
                   </div>
-                </details>
+                </details>}
                 {account.mcpKeys.some((key) => key.status === "revoked") && (
                   <details className="mt-5">
                     <summary className="min-h-10 cursor-pointer font-semibold text-[#16473D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B6A5A]">Afficher les anciennes clés révoquées</summary>

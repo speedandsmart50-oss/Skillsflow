@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordAdminAction, requireAdminApiUser } from "@/lib/security/admin-api";
+import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -73,8 +74,56 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "La demande est invalide." }, { status: 400 });
   }
 
-  if (!isRecord(body) || !["grant", "revoke"].includes(String(body.action))) {
+  if (!isRecord(body) || !["grant", "revoke", "impersonate"].includes(String(body.action))) {
     return NextResponse.json({ error: "Action d’accès invalide." }, { status: 400 });
+  }
+
+  if (body.action === "impersonate") {
+    if (typeof body.userId !== "string" || !UUID_PATTERN.test(body.userId)) {
+      return NextResponse.json({ error: "Sélectionnez un client valide." }, { status: 400 });
+    }
+
+    const { data: target, error: targetError } = await access.supabase
+      .from("profiles")
+      .select("id, email, role")
+      .eq("id", body.userId)
+      .maybeSingle();
+    if (targetError) {
+      console.error("Could not load impersonation target:", targetError.message);
+      return NextResponse.json({ error: "Impossible de charger ce client." }, { status: 500 });
+    }
+    if (!target || target.role !== "client") {
+      return NextResponse.json({ error: "Seuls les comptes clients peuvent être ouverts depuis l’administration." }, { status: 404 });
+    }
+
+    try {
+      await recordAdminAction(access.supabase, access.user.id, "customer.impersonation.start", "profile", target.id, "requested", {
+        targetEmail: target.email,
+      });
+    } catch (caught) {
+      return NextResponse.json({ error: caught instanceof Error ? caught.message : "Impossible d’enregistrer cette action." }, { status: 500 });
+    }
+
+    const origin = new URL(request.url).origin;
+    const { data: link, error: linkError } = await getSupabaseAdminClient().auth.admin.generateLink({
+      type: "magiclink",
+      email: target.email,
+      options: { redirectTo: `${origin}/account` },
+    });
+    if (linkError || !link?.properties?.action_link) {
+      console.error("Could not generate customer impersonation link:", linkError?.message);
+      return NextResponse.json({ error: "Impossible de générer la connexion client." }, { status: 500 });
+    }
+
+    try {
+      await recordAdminAction(access.supabase, access.user.id, "customer.impersonation.start", "profile", target.id, "completed", {
+        targetEmail: target.email,
+      });
+    } catch (caught) {
+      return NextResponse.json({ error: caught instanceof Error ? caught.message : "Le journal d’audit n’a pas pu confirmer l’action." }, { status: 500 });
+    }
+
+    return NextResponse.json({ actionLink: link.properties.action_link }, { headers: { "Cache-Control": "no-store" } });
   }
 
   if (body.action === "grant") {

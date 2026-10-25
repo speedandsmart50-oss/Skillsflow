@@ -28,7 +28,22 @@ export function SiteFooter() {
           </h3>
           <div className="space-y-3 text-[1.05rem] text-slate-400">
             <Link href="/legal" className="block hover:text-white">
-              Mentions et confidentialité
+              Informations légales
+            </Link>
+            <Link href="/legal/mentions-legales" className="block hover:text-white">
+              Mentions légales
+            </Link>
+            <Link href="/legal/conditions-vente" className="block hover:text-white">
+              Conditions de vente
+            </Link>
+            <Link href="/legal/licence" className="block hover:text-white">
+              Licence des skills
+            </Link>
+            <Link href="/legal/remboursement" className="block hover:text-white">
+              Remboursements
+            </Link>
+            <Link href="/legal/confidentialite" className="block hover:text-white">
+              Confidentialité
             </Link>
           </div>
         </div>

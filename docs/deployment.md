@@ -48,7 +48,7 @@ checkout disabled until SasPay has approved the account and live credentials are
 available.
 
 1. Create a dedicated Vercel project for SkillFlow and deploy the `skillflow` directory.
-2. Apply migrations `001_init.sql` through `012_public_recent_sales_activity.sql` in numeric order. Migration 011 seeds 15 categories and 30 Skills and creates member/agent tables with RLS; migration 012 exposes only anonymized, paid purchase activity for catalogue popups. Apply both before opening `/member` or enabling the sales notifications.
+2. Apply all SQL migrations in `supabase/migrations/` in numeric order, including `017_payment_reconciliation.sql` and `018_checkout_legal_acceptance.sql`, before enabling checkout.
 3. Verify the production build with `npm run build`, then check the public catalogue.
 
 The home page, `/shop`, product details, and `/api/products` read published,
@@ -67,9 +67,10 @@ Configure `NEXT_PUBLIC_APP_URL` to the canonical HTTPS production origin,
 administrator manually from a trusted Supabase operator session after verifying
 the account. Public signup and checkout cannot assign administrator access.
 
-Before opening sales, publish the seller's legal identity and contact details,
-terms of sale, product licence, refund/withdrawal policy, and privacy notice. Have
-the wording checked for the seller's jurisdiction and the countries served. Confirm
+Before opening sales, replace every `[À COMPLÉTER]` marker in the legal pages,
+publish the seller's legal identity and contact details, terms of sale, product
+licence, refund policy, and privacy notice. Have the wording checked for the
+seller's jurisdiction and the countries served. Confirm
 SasPay's fees, supported markets, settlement currency, minimum payment, and webhook
 configuration with the provider. Confirm the displayed price and tax treatment.
 Only then set `SKILLFLOW_COMMERCE_ENABLED=true` in production.
@@ -101,5 +102,50 @@ validating both the MCP key and the purchaser's active entitlement.
 3. Run one authorized live payment, then verify webhook reconciliation, account order status,
    and the short-lived signed download.
 
-Do not treat a redirect to the completion page as proof of payment. Only the verified
-SasPay webhook changes order status and unlocks a download.
+Do not treat a redirect to the completion page or webhook payload alone as proof
+of payment. The webhook, customer return, cron, and manual recovery all verify
+the payment with SasPay before the shared database activation routine grants access.
+
+## SasPay reconciliation and manual recovery
+
+Configure this webhook URL in the SasPay dashboard:
+`https://skillflow-sigma.vercel.app/api/webhooks/saspay` (use the same path on the
+canonical custom domain if different). Confirm SasPay sends `x-webhook-signature`,
+`x-webhook-timestamp`, `x-webhook-event`, and the `transaction.success` /
+`transaction.failed` format expected by the integration.
+
+Production environment variables: `NEXT_PUBLIC_APP_URL`, `SASPAY_API_URL`,
+`SASPAY_CHECKOUT_SESSION_STATUS_PATH` (GET path template; default
+`/checkout-sessions/{id}/`),
+live `SASPAY_API_KEY`, `SASPAY_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`,
+`CRON_SECRET`, and `SKILLFLOW_COMMERCE_ENABLED`. Keep the commerce flag `false`
+until all legal markers are completed and the owner has verified a live purchase.
+The checkout records the server timestamp in `orders.terms_accepted_at` after
+the buyer accepts the conditions of sale, skill licence, and refund policy.
+
+This Vercel project uses the Hobby plan, whose cron jobs can run once per day.
+`vercel.json` schedules reconciliation at 08:00 UTC; Hobby may invoke it at any
+time in that hour. The job checks pending or recently closed orders aged 2 minutes
+to 48 hours, including late provider confirmations. Set a random `CRON_SECRET` in
+Vercel. Vercel adds `Authorization: Bearer <CRON_SECRET>` to its scheduled call.
+
+For checks every five minutes without upgrading the Vercel plan, configure an
+external scheduler such as cron-job.org to call
+`https://skillflow-sigma.vercel.app/api/cron/saspay-reconcile` every five minutes.
+Add the HTTP header `Authorization: Bearer <CRON_SECRET>` in that scheduler and
+store the same secret there as a protected value. Never put it in the URL, source
+code, or a committed file. The route returns 401 when the secret is absent or
+does not match.
+
+For manual recovery, put a short-lived administrator Supabase access token in
+`SKILLFLOW_ADMIN_ACCESS_TOKEN` in `.env.local`. Run
+`npm run payments:reconcile -- --reference "SkillFlow order <UUID>"` to inspect
+local and SasPay status, or add `--activate` to reconcile after provider
+confirmation. Use `--email <address>` to list that account's orders. The command
+does not grant access based only on an operator assertion.
+
+Before launch, the owner should run one live purchase at the smallest amount
+SasPay permits, confirm the durable webhook log and immediate account activation,
+then leave a second authorized order pending until a scheduled cron run to verify
+recovery from a missed webhook. Do not run a live payment as part of automated
+tests or deployment verification.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AnimatedShowcase } from "@/components/landing/animated-showcase";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { products as bundledProducts } from "@/features/products/products";
+import { canCheckout } from "@/lib/commerce";
 
 const steps = [
   {
@@ -29,7 +30,7 @@ const benefits = [
 
 export default function HomePage() {
   const featuredProduct = bundledProducts.find((product) => product.catalogStatus === "disponible") ?? bundledProducts[0];
-  const salesEnabled = process.env.SKILLFLOW_COMMERCE_ENABLED === "true";
+  const salesEnabled = canCheckout(process.env.SKILLFLOW_COMMERCE_ENABLED);
 
   return (
     <main className="overflow-hidden bg-[#0b1020] text-white">

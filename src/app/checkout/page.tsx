@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { CheckoutForm } from "@/components/checkout-form";
 import { getCatalogProductBySlug } from "@/features/products/catalog";
+import { canCheckout } from "@/lib/commerce";
 import { PRODUCT_SLUG } from "@/lib/pricing";
 
 export default function CheckoutPage({
@@ -31,5 +32,5 @@ async function CheckoutContent({
     notFound();
   }
 
-  return <CheckoutForm product={product} salesEnabled={process.env.SKILLFLOW_COMMERCE_ENABLED === "true"} />;
+  return <CheckoutForm product={product} salesEnabled={canCheckout(process.env.SKILLFLOW_COMMERCE_ENABLED)} />;
 }

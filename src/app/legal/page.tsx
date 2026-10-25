@@ -1,26 +1,34 @@
-export default function LegalPage() {
+import Link from "next/link";
+import { LegalDocument } from "@/components/legal-document";
+import { hasUncompletedLegalInformation } from "@/lib/legal-information";
+
+const documents = [
+  ["Mentions légales", "/legal/mentions-legales"],
+  ["Conditions générales de vente", "/legal/conditions-vente"],
+  ["Licence d’utilisation", "/legal/licence"],
+  ["Politique de remboursement", "/legal/remboursement"],
+  ["Politique de confidentialité", "/legal/confidentialite"],
+] as const;
+
+export default function LegalIndexPage() {
+  const hasPlaceholders = hasUncompletedLegalInformation();
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">Ventes non ouvertes</p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-900">Informations et conditions</h1>
-      <div className="mt-8 space-y-5 leading-7 text-slate-600">
-        <p>
-          Les ventes ne sont pas encore ouvertes. Cette page doit contenir les informations
-          l&eacute;gales compl&egrave;tes de l&apos;&eacute;diteur et les conditions applicables avant l&apos;activation
-          des paiements.
+    <LegalDocument title="Informations légales">
+      <p>Consultez les documents applicables à l’utilisation et à l’achat des skills SkillFlow.</p>
+      {hasPlaceholders && (
+        <p role="status" className="rounded-xl border border-amber-300/30 bg-amber-50 p-4 text-amber-950">
+          Certains renseignements portent la mention [À COMPLÉTER]. Ils doivent être renseignés avant l’ouverture des ventes.
         </p>
-        <p>
-          Avant toute vente, l&apos;&eacute;diteur doit publier son identit&eacute; et ses coordonn&eacute;es,
-          les conditions de vente, la licence du produit, la politique de remboursement
-          et de r&eacute;tractation, ainsi qu&apos;une notice de confidentialit&eacute; d&eacute;crivant les donn&eacute;es
-          collect&eacute;es, leur dur&eacute;e de conservation et les prestataires utilis&eacute;s.
-        </p>
-        <p>
-          Les textes d&eacute;finitifs doivent &ecirc;tre adapt&eacute;s &agrave; la situation de l&apos;activit&eacute; et
-          v&eacute;rifi&eacute;s au regard des r&egrave;gles applicables dans le pays de l&apos;&eacute;diteur et les
-          pays desservis. Le paiement sera activ&eacute; s&eacute;par&eacute;ment apr&egrave;s ces v&eacute;rifications.
-        </p>
-      </div>
-    </main>
+      )}
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {documents.map(([label, href]) => (
+          <li key={href}>
+            <Link href={href} className="block rounded-xl border border-slate-200 p-4 font-semibold text-cyan-800 underline underline-offset-4 hover:bg-slate-50">
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </LegalDocument>
   );
 }

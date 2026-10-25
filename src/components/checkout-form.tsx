@@ -14,6 +14,7 @@ function formatXof(amount: number): string {
 export function CheckoutForm({ product, salesEnabled }: { product: Product; salesEnabled: boolean }) {
   const router = useRouter();
   const [coupon, setCoupon] = useState("");
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const requestId = useRef<string | null>(null);
@@ -47,7 +48,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ coupon, productSlug: product.slug, requestId: requestId.current }),
+        body: JSON.stringify({ coupon, legalAccepted, productSlug: product.slug, requestId: requestId.current }),
       });
       const result: unknown = await response.json();
       if (!response.ok || typeof result !== "object" || result === null || !("checkoutUrl" in result) || typeof result.checkoutUrl !== "string") {
@@ -90,12 +91,26 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
             )}
             {!salesEnabled && (
               <div role="status" className="mt-8 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm leading-6 text-amber-100">
-                Les ventes ne sont pas encore ouvertes. Revenez bientôt.
+                Ouverture imminente. Les ventes ouvriront dès que les informations requises seront complétées.
               </div>
             )}
             {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}
+            <label htmlFor="legal-acceptance" className="mt-6 flex items-start gap-3 text-sm leading-6 text-slate-300">
+              <input
+                id="legal-acceptance"
+                name="legal-acceptance"
+                type="checkbox"
+                required
+                checked={legalAccepted}
+                onChange={(event) => setLegalAccepted(event.target.checked)}
+                className="mt-1 size-4 shrink-0 accent-cyan-300"
+              />
+              <span>
+                J&apos;ai lu et j&apos;accepte les <Link href="/legal/conditions-vente" className="text-cyan-200 underline underline-offset-2">conditions de vente</Link>, la <Link href="/legal/licence" className="text-cyan-200 underline underline-offset-2">licence</Link> et la <Link href="/legal/remboursement" className="text-cyan-200 underline underline-offset-2">politique de remboursement</Link>.
+              </span>
+            </label>
             <button disabled={!salesEnabled || pending || (coupon.trim() !== "" && price.couponCode !== coupon.trim().toUpperCase())} type="submit" className="mt-6 w-full rounded-full bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
-              {!salesEnabled ? "Ventes fermées" : pending ? "Préparation du paiement…" : "Payer"}
+              {!salesEnabled ? "Ouverture imminente" : pending ? "Préparation du paiement…" : "Payer"}
             </button>
           </section>
 

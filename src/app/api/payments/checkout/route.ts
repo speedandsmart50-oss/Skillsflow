@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { hasAcceptedCheckoutTerms } from "@/lib/checkout-acceptance";
+import { canCheckout } from "@/lib/commerce";
 import { isSasPayLiveReady, saspayRequest } from "@/lib/payments/saspay";
 import {
   calculateProductPrice,
@@ -16,9 +18,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export async function POST(request: Request) {
-  if (process.env.SKILLFLOW_COMMERCE_ENABLED !== "true") {
+  if (!canCheckout(process.env.SKILLFLOW_COMMERCE_ENABLED)) {
     return NextResponse.json(
-      { error: "Les ventes sont temporairement fermées." },
+      { error: "Ouverture imminente. Les ventes ne sont pas encore ouvertes." },
       { status: 503 },
     );
   }
@@ -63,6 +65,9 @@ export async function POST(request: Request) {
 
   if (!isRecord(body) || typeof body.requestId !== "string" || !UUID_PATTERN.test(body.requestId)) {
     return NextResponse.json({ error: "Identifiant de tentative invalide." }, { status: 400 });
+  }
+  if (!hasAcceptedCheckoutTerms(body)) {
+    return NextResponse.json({ error: "Veuillez accepter les conditions de vente, la licence et la politique de remboursement." }, { status: 400 });
   }
   if (body.coupon !== undefined && typeof body.coupon !== "string") {
     return NextResponse.json({ error: "Code de réduction invalide." }, { status: 400 });
@@ -227,6 +232,7 @@ export async function POST(request: Request) {
       payment_status: "pending",
       order_reference: orderReference,
       request_id: body.requestId,
+      terms_accepted_at: new Date().toISOString(),
     })
     .select("id")
     .single();

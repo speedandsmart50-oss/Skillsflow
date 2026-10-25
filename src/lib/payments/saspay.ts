@@ -27,6 +27,7 @@ export async function saspayRequest(path: string, init: RequestInit = {}) {
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },
+    signal: init.signal ?? AbortSignal.timeout(12_000),
     cache: "no-store",
   });
 
@@ -70,4 +71,34 @@ export function verifySasPayWebhook(rawBody: string, signature: string | null, t
   const actual = Buffer.from(signature, "utf8");
   const target = Buffer.from(expected, "utf8");
   return actual.length === target.length && timingSafeEqual(actual, target);
+}
+
+export type SasPayTransaction = {
+  id?: unknown;
+  status?: unknown;
+  currency?: unknown;
+  requested_amount?: unknown;
+  amount?: unknown;
+  description?: unknown;
+};
+
+/** Verify a known SasPay transaction using the provider's authoritative API. */
+export async function verifySasPayTransaction(transactionId: string): Promise<SasPayTransaction> {
+  return await saspayRequest(
+    `/payments/${encodeURIComponent(transactionId)}/verify/`,
+  ) as SasPayTransaction;
+}
+
+/** Resolve a return/cron check from the stored checkout session, never from browser parameters. */
+export async function resolveSasPayTransaction(checkoutId: string): Promise<SasPayTransaction | null> {
+  const statusPath = process.env.SASPAY_CHECKOUT_SESSION_STATUS_PATH ?? "/checkout-sessions/{id}/";
+  if (!statusPath.startsWith("/") || !statusPath.includes("{id}")) {
+    throw new Error("SASPAY_CHECKOUT_SESSION_STATUS_PATH must be a relative path containing {id}.");
+  }
+  const session = await saspayRequest(statusPath.replace("{id}", encodeURIComponent(checkoutId)));
+  const rawId = session.payment_id ?? session.transaction_id
+    ?? (isRecord(session.payment) ? session.payment.id : undefined)
+    ?? (isRecord(session.transaction) ? session.transaction.id : undefined);
+  if (typeof rawId !== "string" || !rawId) return null;
+  return verifySasPayTransaction(rawId);
 }
