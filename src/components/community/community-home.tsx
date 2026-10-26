@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { CommunitySuggestionForm } from "@/components/community/community-suggestion-form";
 
 type Channel = {
   id: string;
@@ -151,6 +152,7 @@ export function CommunityHome({ initialName }: { initialName: string }) {
           <article className="rounded-2xl border border-white/[.07] bg-slate-950/25 p-4"><h3 className="font-semibold text-white">Avancer sans pression</h3><p className="mt-1.5 text-sm leading-6 text-slate-300">Pas de promesse de revenus, de pression ni de messages répétés.</p></article>
         </div>
       </section>
+      {!rules && <CommunitySuggestionForm />}
       {loading ? <p aria-live="polite" className="rounded-2xl border border-slate-700 bg-[#101a2b] p-6 text-slate-300">Chargement des salons…</p> : !rules && (
         <div className="grid items-start gap-5 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-7">
           <aside className="animate-rise h-fit rounded-3xl border border-slate-700/80 bg-gradient-to-b from-[#111c2e] to-[#0c1422] p-4 shadow-[0_18px_55px_rgba(0,0,0,.2)] sm:p-5" aria-label="Menu des salons">

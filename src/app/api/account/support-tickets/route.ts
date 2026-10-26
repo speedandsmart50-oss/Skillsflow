@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
 
-type TicketCategory = "question" | "refund" | "other";
+type TicketCategory = "question" | "refund" | "other" | "suggestion";
 
 function isTicketCategory(value: unknown): value is TicketCategory {
-  return value === "question" || value === "refund" || value === "other";
+  return value === "question" || value === "refund" || value === "other" || value === "suggestion";
 }
 
 export async function POST(request: Request) {

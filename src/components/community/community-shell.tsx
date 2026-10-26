@@ -22,6 +22,7 @@ export function CommunityShell({ children, userId, isStaff }: { children: React.
           <Link className="shrink-0 rounded-lg px-3.5 py-2 font-medium text-slate-300 transition hover:bg-white/[.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" href="/community/closing-negociation">Académies</Link>
           <Link className="shrink-0 rounded-lg px-3.5 py-2 font-medium text-slate-300 transition hover:bg-white/[.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" href="/community/closing-negociation#parcours">Formations</Link>
           <Link className="shrink-0 rounded-lg px-3.5 py-2 font-medium text-slate-300 transition hover:bg-white/[.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" href="/community#valeurs">Nos valeurs</Link>
+          <Link className="shrink-0 rounded-lg px-3.5 py-2 font-medium text-slate-300 transition hover:bg-white/[.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" href="/community#suggestion">Faire une suggestion</Link>
         </nav>
       </header>
       {children}

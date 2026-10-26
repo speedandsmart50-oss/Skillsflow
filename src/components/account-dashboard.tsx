@@ -43,7 +43,7 @@ type McpKey = {
 
 type SupportTicket = {
   id: string;
-  category: "question" | "refund" | "other";
+  category: "question" | "refund" | "other" | "suggestion";
   subject: string;
   status: "open" | "in_progress" | "resolved" | "closed";
   created_at: string;

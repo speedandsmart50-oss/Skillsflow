@@ -80,7 +80,7 @@ type SupportTicket = {
   id: string;
   user_id: string;
   order_id: string | null;
-  category: "question" | "refund" | "other";
+  category: "question" | "refund" | "other" | "suggestion";
   subject: string;
   message: string;
   status: TicketStatus;
@@ -642,7 +642,7 @@ export function AdminDashboard() {
                   </section>
                   {(data.tickets ?? []).length === 0 ? <EmptyState>Aucune demande d’assistance pour le moment.</EmptyState> : (data.tickets ?? []).map((ticket) => (
                     <article key={ticket.id} className={cardClass}>
-                      <div className="flex flex-wrap justify-between gap-3"><div><p className="text-sm text-[#52645E]">{ticket.email} · {ticket.category === "refund" ? "Demande de remboursement" : ticket.category === "question" ? "Question" : "Autre demande"}</p><h2 className="mt-1 text-lg font-bold">{ticket.subject}</h2></div><span className="rounded-full bg-[#EAF5F0] px-3 py-1 text-xs font-semibold text-[#16473D]">{statusText(ticket.status)}</span></div>
+                      <div className="flex flex-wrap justify-between gap-3"><div><p className="text-sm text-[#52645E]">{ticket.email} · {ticket.category === "suggestion" ? "Suggestion de la communauté" : ticket.category === "refund" ? "Demande de remboursement" : ticket.category === "question" ? "Question" : "Autre demande"}</p><h2 className="mt-1 text-lg font-bold">{ticket.subject}</h2></div><span className="rounded-full bg-[#EAF5F0] px-3 py-1 text-xs font-semibold text-[#16473D]">{statusText(ticket.status)}</span></div>
                       <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#29413A]">{ticket.message}</p>
                       <p className="mt-3 text-xs text-[#52645E]">Reçue le {formatDate(ticket.created_at)}{ticket.order_id ? ` · Commande ${ticket.order_id}` : ""}</p>
                       {ticket.status !== "resolved" && ticket.status !== "closed" && <div className="mt-4 flex flex-wrap gap-2">{ticket.status === "open" && <button className={secondaryButtonClass} type="button" disabled={pending} onClick={() => void handleTicketStatus(ticket, "in_progress")}>Prendre en charge</button>}<button className={secondaryButtonClass} type="button" disabled={pending} onClick={() => void handleTicketStatus(ticket, "resolved")}>Marquer comme résolue</button><button className={dangerButtonClass} type="button" disabled={pending} onClick={() => void handleTicketStatus(ticket, "closed")}>Fermer la demande</button></div>}
