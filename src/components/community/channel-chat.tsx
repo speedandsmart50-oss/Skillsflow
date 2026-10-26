@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { WeeklyGoalPanel } from "@/components/community/weekly-goal-panel";
 
 type Reaction = { id: string; user_id: string; emoji: string };
 type Message = {
@@ -29,8 +30,9 @@ function formatTime(value: string): string {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
 
-export function ChannelChat({ channelId, channelName, description, userId, isStaff }: {
+export function ChannelChat({ channelId, channelSlug, channelName, description, userId, isStaff }: {
   channelId: string;
+  channelSlug: string;
   channelName: string;
   description: string;
   userId: string;
@@ -151,6 +153,7 @@ export function ChannelChat({ channelId, channelName, description, userId, isSta
 
   return (
     <main className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+      {channelSlug === "organisation" && <WeeklyGoalPanel />}
       <aside className="h-fit rounded-2xl border border-slate-700 bg-[#101a2b] p-5">
         <Link href="/community" className="text-sm font-semibold text-cyan-200 hover:text-white">← Tous les salons</Link>
         <h1 className="mt-5 text-xl font-bold text-white">{channelName}</h1>

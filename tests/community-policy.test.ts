@@ -45,4 +45,17 @@ test("community migration enables RLS and limits channel and message access", as
   assert.match(moderationMigration, /create policy reports_staff_update[\s\S]*public\.community_is_staff\(\)/i);
   const messagesRoute = await readFile(new URL("../src/app/api/community/channels/[channelId]/messages/route.ts", import.meta.url), "utf8");
   assert.equal((messagesRoute.match(/reactions!reactions_message_id_channel_id_fkey\(/g) ?? []).length, 2);
+  const weeklyGoalMigration = await readFile(new URL("../supabase/migrations/034_community_weekly_goals.sql", import.meta.url), "utf8");
+  assert.match(weeklyGoalMigration, /alter table public\.community_weekly_goal_checks enable row level security/i);
+  assert.match(weeklyGoalMigration, /user_id = auth\.uid\(\)/i);
+  assert.match(weeklyGoalMigration, /community_weekly_goal_roster/i);
+  assert.match(weeklyGoalMigration, /auth\.uid\(\) is null or not public\.community_is_staff\(\)/i);
+  assert.match(weeklyGoalMigration, /week_start = date_trunc\('week', current_date\)::date/i);
+  const weeklyGoalTaskReset = await readFile(new URL("../supabase/migrations/035_community_weekly_goal_task_reset.sql", import.meta.url), "utf8");
+  assert.match(weeklyGoalTaskReset, /existing_task_label is distinct from trim\(item\)/i);
+  assert.match(weeklyGoalTaskReset, /delete from public\.community_weekly_goal_checks where task_id = existing_task_id/i);
+  const weeklyGoalRoute = await readFile(new URL("../src/app/api/community/weekly-goal/route.ts", import.meta.url), "utf8");
+  assert.equal((weeklyGoalRoute.match(/isSameOriginRequest\(request\)/g) ?? []).length, 2);
+  assert.match(weeklyGoalRoute, /export async function PUT\(request: Request\)/);
+  assert.match(weeklyGoalRoute, /export async function PATCH\(request: Request\)/);
 });
