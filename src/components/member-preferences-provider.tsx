@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 export type DashboardTheme = "midnight" | "ocean" | "violet" | "light";
-type MemberProfile = { displayName: string; email: string; avatarUrl: string | null; theme: DashboardTheme };
+export type MemberProfile = { displayName: string; email: string; avatarUrl: string | null; theme: DashboardTheme };
 type PreferencesContextValue = {
   profile: MemberProfile | null;
   loading: boolean;
@@ -63,7 +63,10 @@ export function MemberPreferencesProvider({ children }: { children: React.ReactN
     }
   }, [request]);
 
-  useEffect(() => { void refreshProfile(); }, [refreshProfile]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refreshProfile(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refreshProfile]);
 
   const saveProfile = useCallback(async (input: { displayName: string; theme: DashboardTheme }) => {
     const payload = await request("/api/account/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
