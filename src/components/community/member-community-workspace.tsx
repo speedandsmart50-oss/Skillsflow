@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { BackLink } from "@/components/back-link";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 type WorkspaceData = {
-  community: { id: string; name: string; description: string };
+  community: { id: string; name: string; description: string; weekly_objective: string | null; objective_week_start: string | null };
   membership: { member_role: string; display_name: string; share_progress: boolean; share_avatar: boolean };
   channel: { id: string; name: string } | null;
   members: Array<{ user_id: string; display_name: string; member_role: string; share_progress: boolean; share_avatar: boolean }>;
@@ -22,16 +22,20 @@ export function MemberCommunityWorkspace({ communityId, userId }: { communityId:
   const [error, setError] = useState("");
   const [content, setContent] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
+  const [objectiveDraft, setObjectiveDraft] = useState("");
   const [dueAt, setDueAt] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [pending, setPending] = useState(false);
   const [copied, setCopied] = useState(false);
+  const objectiveInitialized = useRef(false);
   const canManage = data?.membership.member_role !== "member";
   const load = useCallback(async () => {
     const response = await fetch(`/api/community/my/${communityId}`, { cache: "no-store" });
     const payload = await response.json();
     if (!response.ok) { setError(payload.error ?? "Impossible de charger lâ€™espace."); return; }
-    setData(payload); setError("");
+    setData(payload);
+    if (!objectiveInitialized.current) { setObjectiveDraft(payload.community.weekly_objective ?? ""); objectiveInitialized.current = true; }
+    setError("");
   }, [communityId]);
   useEffect(() => { const initial = window.setTimeout(() => void load(), 0); const timer = window.setInterval(() => void load(), 12000); return () => { window.clearTimeout(initial); window.clearInterval(timer); }; }, [load]);
 
@@ -47,6 +51,7 @@ export function MemberCommunityWorkspace({ communityId, userId }: { communityId:
   }
   async function sendMessage(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!content.trim()) return; const value = content; setContent(""); await act({ action: "message", content: value }); }
   async function addTask(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!taskTitle.trim()) return; await act({ action: "task", title: taskTitle, dueAt: dueAt || null, assignedTo: assignedTo || null }); setTaskTitle(""); setDueAt(""); setAssignedTo(""); }
+  async function saveObjective(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!objectiveDraft.trim()) return; await act({ action: "objective", objective: objectiveDraft }); }
 
   if (!data) return <main className="animate-pulse rounded-2xl border border-[#203650] bg-[#0B1729] p-8 text-[#A8B7CB]">Chargement de votre espaceâ€¦</main>;
   const doneIds = new Set(data.checks.filter((check) => check.user_id === userId).map((check) => check.task_id));
@@ -57,6 +62,10 @@ export function MemberCommunityWorkspace({ communityId, userId }: { communityId:
     <div className="flex flex-wrap items-center justify-between gap-3"><BackLink href="/community/my">Mes communautés</BackLink><Link href="/community/private-messages" className="inline-flex min-h-10 items-center rounded-xl border border-[#29425D] px-3.5 text-sm font-semibold text-[#DCE6F0] transition hover:border-[#20DDF2]/45 hover:text-[#70E9F5]">Messages privés</Link></div>
     {error && <p role="alert" className="rounded-xl border border-rose-300/25 bg-rose-300/[.07] p-4 text-sm text-rose-100">{error}</p>}
     <section className="relative overflow-hidden rounded-2xl border border-[#203650] bg-[radial-gradient(ellipse_at_90%_0%,rgba(32,221,242,.10),transparent_40%),linear-gradient(135deg,#0B1729,#0E1D32)] p-6 sm:p-8"><div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-start"><div><p className="text-[11px] font-bold uppercase tracking-[.18em] text-[#70E9F5]">Espace privÃ© Â· {data.members.length} membre{data.members.length === 1 ? "" : "s"}</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-white">{data.community.name}</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-[#A8B7CB]">{data.community.description || "Un espace pour Ã©changer, partager vos objectifs et avancer ensemble."}</p></div>{data.inviteUrl && <button type="button" onClick={() => { void navigator.clipboard.writeText(new URL(data.inviteUrl!, window.location.origin).toString()).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); }); }} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-[#29425D] bg-[#07111F]/45 px-4 text-sm font-semibold text-[#DCE6F0] transition hover:-translate-y-0.5 hover:border-[#20DDF2]/55 hover:text-[#70E9F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#70E9F5]">{copied ? "Lien copiÃ©" : "Inviter des partenaires"}</button>}</div></section>
+    <section className="rounded-2xl border border-[#20DDF2]/20 bg-[linear-gradient(110deg,rgba(32,221,242,.07),#0B1729_52%)] p-5 sm:p-6" aria-labelledby="member-community-objective">
+      <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#70E9F5]">Cap commun</p><h2 id="member-community-objective" className="mt-1 text-lg font-bold text-white">Objectif de la semaine</h2>{data.community.weekly_objective ? <p className="mt-2 max-w-3xl text-sm leading-6 text-[#DCE6F0]">{data.community.weekly_objective}</p> : <p className="mt-2 text-sm text-[#91A4B9]">Le responsable peut définir ici la priorité de l’équipe.</p>}</div><span className="rounded-full border border-[#29425D] px-3 py-1 text-xs font-semibold text-[#A8B7CB]">{data.community.objective_week_start ? `Semaine du ${new Date(`${data.community.objective_week_start}T12:00:00`).toLocaleDateString("fr-FR")}` : "À définir"}</span></div>
+      {canManage && <form onSubmit={(event) => void saveObjective(event)} className="mt-4 flex flex-col gap-2 sm:flex-row"><label htmlFor="community-weekly-objective" className="sr-only">Objectif de la semaine</label><input id="community-weekly-objective" value={objectiveDraft} onChange={(event) => setObjectiveDraft(event.target.value)} maxLength={240} minLength={5} placeholder="Ex. Réaliser 3 prises de contact de qualité" className={field} /><button disabled={pending || objectiveDraft.trim().length < 5} className={button}>{data.community.weekly_objective ? "Mettre à jour" : "Définir l’objectif"}</button></form>}
+    </section>
     <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,.76fr)]">
       <section className="overflow-hidden rounded-2xl border border-[#203650] bg-[#0B1729]" aria-labelledby="team-chat-title"><div className="flex items-center justify-between gap-3 border-b border-[#203650] px-5 py-4"><div><h2 id="team-chat-title" className="font-bold text-white">Conversation dâ€™Ã©quipe</h2><p className="mt-1 text-xs text-[#91A4B9]">Visible uniquement par les membres de cet espace</p></div><span className="rounded-full border border-emerald-300/20 bg-emerald-300/[.06] px-3 py-1 text-xs font-semibold text-emerald-200">En direct</span></div>
         <div className="max-h-[430px] min-h-56 space-y-3 overflow-y-auto p-4 sm:p-5">{data.messages.length ? data.messages.map((message) => <article key={message.id} className={`w-fit max-w-[90%] rounded-2xl border p-3.5 ${message.author_id === userId ? "ml-auto border-[#20DDF2]/25 bg-[#0B2635]" : "border-[#203650] bg-[#0E1D32]"}`}><div className="mb-1.5 flex flex-wrap items-center gap-2"><span className="text-sm font-bold text-[#70E9F5]">{message.author_name}</span><time className="text-[11px] text-[#71849A]">{new Date(message.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}</time></div><p className="whitespace-pre-wrap break-words text-sm leading-6 text-[#E3EBF4]">{message.content}</p></article>) : <div className="grid min-h-52 place-items-center text-center"><div><span className="text-2xl text-[#70E9F5]">âœ¦</span><p className="mt-2 text-sm font-semibold text-[#DCE6F0]">La conversation commence ici</p><p className="mt-1 text-xs text-[#91A4B9]">PrÃ©sentez votre objectif ou partagez une premiÃ¨re idÃ©e.</p></div></div>}</div>

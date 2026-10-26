@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/community", label: "Salons" },
-  { href: "/community/my", label: "Mes communautés" },
+  { href: "/community/my", label: "Ma communauté" },
   { href: "/community/private-messages", label: "Messages privés" },
 ];
 

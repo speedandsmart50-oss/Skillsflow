@@ -11,12 +11,18 @@ export async function GET(_request: Request, { params }: Context) {
   const { data: membership } = await session.supabase.from("member_community_memberships").select("member_role, display_name, share_progress, share_avatar").eq("community_id", communityId).eq("user_id", session.user.id).maybeSingle();
   if (!membership) return NextResponse.json({ error: "Vous n’avez pas accès à cette communauté." }, { status: 403 });
   const [{ data: community }, { data: channels }, { data: members }, { data: tasks }] = await Promise.all([
-    session.supabase.from("member_communities").select("id, name, description, created_at").eq("id", communityId).maybeSingle(),
+    session.supabase.from("member_communities").select("id, name, description, weekly_objective, objective_week_start, created_at").eq("id", communityId).maybeSingle(),
     session.supabase.from("member_community_channels").select("id, name, description").eq("community_id", communityId).order("created_at"),
     session.supabase.from("member_community_memberships").select("user_id, display_name, member_role, joined_at, share_progress, share_avatar").eq("community_id", communityId).order("joined_at"),
     session.supabase.from("member_community_tasks").select("id, title, due_at, assigned_to, created_by, created_at").eq("community_id", communityId).order("due_at", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false }),
   ]);
   if (!community) return NextResponse.json({ error: "Communauté introuvable." }, { status: 404 });
+  const currentWeek = new Date();
+  currentWeek.setUTCDate(currentWeek.getUTCDate() - ((currentWeek.getUTCDay() + 6) % 7));
+  const currentWeekStart = currentWeek.toISOString().slice(0, 10);
+  const currentCommunity = community.objective_week_start === currentWeekStart
+    ? community
+    : { ...community, weekly_objective: "", objective_week_start: null };
   const channel = channels?.[0];
   const { data: messages } = channel ? await session.supabase.from("member_community_messages").select("id, author_id, author_name, content, created_at").eq("channel_id", channel.id).order("created_at", { ascending: false }).limit(60) : { data: [] };
   const taskIds = (tasks ?? []).map((task) => task.id);
@@ -26,7 +32,7 @@ export async function GET(_request: Request, { params }: Context) {
     const { data: inviteToken } = await session.supabase.rpc("get_member_community_invite_token", { p_community_id: communityId });
     if (inviteToken) inviteUrl = `/community/my?invite=${inviteToken}`;
   }
-  return NextResponse.json({ community, membership, channels: channels ?? [], channel, members: members ?? [], messages: (messages ?? []).reverse(), tasks: tasks ?? [], checks: checks ?? [], inviteUrl }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ community: currentCommunity, membership, channels: channels ?? [], channel, members: members ?? [], messages: (messages ?? []).reverse(), tasks: tasks ?? [], checks: checks ?? [], inviteUrl }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(request: Request, { params }: Context) {
@@ -38,9 +44,17 @@ export async function POST(request: Request, { params }: Context) {
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Données invalides." }, { status: 400 }); }
   if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Données invalides." }, { status: 400 });
-  const input = body as { action?: unknown; content?: unknown; title?: unknown; dueAt?: unknown; assignedTo?: unknown; taskId?: unknown; completed?: unknown };
+  const input = body as { action?: unknown; content?: unknown; title?: unknown; dueAt?: unknown; assignedTo?: unknown; taskId?: unknown; completed?: unknown; objective?: unknown };
   const { data: member } = await session.supabase.from("member_community_memberships").select("display_name, member_role").eq("community_id", communityId).eq("user_id", session.user.id).maybeSingle();
   if (!member) return NextResponse.json({ error: "Vous n’avez pas accès à cette communauté." }, { status: 403 });
+  if (input.action === "objective") {
+    if (member.member_role === "member") return NextResponse.json({ error: "Seuls les responsables peuvent définir l’objectif de la semaine." }, { status: 403 });
+    if (typeof input.objective !== "string" || input.objective.trim().length < 5 || input.objective.trim().length > 240) return NextResponse.json({ error: "L’objectif doit contenir entre 5 et 240 caractères." }, { status: 400 });
+    const today = new Date();
+    today.setUTCDate(today.getUTCDate() - ((today.getUTCDay() + 6) % 7));
+    const { error } = await session.supabase.from("member_communities").update({ weekly_objective: input.objective.trim(), objective_week_start: today.toISOString().slice(0, 10) }).eq("id", communityId);
+    return error ? NextResponse.json({ error: "Impossible d’enregistrer l’objectif." }, { status: 503 }) : NextResponse.json({ saved: true });
+  }
   if (input.action === "privacy") {
     const value = input as typeof input & { shareProgress?: unknown; shareAvatar?: unknown };
     if (typeof value.shareProgress !== "boolean" || typeof value.shareAvatar !== "boolean") return NextResponse.json({ error: "Choisissez des options de partage valides." }, { status: 400 });
