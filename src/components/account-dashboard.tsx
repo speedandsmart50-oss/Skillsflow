@@ -72,14 +72,18 @@ const sections: { id: Section; label: string }[] = [
   { id: "help", label: "Aide" },
 ];
 
-const pageClass = "min-h-screen bg-[#0b1020] text-slate-100";
-const cardClass = "account-card rounded-3xl border border-white/10 bg-[#111a2b]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.2)] sm:p-7";
+const pageClass = "min-h-screen bg-[#06132d] text-slate-100";
+const cardClass = "account-card rounded-3xl border border-white/10 bg-[#0b2044]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.2)] sm:p-7";
 const buttonClass = "inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-cyan-200 disabled:cursor-wait disabled:opacity-60";
 const secondaryButtonClass = "inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-cyan-200 disabled:cursor-wait disabled:opacity-60";
 const inputClass = "min-h-11 w-full rounded-xl border border-white/15 bg-[#0b1524] px-3.5 py-2.5 text-base text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300";
 const subscribeToLocation = () => () => {};
 const getBrowserOrigin = () => window.location.origin;
 const getServerOrigin = () => "";
+
+function DashboardGlyph({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <span aria-hidden="true" className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-xl ${className}`}>{children}</span>;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -372,8 +376,39 @@ export function AccountDashboard() {
 
   return (
     <main className={`app-shell-bare ${pageClass} font-[family-name:var(--font-instrument-sans)]`}>
-      <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
+      <div className="min-h-screen lg:grid lg:grid-cols-[19.5rem_minmax(0,1fr)]">
+        <aside className="border-b border-[#17345e] bg-[#071a39]/95 lg:min-h-screen lg:border-b-0 lg:border-r">
+          <div className="flex h-full flex-col px-5 py-5 sm:px-7 lg:px-6 lg:py-7">
+            <Link href="/" className="flex items-center gap-3 rounded-xl text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-500 text-xl shadow-[0_0_25px_rgba(30,174,255,.45)]">◉</span>
+              <span className="text-lg font-black uppercase tracking-[.08em]">Espace <span className="text-cyan-300">client</span></span>
+            </Link>
+            <div className="mt-8 lg:sticky lg:top-6">
+              <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} showCommunityLinks selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
+              <div className="mt-4"><AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} /></div>
+            </div>
+          </div>
+        </aside>
+        <div className="min-w-0">
+          <header className="flex min-h-[78px] flex-wrap items-center justify-between gap-4 border-b border-[#17345e] bg-[#06132d]/90 px-5 py-4 backdrop-blur-xl sm:px-8 lg:px-10">
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-full border border-[#244b80] bg-[#0b2148] px-4 py-2.5 text-sm text-[#9bb3d4] sm:flex"><span aria-hidden="true" className="text-xl">⌕</span><span className="truncate">Rechercher un skill, une formation, un outil...</span><kbd className="ml-auto rounded-lg bg-white/[.08] px-2 py-1 text-xs text-[#a8c0df]">Ctrl K</kbd></div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button type="button" aria-label="Notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/[.04] text-2xl text-[#b7c9e2] hover:bg-white/[.09]">♧<span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-[#06132d]" /></button>
+              <Link href="/member/settings" aria-label="Ouvrir mon profil" className="flex items-center gap-2 rounded-full border-l border-[#17345e] pl-3 text-sm font-semibold text-white"><span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-200 to-orange-400 text-lg text-slate-950">{profile?.avatarUrl ? <Image src={profile.avatarUrl} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}</span><span className="hidden max-w-40 truncate sm:block">{profile?.displayName || account?.user.email || "Mon profil"}</span><span aria-hidden="true">⌄</span></Link>
+            </div>
+          </header>
+          <div className="px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
+            <section className="relative overflow-hidden border-b border-[#17345e] pb-8" aria-labelledby="account-title">
+              <div className="relative z-10 max-w-3xl">
+                <p className="text-sm font-bold uppercase tracking-[.15em] text-[#a9bddc]">Bienvenue dans <span className="text-cyan-300">votre</span></p>
+                <h1 id="account-title" className="mt-1 text-5xl font-black tracking-[-.06em] text-white sm:text-6xl">Espace <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-violet-400 bg-clip-text text-transparent">Client</span></h1>
+                <p className="mt-3 max-w-2xl text-base leading-7 text-[#a4b9d7]">Vos skills, vos achats et votre agent personnel, réunis dans un espace cohérent pour vous accompagner au quotidien.</p>
+              </div>
+              <div aria-hidden="true" className="pointer-events-none absolute -right-5 bottom-0 hidden h-44 w-[24rem] md:block"><div className="absolute bottom-3 left-4 h-16 w-48 rotate-[-8deg] rounded-[2rem] border border-cyan-300/30 bg-gradient-to-br from-blue-500/50 to-cyan-300/10 shadow-[0_0_45px_rgba(29,142,255,.35)]" /><div className="absolute right-16 top-5 h-24 w-32 rotate-[8deg] rounded-2xl border border-blue-300/30 bg-gradient-to-br from-blue-400/55 to-indigo-700/30" /><div className="absolute right-0 top-12 h-20 w-28 rotate-[-9deg] rounded-2xl border border-indigo-300/30 bg-indigo-500/25" /><span className="absolute right-5 top-0 text-4xl text-violet-400">✦</span></div>
+            </section>
+          {false && <>
           <Link href="/" className="flex items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B6A5A]">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0B6A5A] font-[family-name:var(--font-bricolage)] text-lg font-bold text-white">S</span>
             <span className="font-[family-name:var(--font-bricolage)] text-xl font-bold tracking-tight">SkillFlow</span>
@@ -386,8 +421,6 @@ export function AccountDashboard() {
             <button type="button" onClick={() => changeSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
             <button type="button" onClick={() => void signOut()} className={secondaryButtonClass}>Se déconnecter</button>
           </div>
-        </header>
-
         <div className="mt-9 border-b border-white/10 pb-6 sm:mt-12">
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-300">Espace client</p>
           <h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
@@ -397,6 +430,7 @@ export function AccountDashboard() {
             Vos skills, vos achats et votre agent personnel, réunis dans un espace cohérent.
           </p>
         </div>
+        </>}
 
         {(error || notice) && (
           <div className={`mt-5 rounded-2xl border p-4 text-sm ${error ? "border-[#E7B9B3] bg-[#FFF3F1] text-[#8A2F25]" : "border-[#B9D6CC] bg-[#EAF5F0] text-[#16473D]"}`} role={error ? "alert" : "status"}>
@@ -412,11 +446,11 @@ export function AccountDashboard() {
             <p className="mt-2 text-sm leading-6 text-[#52645E]">{error || "Réessayez dans quelques instants."}</p>
           </section>
         ) : (
-          <div className="account-layout mt-7" aria-live="polite">
-            <aside className="account-nav-stack" aria-label="Navigation de votre espace">
-              <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
+          <div className="account-layout mt-7 block" aria-live="polite">
+            {false && <aside className="account-nav-stack" aria-label="Navigation de votre espace">
+              <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} showCommunityLinks selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
               <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
-            </aside>
+            </aside>}
             <section className="account-content" key={section}>
             {section === "catalog" && <AccountCatalog />}
             {section === "overview" && (
@@ -641,9 +675,10 @@ function SummaryCard({ label, value, detail }: { label: string; value: string | 
   );
 }
 
-function AccountSideNav({ title, ids, selected, onSelect }: {
+function AccountSideNav({ title, ids, showCommunityLinks = false, selected, onSelect }: {
   title: string;
   ids: Section[];
+  showCommunityLinks?: boolean;
   selected: Section;
   onSelect: (id: Section) => void;
 }) {
@@ -653,7 +688,7 @@ function AccountSideNav({ title, ids, selected, onSelect }: {
       const item = sections.find((entry) => entry.id === id);
       if (!item) return null;
       return <li key={id}><button type="button" aria-current={selected === id ? "page" : undefined} onClick={() => onSelect(id)} className={`account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${selected === id ? "is-active bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"}`}><span aria-hidden="true" className="text-xs">{id === "overview" ? "◈" : id === "skills" ? "✳" : id === "catalog" ? "▦" : id === "mcp" ? "⌘" : id === "billing" ? "＄" : id === "privacy" ? "◉" : "?"}</span>{item.label}</button></li>;
-    })}<li><Link href="/community" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">✦</span>Communauté</Link></li><li><Link href="/community/my" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">◈</span>Ma communauté</Link></li><li><Link href="/member/prospection" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">↗</span>SkillFlow Prospection</Link></li></ul>
+    })}{showCommunityLinks && <><li><Link href="/community" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">✦</span>Communauté</Link></li><li><Link href="/community/my" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">◈</span>Ma communauté</Link></li><li><Link href="/member/prospection" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">↗</span>SkillFlow Prospection</Link></li></>}</ul>
   </nav>;
 }
 
