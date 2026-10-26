@@ -35,6 +35,14 @@ async function ProductDetailContent({
     notFound();
   }
   const canPurchase = product.catalogStatus === "disponible" && (Boolean(product.zipFile) || Boolean(product.isMemberSkill) || Boolean(product.includedSkills?.length));
+  const getPackSkillDescription = (name: string) => {
+    const normalizedName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[’‘]/g, "'");
+    if (normalizedName.includes("go pro")) return "Structure les étapes clés de votre activité, de la prospection au suivi de l’équipe.";
+    if (normalizedName.includes("qualificateur")) return "Aide à poser les bonnes questions pour comprendre les besoins et l’intérêt d’un prospect, sans pression.";
+    if (normalizedName.includes("coach d'equipe")) return "Aide à définir des objectifs, préparer des plans d’action et accompagner votre équipe.";
+    if (normalizedName.includes("duplication")) return "Aide à expliquer les méthodes et les prochaines étapes aux nouveaux partenaires.";
+    return "Un skill spécialisé inclus dans ce pack.";
+  };
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
@@ -57,8 +65,13 @@ async function ProductDetailContent({
           {Boolean(product.includedSkills?.length) && (
             <div className="mt-8 rounded-2xl border border-violet-200 bg-violet-50 p-5">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-violet-900">Le pack comprend {product.includedSkills?.length} skills</h2>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-700">
-                {product.includedSkills?.map((skill) => <li key={skill}>{skill}</li>)}
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                {product.includedSkills?.map((skill) => (
+                  <li key={skill} className="rounded-xl border border-violet-200 bg-white/80 p-4">
+                    <h3 className="font-semibold text-slate-900">{skill}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{getPackSkillDescription(skill)}</p>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
