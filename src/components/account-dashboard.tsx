@@ -383,7 +383,6 @@ export function AccountDashboard() {
               {profile?.avatarUrl ? <Image src={profile.avatarUrl} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}
             </Link>
             <Link href="/member/settings" className={secondaryButtonClass}>Profil &amp; apparence</Link>
-            <span className="hidden max-w-60 truncate text-sm text-[#52645E] sm:inline">{account?.user.email}</span>
             <button type="button" onClick={() => changeSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
             <button type="button" onClick={() => void signOut()} className={secondaryButtonClass}>Se déconnecter</button>
           </div>
