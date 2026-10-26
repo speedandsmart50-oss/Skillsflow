@@ -6,7 +6,7 @@ create table public.member_communities (
   owner_id uuid not null references public.profiles(id) on delete cascade,
   name text not null check (char_length(name) between 2 and 80),
   description text not null default '' check (char_length(description) <= 500),
-  invite_token text not null unique default encode(gen_random_bytes(18), 'hex'),
+  invite_token text not null unique default encode(extensions.gen_random_bytes(18), 'hex'),
   created_at timestamptz not null default now()
 );
 
