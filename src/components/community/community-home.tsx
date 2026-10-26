@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 type Channel = {
   id: string;
@@ -16,7 +16,13 @@ type Channel = {
 type Rules = { version: string; body: string };
 type Payload = { channels?: Channel[]; rules?: Rules | null; error?: string };
 
-const cardClass = "rounded-2xl border border-slate-700/80 bg-[#111c2e] p-5 transition hover:border-cyan-300/50 hover:bg-[#142238]";
+const iconBySlug: Record<string, string> = {
+  bienvenue: "✦",
+  prospection: "↗",
+  "confiance-et-rejet": "◇",
+  organisation: "◷",
+  "questions-au-coach": "?",
+};
 
 export function CommunityHome({ initialName }: { initialName: string }) {
   const router = useRouter();
@@ -77,16 +83,29 @@ export function CommunityHome({ initialName }: { initialName: string }) {
     }
   }
 
+  const accessibleChannels = useMemo(() => channels.filter((channel) => channel.accessible), [channels]);
+  const unreadCount = accessibleChannels.reduce((total, channel) => total + channel.unread_count, 0);
+  const organisation = accessibleChannels.find((channel) => channel.slug === "organisation");
+
   return (
     <main>
-      <section className="mb-7 rounded-3xl border border-cyan-300/15 bg-gradient-to-br from-[#10283a] via-[#101a2b] to-[#15162f] p-6 sm:p-8">
-        <p className="text-sm font-semibold text-cyan-200">Un espace pour avancer sans pression</p>
-        <h2 className="mt-2 max-w-3xl text-2xl font-bold leading-tight text-white sm:text-3xl">Des échanges utiles, des objectifs réalistes et une communauté qui respecte votre rythme.</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Choisissez un salon pour poser vos questions, partager vos idées et construire une routine plus régulière.</p>
+      <section className="animate-rise relative mb-6 overflow-hidden rounded-3xl border border-cyan-300/20 bg-[radial-gradient(ellipse_at_top_right,rgba(34,211,238,.15),transparent_42%),linear-gradient(120deg,#10283a,#101a2b_60%,#15162f)] p-6 shadow-[0_20px_65px_rgba(0,0,0,.2)] sm:mb-8 sm:p-8">
+        <div className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full border border-cyan-300/10 bg-cyan-300/[.025] blur-2xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-5">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[.23em] text-cyan-300">Communauté SkillFlow</p>
+            <h2 className="mt-2 text-2xl font-bold leading-tight text-white sm:text-3xl">Progressez ensemble, à votre rythme.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Choisissez un salon pour échanger, avancer sur vos objectifs et demander conseil.</p>
+          </div>
+          {!loading && !rules && <div className="flex gap-2">
+            <div className="rounded-xl border border-white/10 bg-slate-950/35 px-3.5 py-2.5"><p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Salons ouverts</p><p className="mt-1 text-lg font-bold text-white">{accessibleChannels.length}<span className="ml-1 text-xs font-medium text-slate-400">/ {channels.length}</span></p></div>
+            <div className="rounded-xl border border-white/10 bg-slate-950/35 px-3.5 py-2.5"><p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">À découvrir</p><p className="mt-1 text-lg font-bold text-cyan-200">{unreadCount}</p></div>
+          </div>}
+        </div>
       </section>
 
       {rules && (
-        <section className="mb-7 rounded-2xl border border-amber-300/30 bg-amber-300/[.06] p-5 sm:p-7" aria-labelledby="community-rules-title">
+        <section className="animate-rise mb-7 rounded-2xl border border-amber-300/30 bg-amber-300/[.06] p-5 sm:p-7" aria-labelledby="community-rules-title">
           <p className="text-xs font-bold uppercase tracking-[.18em] text-amber-200">Avant de participer</p>
           <h2 id="community-rules-title" className="mt-2 text-xl font-bold text-white">Les règles de la communauté</h2>
           <p className="mt-3 leading-7 text-slate-200">{rules.body}</p>
@@ -106,44 +125,50 @@ export function CommunityHome({ initialName }: { initialName: string }) {
         </section>
       )}
 
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Vos espaces d’échange</p>
-          <h2 className="mt-1 text-2xl font-bold text-white">Salons</h2>
-        </div>
-        {!loading && !rules && <span className="text-sm text-slate-400">{channels.filter((channel) => channel.accessible).length} accessible(s)</span>}
-      </div>
-
-      {error && <p role="alert" className="mb-4 rounded-xl border border-rose-300/30 bg-rose-300/10 p-4 text-sm text-rose-100">{error}</p>}
-      {loading ? (
-        <p aria-live="polite" className="rounded-2xl border border-slate-700 bg-[#101a2b] p-6 text-slate-300">Chargement des salons…</p>
-      ) : !rules && channels.length === 0 && !error ? (
-        <p className="rounded-2xl border border-slate-700 bg-[#101a2b] p-6 text-slate-300">Aucun salon n’est disponible pour le moment.</p>
-      ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {channels.map((channel) => (
-            <li key={channel.id}>
-              {channel.accessible ? (
-                <Link href={`/community/channels/${channel.id}`} className={`${cardClass} block h-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-bold text-white">{channel.name}</h3>
-                    {channel.unread_count > 0 && <span className="min-w-7 rounded-full bg-cyan-300 px-2 py-1 text-center text-xs font-bold text-slate-950" aria-label={`${channel.unread_count} message(s) non lu(s)`}>{channel.unread_count}</span>}
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">{channel.description}</p>
-                  <span className="mt-5 inline-flex text-sm font-semibold text-cyan-200">Ouvrir le salon →</span>
+      {error && <p role="alert" className="animate-rise mb-5 rounded-xl border border-rose-300/30 bg-rose-300/10 p-4 text-sm text-rose-100">{error}</p>}
+      {loading ? <p aria-live="polite" className="rounded-2xl border border-slate-700 bg-[#101a2b] p-6 text-slate-300">Chargement des salons…</p> : !rules && (
+        <div className="grid items-start gap-5 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-7">
+          <aside className="animate-rise h-fit rounded-3xl border border-slate-700/80 bg-gradient-to-b from-[#111c2e] to-[#0c1422] p-4 shadow-[0_18px_55px_rgba(0,0,0,.2)] sm:p-5" aria-label="Menu des salons">
+            <div className="flex items-center justify-between gap-3 px-2 pb-4">
+              <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-cyan-300">Explorer</p><h2 className="mt-1 text-lg font-bold text-white">Les salons</h2></div>
+              <span className="rounded-full border border-slate-700 bg-slate-950/40 px-2.5 py-1 text-xs font-semibold text-slate-300">{accessibleChannels.length} ouverts</span>
+            </div>
+            {channels.length === 0 ? <p className="rounded-xl border border-slate-700 bg-slate-950/30 p-4 text-sm text-slate-300">Aucun salon n’est disponible pour le moment.</p> : <nav aria-label="Salons de la communauté" className="grid gap-2">
+              {channels.map((channel, index) => channel.accessible ? (
+                <Link key={channel.id} href={`/community/channels/${channel.id}`} style={{ animationDelay: `${index * 65}ms` }} className="group animate-rise relative flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-950/25 p-3.5 transition duration-300 hover:translate-x-1 hover:border-cyan-300/45 hover:bg-cyan-300/[.055] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 motion-reduce:transform-none">
+                  <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/15 bg-cyan-300/[.07] text-lg font-bold text-cyan-200 transition duration-300 group-hover:scale-105 group-hover:border-cyan-300/40 group-hover:bg-cyan-300/15">{iconBySlug[channel.slug] ?? "✦"}</span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-slate-100 transition-colors group-hover:text-white">{channel.name}</span><span className="mt-0.5 block truncate text-xs text-slate-400">{channel.description}</span></span>
+                  {channel.unread_count > 0 ? <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[11px] font-black text-slate-950" aria-label={`${channel.unread_count} message(s) non lu(s)`}>{channel.unread_count}</span> : <span aria-hidden="true" className="shrink-0 text-sm text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-cyan-200">→</span>}
+                  <span aria-hidden="true" className="absolute bottom-3 left-0 top-3 w-0.5 origin-center scale-y-0 rounded-full bg-cyan-300 transition-transform duration-300 group-hover:scale-y-100" />
                 </Link>
               ) : (
-                <div className="h-full rounded-2xl border border-slate-800 bg-[#0c1422] p-5 opacity-80">
-                  <div className="flex items-center justify-between gap-3"><h3 className="font-bold text-slate-200">{channel.name}</h3><span aria-label="Salon verrouillé">🔒</span></div>
-                  <p className="mt-2 text-sm leading-6 text-slate-400">{channel.description}</p>
-                  <p className="mt-4 text-xs font-semibold text-amber-200">Réservé au niveau {channel.required_tier}</p>
+                <div key={channel.id} style={{ animationDelay: `${index * 65}ms` }} className="animate-rise flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-[#0c1422]/75 p-3.5 opacity-75">
+                  <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/35 text-sm text-slate-500">⌑</span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-slate-300">{channel.name}</span><span className="mt-0.5 block text-xs text-slate-500">Niveau {channel.required_tier} requis</span></span>
+                  <span aria-label="Salon verrouillé" className="text-xs text-slate-500">🔒</span>
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
+              ))}
+            </nav>}
+            <button type="button" onClick={() => void loadChannels()} className="mt-4 w-full rounded-xl border border-slate-700 px-3 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">↻ Actualiser les salons</button>
+          </aside>
+
+          <section className="animate-rise relative min-h-[360px] overflow-hidden rounded-3xl border border-cyan-300/15 bg-[radial-gradient(ellipse_at_80%_10%,rgba(34,211,238,.12),transparent_35%),linear-gradient(145deg,#111c2e,#0c1422_70%)] p-6 shadow-[0_20px_65px_rgba(0,0,0,.2)] sm:min-h-[440px] sm:p-8" style={{ animationDelay: "100ms" }}>
+            <div aria-hidden="true" className="pointer-events-none absolute -right-20 top-24 h-64 w-64 animate-float rounded-full border border-cyan-300/[.08] bg-cyan-300/[.025]" />
+            <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-36 h-44 w-44 rounded-full border border-blue-400/[.08]" />
+            <div className="relative flex min-h-[310px] flex-col justify-between sm:min-h-[380px]">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/[.07] px-3 py-1.5 text-xs font-semibold text-emerald-200"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />Un espace pour avancer sans pression</span>
+                <h2 className="mt-6 max-w-xl text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl">Les bonnes conversations font avancer les idées.</h2>
+                <p className="mt-4 max-w-lg text-sm leading-7 text-slate-300">Présentez-vous, partagez vos expériences et trouvez le salon adapté à votre prochaine étape.</p>
+              </div>
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/[.07] bg-slate-950/30 p-4 sm:p-5">
+                <div><p className="text-xs font-bold uppercase tracking-[.16em] text-cyan-200">Votre prochaine étape</p><p className="mt-1 text-sm text-slate-300">{organisation ? "Suivez votre objectif hebdomadaire avec la communauté." : "Choisissez un salon et lancez la conversation."}</p></div>
+                {organisation ? <Link href={`/community/channels/${organisation.id}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">Voir l’organisation <span aria-hidden="true">↗</span></Link> : <span className="text-sm font-semibold text-cyan-200">{accessibleChannels.length} salon{accessibleChannels.length > 1 ? "s" : ""} à explorer</span>}
+              </div>
+            </div>
+          </section>
+        </div>
       )}
-      {!rules && <button type="button" onClick={() => void loadChannels()} className="mt-5 rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Actualiser les salons</button>}
     </main>
   );
 }
