@@ -73,7 +73,9 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
         <h1 className="mt-3 text-4xl font-black tracking-[-0.04em]">Vérifier la commande</h1>
         <p className="mt-4 max-w-2xl leading-7 text-slate-300">
           {price.couponCode === "SMART"
-            ? "Le coupon SMART vous permet d’obtenir un skill gratuitement, une seule fois par compte."
+            ? "Le coupon SMART offre un skill gratuit, dans la limite de 20 utilisations au total et d\u2019une utilisation par compte."
+            : price.couponCode === "GOPRO"
+              ? "Le coupon GOPRO offre 5 \u20ac de r\u00e9duction, dans la limite de 3 utilisations au total."
             : "Le paiement est traité par SasPay. Votre commande et l’accès au pack seront confirmés après vérification du paiement."}
         </p>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">

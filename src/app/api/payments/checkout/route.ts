@@ -209,6 +209,9 @@ export async function POST(request: Request) {
       if (message.includes("SMART coupon already redeemed")) {
         return NextResponse.json({ error: "Le coupon SMART a déjà été utilisé sur ce compte. Il donne droit à un seul skill gratuit." }, { status: 409 });
       }
+      if (message.includes("SMART coupon exhausted")) {
+        return NextResponse.json({ error: "Les 20 utilisations du coupon SMART ont déjà été attribuées." }, { status: 409 });
+      }
       if (message.includes("Skill is already available")) {
         return NextResponse.json({ error: "Vous avez déjà accès à ce skill. Choisissez-en un autre, le coupon reste utilisable." }, { status: 409 });
       }
@@ -245,6 +248,30 @@ export async function POST(request: Request) {
 
   const orderId = randomUUID();
   const orderReference = `SkillFlow order ${orderId}`;
+
+  if (price.couponCode === "GOPRO") {
+    const { error: reserveError } = await supabase.rpc("reserve_gopro_coupon", {
+      p_user_id: user.id,
+      p_request_id: body.requestId,
+    });
+    if (reserveError) {
+      if (reserveError.message.includes("GOPRO coupon exhausted")) {
+        return NextResponse.json({ error: "Le coupon GOPRO a déjà été utilisé 3 fois." }, { status: 409 });
+      }
+      console.error("Could not reserve GOPRO coupon:", reserveError.message);
+      return NextResponse.json({ error: "Impossible de vérifier le coupon GOPRO." }, { status: 500 });
+    }
+  }
+
+  const releaseGoproReservation = async () => {
+    if (price.couponCode !== "GOPRO") return;
+    const { error } = await supabase.rpc("release_gopro_coupon", {
+      p_user_id: user.id,
+      p_request_id: body.requestId as string,
+    });
+    if (error) console.error("Could not release GOPRO coupon reservation:", error.message);
+  };
+
   const { data: order, error: insertError } = await supabase
     .from("orders")
     .insert({
@@ -276,11 +303,16 @@ export async function POST(request: Request) {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (racedPendingOrder?.checkout_url) return NextResponse.json({ checkoutUrl: racedPendingOrder.checkout_url });
+      if (racedPendingOrder?.checkout_url) {
+        await releaseGoproReservation();
+        return NextResponse.json({ checkoutUrl: racedPendingOrder.checkout_url });
+      }
       if (racedPendingOrder) {
+        await releaseGoproReservation();
         return NextResponse.json({ error: "Une session de paiement est déjà en cours de création." }, { status: 409 });
       }
     }
+    await releaseGoproReservation();
     console.error("Could not create checkout order:", insertError?.message ?? "no order returned");
     return NextResponse.json({ error: "Impossible de créer la commande." }, { status: 500 });
   }
@@ -331,6 +363,8 @@ export async function POST(request: Request) {
 
     if (updateError) {
       console.error("Could not store SasPay checkout session:", updateError.message);
+      await supabase.from("orders").update({ payment_status: "failed" }).eq("id", order.id).eq("payment_status", "pending");
+      await releaseGoproReservation();
       return NextResponse.json({ error: "La session de paiement n'a pas pu être enregistrée." }, { status: 500 });
     }
 
@@ -343,6 +377,7 @@ export async function POST(request: Request) {
       .update({ payment_status: "failed" })
       .eq("id", order.id)
       .eq("payment_status", "pending");
+    await releaseGoproReservation();
     return NextResponse.json(
       { error: "SasPay n'a pas pu créer la session de paiement." },
       { status: 502 },
