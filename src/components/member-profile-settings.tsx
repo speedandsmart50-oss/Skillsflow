@@ -56,7 +56,10 @@ function MemberProfileSettingsForm({ profile, saveProfile, uploadAvatar, removeA
 
   const initials = (name || profile?.email || "M").trim().slice(0, 1).toUpperCase();
   return <main className="min-h-screen bg-[#0b1020] px-4 py-8 text-slate-100 sm:px-8"><div className="mx-auto max-w-5xl">
-    <Link className="text-sm font-semibold text-cyan-200 transition hover:text-white" href="/member/skills">← Retour à mes skills</Link>
+    <Link href="/member/skills" className="group inline-flex min-h-14 min-w-56 items-center justify-center gap-3 rounded-2xl border border-cyan-200/30 bg-gradient-to-r from-cyan-300 to-cyan-200 px-6 py-3 text-base font-bold text-slate-950 shadow-[0_10px_28px_rgba(34,211,238,.18)] transition duration-200 hover:-translate-y-0.5 hover:border-cyan-100 hover:from-cyan-200 hover:to-cyan-100 hover:shadow-[0_14px_34px_rgba(34,211,238,.28)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200 active:translate-y-0">
+      <span aria-hidden="true" className="text-xl transition-transform duration-200 group-hover:-translate-x-1">←</span>
+      <span>Retour à mes skills</span>
+    </Link>
     <header className="mt-7 max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Espace membre · Personnalisation</p><h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-3xl font-semibold sm:text-4xl">Votre profil et vos réglages</h1><p className="mt-3 leading-7 text-slate-300">Choisissez l’identité visuelle de SkillFlow. Votre thème vous suit sur l’ensemble du site et reste lié à votre compte.</p></header>
     {(error || message) && <p role={error ? "alert" : "status"} className={`mt-6 rounded-2xl border p-4 text-sm ${error ? "border-rose-300/30 bg-rose-300/10 text-rose-100" : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"}`}>{error || message}</p>}
     <div className="mt-7 grid gap-5 lg:grid-cols-[.82fr_1.18fr]">
