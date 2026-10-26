@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { AccountCatalog } from "@/components/account-catalog";
+import { useMemberPreferences } from "@/components/member-preferences-provider";
 
 type AccountOrder = {
   id: string;
@@ -147,6 +149,7 @@ function ticketStatusLabel(status: SupportTicket["status"]) {
 
 export function AccountDashboard() {
   const router = useRouter();
+  const { profile } = useMemberPreferences();
   const [section, setSection] = useState<Section>("overview");
   const [account, setAccount] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -376,6 +379,10 @@ export function AccountDashboard() {
             <span className="font-[family-name:var(--font-bricolage)] text-xl font-bold tracking-tight">SkillFlow</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/member/settings" aria-label="Ouvrir mon profil" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-cyan-200/25 bg-cyan-300/10 font-semibold text-cyan-100 transition hover:border-cyan-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">
+              {profile?.avatarUrl ? <Image src={profile.avatarUrl} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}
+            </Link>
+            <Link href="/member/settings" className={secondaryButtonClass}>Profil &amp; apparence</Link>
             <span className="hidden max-w-60 truncate text-sm text-[#52645E] sm:inline">{account?.user.email}</span>
             <button type="button" onClick={() => changeSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
             <button type="button" onClick={() => void signOut()} className={secondaryButtonClass}>Se déconnecter</button>
@@ -420,7 +427,7 @@ export function AccountDashboard() {
                 <section className={`${cardClass} mt-5`}>
                   <p className="text-sm font-semibold text-[#0B6A5A]">Bienvenue</p>
                   <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold">
-                    {account.user.email}
+                    {profile?.displayName || account.user.email}
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#52645E]">
                     Retrouvez vos skills et le tutoriel pour les connecter à Claude.

@@ -74,6 +74,32 @@ body:has(.admin-shell) .app-shell-chrome {
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28);
 }
 
+/* Member dashboard themes stay scoped to authenticated account/member screens. */
+.member-preferences-scope[data-member-theme="ocean"] main { background: #071a2b !important; color: #edf7ff !important; }
+.member-preferences-scope[data-member-theme="ocean"] main [class~="bg-[#111a2b]"],
+.member-preferences-scope[data-member-theme="ocean"] main .account-card { background-color: #0d263c !important; border-color: rgba(84, 221, 235, .2) !important; }
+.member-preferences-scope[data-member-theme="ocean"] main [class~="bg-[#0b1524]"],
+.member-preferences-scope[data-member-theme="ocean"] main [class~="bg-[#0b1020]"] { background-color: #091f33 !important; }
+.member-preferences-scope[data-member-theme="violet"] main { background: #141126 !important; color: #f5f1ff !important; }
+.member-preferences-scope[data-member-theme="violet"] main [class~="bg-[#111a2b]"],
+.member-preferences-scope[data-member-theme="violet"] main .account-card { background-color: #211b3d !important; border-color: rgba(190, 169, 255, .22) !important; }
+.member-preferences-scope[data-member-theme="violet"] main [class~="bg-[#0b1524]"],
+.member-preferences-scope[data-member-theme="violet"] main [class~="bg-[#0b1020]"] { background-color: #19152f !important; }
+.member-preferences-scope[data-member-theme="light"] main { background: #f4f7fb !important; color: #152234 !important; }
+.member-preferences-scope[data-member-theme="light"] main [class~="bg-[#111a2b]"],
+.member-preferences-scope[data-member-theme="light"] main .account-card { background-color: #fff !important; border-color: #dbe3ec !important; color: #152234 !important; box-shadow: 0 12px 36px rgba(21, 34, 52, .07) !important; }
+.member-preferences-scope[data-member-theme="light"] main [class~="bg-[#0b1524]"],
+.member-preferences-scope[data-member-theme="light"] main [class~="bg-[#0b1020]"] { background-color: #edf2f7 !important; }
+.member-preferences-scope[data-member-theme="light"] main [class*="text-slate-100"],
+.member-preferences-scope[data-member-theme="light"] main [class*="text-slate-200"],
+.member-preferences-scope[data-member-theme="light"] main [class*="text-slate-300"],
+.member-preferences-scope[data-member-theme="light"] main [class*="text-slate-400"],
+.member-preferences-scope[data-member-theme="light"] main [class*="text-white"] { color: #334155 !important; }
+.member-preferences-scope[data-member-theme="light"] main input,
+.member-preferences-scope[data-member-theme="light"] main textarea,
+.member-preferences-scope[data-member-theme="light"] main select { background-color: #fff !important; border-color: #cbd5e1 !important; color: #152234 !important; }
+.member-preferences-scope main { transition: background-color 220ms ease, color 220ms ease; }
+
 .admin-shell > div > header {
   animation: workspace-card-in 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
