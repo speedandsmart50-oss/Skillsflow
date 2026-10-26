@@ -150,6 +150,11 @@ export function CommunityHome({ initialName }: { initialName: string }) {
               ))}
             </nav>}
             <button type="button" onClick={() => void loadChannels()} className="mt-4 w-full rounded-xl border border-slate-700 px-3 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">↻ Actualiser les salons</button>
+            <Link href="/community/closing-negociation" className="group mt-4 flex min-w-0 items-center gap-3 rounded-2xl border border-cyan-300/30 bg-cyan-300/[.07] p-3.5 transition duration-300 hover:translate-x-1 hover:border-cyan-300/60 hover:bg-cyan-300/[.11] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 motion-reduce:transform-none">
+              <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-300/10 text-lg font-bold text-cyan-200">◎</span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-white">Closing &amp; Négociation</span><span className="mt-0.5 block text-xs text-slate-300">Apprenez à accompagner une décision éclairée.</span></span>
+              <span aria-hidden="true" className="shrink-0 text-sm text-cyan-200 transition group-hover:translate-x-0.5">→</span>
+            </Link>
           </aside>
 
           <section className="animate-rise relative min-h-[360px] overflow-hidden rounded-3xl border border-cyan-300/15 bg-[radial-gradient(ellipse_at_80%_10%,rgba(34,211,238,.12),transparent_35%),linear-gradient(145deg,#111c2e,#0c1422_70%)] p-6 shadow-[0_20px_65px_rgba(0,0,0,.2)] sm:min-h-[440px] sm:p-8" style={{ animationDelay: "100ms" }}>

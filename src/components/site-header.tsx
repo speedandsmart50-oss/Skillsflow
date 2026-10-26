@@ -4,6 +4,7 @@ const navItems = [
   { label: "Accueil", href: "/" },
   { label: "Catalogue", href: "/shop" },
   { label: "Communauté", href: "/community" },
+  { label: "Académies", href: "/community/closing-negociation" },
 ];
 
 export function SiteHeader() {
@@ -32,6 +33,9 @@ export function SiteHeader() {
         <div className="flex items-center gap-3">
           <Link href="/community" aria-label="Communauté" title="Communauté" className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-cyan-200 transition hover:border-cyan-200/50 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 lg:hidden">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 9.5h9m-9 4h5m-1.5 7-4-4H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-5.5l-4 4Z" /></svg>
+          </Link>
+          <Link href="/community/closing-negociation" aria-label="Académies" title="Académies" className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-cyan-200 transition hover:border-cyan-200/50 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 lg:hidden">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Zm0 0V21m4-14h8m-8 4h8" /></svg>
           </Link>
           <Link
             href="/login"
