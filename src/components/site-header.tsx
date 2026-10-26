@@ -1,8 +1,19 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { SiteHeaderNavigation } from "@/components/site-header-navigation";
+import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  let isAuthenticated = false;
+
+  try {
+    const supabase = await getSupabaseSessionClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    isAuthenticated = Boolean(user);
+  } catch {
+    // L’en-tête reste utilisable comme pour un visiteur si Supabase est indisponible.
+  }
+
   return (
     <header className="app-shell-chrome sticky top-0 z-50 border-b border-[#203650]/75 bg-[#07111F]/95 backdrop-blur-xl">
       <div className="mx-auto flex min-h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -11,7 +22,7 @@ export function SiteHeader() {
           <span className="text-xl font-bold tracking-[-.045em]">SkillFlow</span>
         </Link>
         <Suspense fallback={<div aria-hidden="true" className="h-11 w-64 rounded-xl bg-white/[.025]" />}>
-          <SiteHeaderNavigation />
+          <SiteHeaderNavigation isAuthenticated={isAuthenticated} />
         </Suspense>
       </div>
     </header>
