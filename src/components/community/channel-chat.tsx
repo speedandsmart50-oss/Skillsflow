@@ -38,6 +38,8 @@ export function ChannelChat({ channelId, channelName, description, userId, isSta
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
+  const [searchDraft, setSearchDraft] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -48,11 +50,15 @@ export function ChannelChat({ channelId, channelName, description, userId, isSta
 
   const endpoint = `/api/community/channels/${channelId}/messages`;
   const loadMessages = useCallback(async (before?: string) => {
-    const response = await fetch(`${endpoint}${before ? `?before=${encodeURIComponent(before)}` : ""}`, { cache: "no-store" });
+    const params = new URLSearchParams();
+    if (before) params.set("before", before);
+    if (searchQuery) params.set("q", searchQuery);
+    const suffix = params.size ? `?${params.toString()}` : "";
+    const response = await fetch(`${endpoint}${suffix}`, { cache: "no-store" });
     const payload = await response.json() as ApiPayload;
     if (!response.ok) throw new Error(payload.error ?? "Impossible de charger les messages.");
     return payload.messages ?? [];
-  }, [endpoint]);
+  }, [endpoint, searchQuery]);
 
   const refresh = useCallback(async () => {
     try {
@@ -160,6 +166,12 @@ export function ChannelChat({ channelId, channelName, description, userId, isSta
 
         {pinnedMessages.length > 0 && <div className="border-b border-cyan-300/20 bg-cyan-300/[.06] px-4 py-4 sm:px-6"><p className="text-xs font-bold uppercase tracking-[.16em] text-cyan-200">Message épinglé</p>{pinnedMessages.map((message) => <p key={message.id} className="mt-2 text-sm leading-6 text-slate-200">{message.content}</p>)}</div>}
         {error && <p role="alert" className="mx-4 mt-4 rounded-xl border border-rose-300/30 bg-rose-300/10 p-3 text-sm text-rose-100 sm:mx-6">{error}</p>}
+
+        <form onSubmit={(event) => { event.preventDefault(); setSearchQuery(searchDraft.trim()); }} className="flex flex-col gap-2 border-b border-slate-700 p-4 sm:flex-row sm:px-6">
+          <label htmlFor="community-search" className="sr-only">Rechercher dans ce salon</label>
+          <input id="community-search" type="search" value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} maxLength={100} placeholder="Rechercher dans ce salon" className="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-600 bg-[#0b1220] px-4 text-sm text-white placeholder:text-slate-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" />
+          <div className="flex gap-2"><button type="submit" disabled={searchDraft.trim().length === 1} className="min-h-11 rounded-xl bg-cyan-300 px-4 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">Rechercher</button>{searchQuery && <button type="button" onClick={() => { setSearchDraft(""); setSearchQuery(""); }} className="min-h-11 rounded-xl border border-slate-600 px-4 text-sm text-slate-200 hover:border-cyan-300">Effacer</button>}</div>
+        </form>
 
         <div className="flex max-h-[65vh] min-h-[320px] flex-col gap-3 overflow-y-auto p-4 sm:p-6" aria-live="polite" aria-relevant="additions text">
           {!loading && messages.length > 0 && <button type="button" onClick={() => void loadOlder()} disabled={loadingOlder} className="mx-auto rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:border-cyan-300 disabled:opacity-50">{loadingOlder ? "Chargement…" : "Charger les messages précédents"}</button>}

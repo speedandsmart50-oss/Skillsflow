@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { hasDisallowedMessageContent, isSameOriginRequest, isValidUuid } from "../src/lib/community/policy";
+import { hasDisallowedMessageContent, isSameOriginRequest, isValidCommunitySearchQuery, isValidUuid } from "../src/lib/community/policy";
+
+test("community search queries have bounded length and reject control characters", () => {
+  assert.equal(isValidCommunitySearchQuery("suivi client"), true);
+  assert.equal(isValidCommunitySearchQuery("a"), false);
+  assert.equal(isValidCommunitySearchQuery("x".repeat(101)), false);
+  assert.equal(isValidCommunitySearchQuery("test\nother"), false);
+});
 
 test("community write requests must be same-origin and provide the origin", () => {
   assert.equal(isSameOriginRequest(new Request("https://skillflow.example/api", { headers: { origin: "https://skillflow.example", host: "skillflow.example" } })), true);
@@ -26,4 +33,7 @@ test("community migration enables RLS and limits channel and message access", as
   assert.match(migration, /community_can_access_channel\(channel_id\)/i);
   assert.match(migration, /author_id = auth\.uid\(\)/i);
   assert.match(migration, /accept_community_rules/i);
+  const searchMigration = await readFile(new URL("../supabase/migrations/031_community_message_search.sql", import.meta.url), "utf8");
+  assert.match(searchMigration, /generated always as \(to_tsvector/i);
+  assert.match(searchMigration, /using gin \(search_vector\)/i);
 });

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
-export { hasDisallowedMessageContent, isSameOriginRequest, isValidUuid } from "@/lib/community/policy";
+export { hasDisallowedMessageContent, isSameOriginRequest, isValidCommunitySearchQuery, isValidUuid } from "@/lib/community/policy";
 
 export async function getCommunitySession() {
   const supabase = await getSupabaseSessionClient();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getCommunitySession, hasDisallowedMessageContent, isSameOriginRequest, isValidUuid } from "@/lib/community/server";
+import { getCommunitySession, hasDisallowedMessageContent, isSameOriginRequest, isValidCommunitySearchQuery, isValidUuid } from "@/lib/community/server";
 
 type RouteContext = { params: Promise<{ channelId: string }> };
 
@@ -22,7 +22,10 @@ export async function GET(request: Request, { params }: RouteContext) {
 
   const url = new URL(request.url);
   const before = url.searchParams.get("before");
+  const rawSearch = url.searchParams.get("q");
+  const search = rawSearch?.trim() ?? "";
   if (before && !Number.isFinite(Date.parse(before))) return NextResponse.json({ error: "Curseur invalide." }, { status: 400 });
+  if (search && !isValidCommunitySearchQuery(search)) return NextResponse.json({ error: "La recherche doit contenir entre 2 et 100 caractères." }, { status: 400 });
   let query = context.supabase
     .from("messages")
     .select("id, channel_id, author_id, content, parent_id, pinned_at, deleted_at, created_at, updated_at, community_members(display_name), reactions(id, user_id, emoji)")
@@ -31,6 +34,7 @@ export async function GET(request: Request, { params }: RouteContext) {
     .order("created_at", { ascending: false })
     .limit(50);
   if (before) query = query.lt("created_at", before);
+  if (search) query = query.textSearch("search_vector", search, { type: "websearch", config: "simple" });
   const { data, error } = await query;
   if (error) {
     console.error("Could not load community messages:", error.message);

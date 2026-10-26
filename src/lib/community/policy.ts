@@ -14,6 +14,13 @@ export function isValidUuid(value: unknown): value is string {
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+export function isValidCommunitySearchQuery(value: unknown): value is string {
+  return typeof value === "string"
+    && value.trim().length >= 2
+    && value.trim().length <= 100
+    && !/[\u0000-\u001f\u007f]/.test(value);
+}
+
 export function hasDisallowedMessageContent(content: string): boolean {
   const normalized = content.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   return /\b(gains? garantis?|revenu passif garanti|sans risque|devenir riche|derniere chance|garantis? des gains?)\b/i.test(normalized);
