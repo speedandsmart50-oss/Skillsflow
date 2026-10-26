@@ -126,6 +126,17 @@ export function CommunityHome({ initialName }: { initialName: string }) {
       )}
 
       {error && <p role="alert" className="animate-rise mb-5 rounded-xl border border-rose-300/30 bg-rose-300/10 p-4 text-sm text-rose-100">{error}</p>}
+      <section id="valeurs" className="mb-6 scroll-mt-28 rounded-3xl border border-cyan-300/15 bg-[#101a2b] p-5 shadow-[0_18px_55px_rgba(0,0,0,.16)] sm:mb-8 sm:p-6" aria-labelledby="community-values-title">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div><p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Apprendre et avancer ensemble</p><h2 id="community-values-title" className="mt-2 text-xl font-bold text-white sm:text-2xl">Une communauté fondée sur le partage</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Des échanges utiles, des formations concrètes et une progression qui respecte le rythme de chacun.</p></div>
+          <Link href="/community/closing-negociation" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-cyan-300/25 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300/55 hover:bg-cyan-300/[.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Découvrir l’académie <span aria-hidden="true">↗</span></Link>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <article className="rounded-2xl border border-white/[.07] bg-slate-950/25 p-4"><h3 className="font-semibold text-white">Partager avec respect</h3><p className="mt-1.5 text-sm leading-6 text-slate-300">Écouter les expériences et accueillir les questions sans jugement.</p></article>
+          <article className="rounded-2xl border border-white/[.07] bg-slate-950/25 p-4"><h3 className="font-semibold text-white">Apprendre par la pratique</h3><p className="mt-1.5 text-sm leading-6 text-slate-300">S’appuyer sur les parcours et les échanges pour progresser étape par étape.</p></article>
+          <article className="rounded-2xl border border-white/[.07] bg-slate-950/25 p-4"><h3 className="font-semibold text-white">Avancer sans pression</h3><p className="mt-1.5 text-sm leading-6 text-slate-300">Pas de promesse de revenus, de pression ni de messages répétés.</p></article>
+        </div>
+      </section>
       {loading ? <p aria-live="polite" className="rounded-2xl border border-slate-700 bg-[#101a2b] p-6 text-slate-300">Chargement des salons…</p> : !rules && (
         <div className="grid items-start gap-5 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-7">
           <aside className="animate-rise h-fit rounded-3xl border border-slate-700/80 bg-gradient-to-b from-[#111c2e] to-[#0c1422] p-4 shadow-[0_18px_55px_rgba(0,0,0,.2)] sm:p-5" aria-label="Menu des salons">
