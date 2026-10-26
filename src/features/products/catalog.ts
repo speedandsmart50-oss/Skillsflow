@@ -178,7 +178,9 @@ export async function getCatalogProducts(): Promise<Product[]> {
       name: row.name,
       domain: row.domain ?? existingProduct?.domain ?? "Général",
       catalogStatus: row.catalog_status ?? (row.status === "published" ? "disponible" : "en_preparation"),
-      tagline: existingProduct?.tagline ?? row.description,
+      tagline: existingProduct?.tagline ?? (row.slug === "pack-marketing-reseau"
+        ? "Les quatre skills de marketing de réseau regroupés dans un seul pack."
+        : row.description),
       description: row.description || existingProduct?.description || "",
       problem: existingProduct?.problem ?? row.description,
       stack: existingProduct?.stack ?? ["Claude", "ChatGPT"],

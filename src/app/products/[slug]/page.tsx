@@ -63,10 +63,10 @@ async function ProductDetailContent({
             </div>
           )}
 
-          <div className="mt-8">
+          {!product.includedSkills?.length && <div className="mt-8">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Le besoin</h2>
               <p className="mt-3 text-slate-600">{product.problem}</p>
-          </div>
+          </div>}
 
           <div className="mt-8">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">{product.includedSkills?.length || product.isMemberSkill ? "Apr\u00e8s votre achat" : "Installation"}</h2>

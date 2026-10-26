@@ -28,7 +28,7 @@ async function ShopContent() {
           </div>
           <div className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-slate-900/70 px-4 py-2 text-sm text-slate-300">
             <span className="h-2 w-2 rounded-full bg-cyan-300" />
-            {products.filter((product) => !product.includedSkills?.length).length} skills &#183; {products.filter((product) => product.includedSkills?.length).length} pack(s)
+            {products.filter((product) => !product.includedSkills?.length).length} skills &#183; {products.filter((product) => product.includedSkills?.length).length} {products.filter((product) => product.includedSkills?.length).length === 1 ? "pack" : "packs"}
           </div>
         </div>
 
