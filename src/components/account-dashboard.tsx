@@ -413,7 +413,10 @@ export function AccountDashboard() {
           </section>
         ) : (
           <div className="account-layout mt-7" aria-live="polite">
-            <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
+            <aside className="account-nav-stack" aria-label="Navigation de votre espace">
+              <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
+              <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
+            </aside>
             <section className="account-content" key={section}>
             {section === "catalog" && <AccountCatalog />}
             {section === "overview" && (
@@ -621,7 +624,6 @@ export function AccountDashboard() {
               </div>
             )}
             </section>
-            <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
           </div>
         )}
       </div>
@@ -651,7 +653,7 @@ function AccountSideNav({ title, ids, selected, onSelect }: {
       const item = sections.find((entry) => entry.id === id);
       if (!item) return null;
       return <li key={id}><button type="button" aria-current={selected === id ? "page" : undefined} onClick={() => onSelect(id)} className={`account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${selected === id ? "is-active bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"}`}><span aria-hidden="true" className="text-xs">{id === "overview" ? "◈" : id === "skills" ? "✳" : id === "catalog" ? "▦" : id === "mcp" ? "⌘" : id === "billing" ? "＄" : id === "privacy" ? "◉" : "?"}</span>{item.label}</button></li>;
-    })}<li><Link href="/community" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">✦</span>Communauté</Link></li><li><Link href="/member/prospection" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">↗</span>SkillFlow Prospection</Link></li></ul>
+    })}<li><Link href="/community" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">✦</span>Communauté</Link></li><li><Link href="/community/my" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">◈</span>Ma communauté</Link></li><li><Link href="/member/prospection" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">↗</span>SkillFlow Prospection</Link></li></ul>
   </nav>;
 }
 

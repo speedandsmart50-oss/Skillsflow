@@ -37,19 +37,70 @@ body:has(.admin-shell) .app-shell-chrome {
 
 .account-layout {
   display: grid;
-  grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr) minmax(13rem, 15rem);
+  grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr);
   align-items: start;
+  gap: 1.25rem;
+}
+
+.account-nav-stack {
+  display: grid;
   gap: 1rem;
+  position: sticky;
+  top: 1.5rem;
 }
 
 .account-side-nav {
-  position: sticky;
-  top: 1.5rem;
   animation: account-nav-in 460ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
 
-.account-side-nav:last-child {
+.account-nav-stack .account-side-nav:nth-child(2) {
   animation-delay: 90ms;
+}
+
+.account-nav-stack .account-side-nav {
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+}
+
+.account-nav-link {
+  position: relative;
+  overflow: hidden;
+  transition: transform 180ms cubic-bezier(0.2, 0.75, 0.25, 1), background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.account-nav-link::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.16) 48%, transparent 72%);
+  content: "";
+  transform: translateX(-115%);
+  transition: transform 500ms ease;
+  pointer-events: none;
+}
+
+.account-nav-link:hover::after,
+.account-nav-link:focus-visible::after {
+  transform: translateX(115%);
+}
+
+.account-nav-link:hover {
+  transform: translateX(3px);
+}
+
+.account-nav-link > span {
+  display: inline-grid;
+  width: 1.15rem;
+  place-items: center;
+  transition: transform 180ms ease;
+}
+
+.account-nav-link:hover > span,
+.account-nav-link[aria-current="page"] > span {
+  transform: scale(1.18) rotate(-8deg);
+}
+
+.account-nav-link[aria-current="page"] {
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.16);
 }
 
 .account-content {
@@ -459,16 +510,17 @@ body:has(.admin-shell) .app-shell-chrome {
 
 @media (max-width: 1100px) {
   .account-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .account-content {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    grid-column: auto;
+    grid-row: auto;
   }
 
-  .account-side-nav {
+  .account-nav-stack {
     position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -482,8 +534,8 @@ body:has(.admin-shell) .app-shell-chrome {
     grid-row: auto;
   }
 
-  .account-side-nav:last-child {
-    grid-row: 3;
+  .account-nav-stack {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -957,6 +1009,12 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .account-nav-link:hover,
+  .account-nav-link:hover > span,
+  .account-nav-link[aria-current="page"] > span {
+    transform: none;
+  }
+
   *,
   *::before,
   *::after {

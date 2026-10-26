@@ -25,7 +25,7 @@ const instrument = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "SkillFlow — Des skills IA pour le travail réel",
+  title: "Skillsflow",
   description: "Découvrez des skills IA pratiques, leurs formats compatibles et les guides pour les intégrer à votre façon de travailler.",
 };
 
