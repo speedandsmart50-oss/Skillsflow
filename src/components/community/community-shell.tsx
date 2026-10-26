@@ -1,52 +1,42 @@
 import Link from "next/link";
 import { CommunityNotifications } from "@/components/community/community-notifications";
 
-const communityLinks = [
-  { label: "Accueil", href: "/community" },
-  { label: "Académies", href: "/community/closing-negociation" },
-  { label: "Formations", href: "/community/closing-negociation#parcours" },
-  { label: "Nos valeurs", href: "/community#valeurs" },
-];
-
-const utilityLinkClass = "inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-950/20 px-3.5 text-sm font-semibold text-slate-200 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-300/50 hover:bg-cyan-300/[.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
+const actionClass = "inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-[#203650] bg-[#0B1729]/70 px-3.5 text-sm font-semibold text-[#C7D4E3] transition duration-200 hover:border-[#20DDF2]/50 hover:bg-[#20DDF2]/[.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]";
 
 export function CommunityShell({ children, userId, isStaff }: { children: React.ReactNode; userId: string; isStaff: boolean }) {
   return (
-    <div className="mx-auto min-h-[calc(100vh-76px)] max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-      <header className="mb-7 overflow-hidden rounded-3xl border border-cyan-300/15 bg-[#101a2b] shadow-[0_18px_60px_rgba(0,.22)]">
-        <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between lg:px-7 lg:py-5">
+    <div className="min-h-[calc(100vh-72px)] bg-[#07111F] font-sans text-[#F4F7FC]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <header className="mb-7 rounded-2xl border border-[#203650] bg-[#0B1729] shadow-[0_12px_36px_rgba(0,0,0,.16)]">
+        <div className="flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center md:justify-between lg:px-7">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[.22em] text-cyan-300">SkillFlow <span className="mx-1.5 text-slate-600">/</span> Communauté</p>
-            <h1 className="mt-1.5 text-xl font-bold tracking-tight text-white sm:text-2xl">Progressez avec méthode</h1>
+            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.18em] text-[#20DDF2]"><span aria-hidden="true">⌂</span><span>SkillFlow</span><span aria-hidden="true" className="text-[#60738A]">/</span><span>Communauté</span></p>
+            <h1 className="mt-1.5 text-xl font-bold tracking-[-.025em] text-[#F4F7FC] sm:text-2xl">Progressez avec méthode</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+
+          <div className="flex items-center gap-2">
             <CommunityNotifications userId={userId} />
-            {isStaff && <Link className={utilityLinkClass} href="/community/moderation">Modération</Link>}
-            <Link className={utilityLinkClass} href="/member/skills">Mes skills</Link>
-            <Link className={utilityLinkClass} href="/account">Mon compte</Link>
+            <div className="hidden items-center gap-2 md:flex">
+              {isStaff && <Link className={actionClass} href="/community/moderation">Modération</Link>}
+              <Link className={actionClass} href="/member/skills">Mes skills</Link>
+              <Link className={actionClass} href="/account">Mon compte</Link>
+            </div>
+            <details className="group relative md:hidden">
+              <summary className={`${actionClass} list-none cursor-pointer [&::-webkit-details-marker]:hidden`}>
+                Actions <span aria-hidden="true" className="ml-2 text-xs text-[#8EA2B9] transition-transform group-open:rotate-180">⌄</span>
+              </summary>
+              <nav aria-label="Actions de la communauté" className="absolute right-0 z-30 mt-2 grid w-48 gap-1 rounded-xl border border-[#203650] bg-[#0B1729] p-2 shadow-2xl">
+                {isStaff && <Link className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#D6E1EF] hover:bg-white/[.05]" href="/community/moderation">Modération</Link>}
+                <Link className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#D6E1EF] hover:bg-white/[.05]" href="/member/skills">Mes skills</Link>
+                <Link className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#D6E1EF] hover:bg-white/[.05]" href="/account">Mon compte</Link>
+                <Link className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#D6E1EF] hover:bg-white/[.05]" href="/community#suggestion">Faire une suggestion</Link>
+              </nav>
+            </details>
           </div>
-        </div>
-        <div className="border-t border-slate-700/70 bg-slate-950/15 px-4 py-3 sm:px-6 lg:px-7">
-          <nav aria-label="Explorer la communauté" className="flex flex-wrap items-center gap-1.5">
-            {communityLinks.map((item, index) => (
-              <Link
-                key={item.href}
-                aria-current={index === 0 ? "page" : undefined}
-                className={`inline-flex min-h-10 shrink-0 items-center rounded-xl px-3.5 text-sm font-semibold transition duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${index === 0 ? "bg-cyan-300 text-slate-950 shadow-[0_6px_18px_rgba(34,211,238,.13)] hover:bg-cyan-200" : "text-slate-300 hover:bg-white/[.06] hover:text-white"}`}
-                href={item.href}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <span aria-hidden="true" className="mx-1 hidden h-6 w-px bg-slate-700 sm:block" />
-            <Link className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-300/[.07] px-3.5 text-sm font-semibold text-cyan-100 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-300/50 hover:bg-cyan-300/[.12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300" href="/community#suggestion">
-              <span aria-hidden="true" className="text-base leading-none">＋</span>
-              Faire une suggestion
-            </Link>
-          </nav>
         </div>
       </header>
       {children}
+      </div>
     </div>
   );
 }

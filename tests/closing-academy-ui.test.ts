@@ -22,23 +22,30 @@ test("the academy roadmap reflects the supplied four levels and ethical requirem
   assert.match(page, /<details/);
 });
 
-test("the academy is available in the site header on desktop and mobile", async () => {
-  const header = await readFile(new URL("../src/components/site-header.tsx", import.meta.url), "utf8");
+test("the primary navigation shows the active page and provides a complete mobile menu", async () => {
+  const header = await readFile(new URL("../src/components/site-header-navigation.tsx", import.meta.url), "utf8");
   assert.match(header, /label: "Académies", href: "\/community\/closing-negociation"/);
-  assert.match(header, /href="\/community\/closing-negociation" aria-label="Académies" title="Académies"/);
+  assert.match(header, /aria-label="Navigation principale"/);
+  assert.match(header, /aria-label="Navigation mobile"/);
+  assert.match(header, /aria-current=\{active \? "page" : undefined\}/);
+  assert.match(header, /Connexion/);
+  assert.match(header, /Mes skills/);
 });
 
-test("the community header groups academy, training and values with visible value cards", async () => {
+test("the community header groups member actions and the values section presents the three principles", async () => {
   const shell = await readFile(new URL("../src/components/community/community-shell.tsx", import.meta.url), "utf8");
   const home = await readFile(new URL("../src/components/community/community-home.tsx", import.meta.url), "utf8");
-  assert.match(shell, /label: "Académies", href: "\/community\/closing-negociation"/);
-  assert.match(shell, /label: "Formations", href: "\/community\/closing-negociation#parcours"/);
-  assert.match(shell, /label: "Nos valeurs", href: "\/community#valeurs"/);
+  assert.match(shell, /href="\/community\/moderation">Modération/);
+  assert.match(shell, /href="\/member\/skills">Mes skills/);
+  assert.match(shell, /href="\/account">Mon compte/);
+  assert.match(shell, /aria-label="Actions de la communauté"/);
   assert.match(home, /id="valeurs"/);
   assert.match(home, /Partager avec respect[\s\S]*Apprendre par la pratique[\s\S]*Avancer sans pression/);
+  assert.match(home, /Découvrir l’académie/);
+  assert.match(home, /Faire une suggestion/);
 });
 
-test("the community sidebar replaces Organisation with the academy and puts refresh last", async () => {
+test("the community sidebar keeps the academy and refresh action available", async () => {
   const home = await readFile(new URL("../src/components/community/community-home.tsx", import.meta.url), "utf8");
   assert.match(home, /filter\(\(channel\) => channel\.slug !== "organisation"\)/);
   assert.match(home, /beforeChannelIndex[\s\S]*coachIndex[\s\S]*channelItems\.splice\(beforeChannelIndex, 0, \{ type: "academy" \}\)/);
