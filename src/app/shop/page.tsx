@@ -23,12 +23,12 @@ async function ShopContent() {
         <div className="flex flex-col gap-6 border-b border-slate-800 pb-8 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Catalogue SkillFlow</p>
-            <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">Une compétence IA, à votre façon de travailler.</h1>
-            <p className="mt-4 max-w-2xl text-lg text-slate-300">Des compétences conçues pour vous aider dans votre activité, avec des formats adaptés à vos assistants IA préférés.</p>
+            <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">Des skills et des packs pour votre activit&#233;.</h1>
+            <p className="mt-4 max-w-2xl text-lg text-slate-300">Choisissez un skill &#224; l&#8217;unit&#233; ou un pack qui regroupe plusieurs comp&#233;tences compl&#233;mentaires.</p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-slate-900/70 px-4 py-2 text-sm text-slate-300">
             <span className="h-2 w-2 rounded-full bg-cyan-300" />
-            {products.length} {products.length === 1 ? "skill au catalogue" : "skills au catalogue"}
+            {products.filter((product) => !product.includedSkills?.length).length} skills &#183; {products.filter((product) => product.includedSkills?.length).length} pack(s)
           </div>
         </div>
 

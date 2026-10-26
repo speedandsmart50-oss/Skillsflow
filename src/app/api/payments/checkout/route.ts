@@ -82,7 +82,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Impossible de vérifier le contenu de ce skill." }, { status: 500 });
   }
   const grantsMemberSkillAccess = Boolean(linkedSkill);
-  if (!product.zip_path && !grantsMemberSkillAccess) {
+  const { data: bundleItems, error: bundleItemsError } = await supabase
+    .from("product_bundle_items")
+    .select("item_product_id")
+    .eq("bundle_product_id", product.id);
+  if (bundleItemsError) {
+    console.error("Could not verify bundle contents:", bundleItemsError.message);
+    return NextResponse.json({ error: "Impossible de vérifier le contenu de cette offre." }, { status: 500 });
+  }
+  const isBundle = Boolean(bundleItems?.length);
+  if (isBundle) {
+    const itemIds = bundleItems.map((item) => item.item_product_id);
+    const { data: availableItems, error: itemCheckError } = await supabase
+      .from("products")
+      .select("id")
+      .in("id", itemIds)
+      .eq("status", "published")
+      .eq("catalog_status", "disponible")
+      .is("archived_at", null);
+    if (itemCheckError || availableItems?.length !== itemIds.length) {
+      console.error("Bundle contains unavailable products:", itemCheckError?.message ?? product.id);
+      return NextResponse.json({ error: "Un ou plusieurs skills de ce pack ne sont pas disponibles." }, { status: 409 });
+    }
+  }
+  if (!product.zip_path && !grantsMemberSkillAccess && !isBundle) {
     return NextResponse.json({ error: "Le pack n'est pas encore prêt pour le paiement." }, { status: 503 });
   }
 
@@ -105,6 +128,7 @@ export async function POST(request: Request) {
       product.slug,
       productPriceEur,
       productPriceXof,
+      !isBundle,
     );
   } catch (error) {
     if (error instanceof InvalidCouponError) {

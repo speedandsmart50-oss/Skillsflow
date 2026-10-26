@@ -28,6 +28,8 @@ type VersionRow = {
   created_at: string;
 };
 
+type BundleItemRow = { bundle_product_id: string; item_product_id: string };
+
 function isSchemaCompatibilityError(error: { code?: string; message?: string } | null) {
   return Boolean(error && (
     error.code === "PGRST204"
@@ -92,6 +94,31 @@ export async function getCatalogProducts(): Promise<Product[]> {
     console.error("Could not load catalog skill links:", linkedSkillsResult.error.message);
   }
   const memberSkillProductIds = new Set((linkedSkillsResult.data ?? []).map((skill) => skill.product_id));
+  const bundleItemsResult = productIds.length
+    ? await supabase.from("product_bundle_items").select("bundle_product_id, item_product_id").in("bundle_product_id", productIds).order("position", { ascending: true })
+    : { data: [], error: null };
+  if (bundleItemsResult.error && !isSchemaCompatibilityError(bundleItemsResult.error)) {
+    console.error("Could not load catalog bundle items:", bundleItemsResult.error.message);
+    throw new Error("Les packs du catalogue sont temporairement indisponibles.");
+  }
+  const bundleItems = (bundleItemsResult.data ?? []) as BundleItemRow[];
+  const bundleItemProductIds = [...new Set(bundleItems.map((item) => item.item_product_id))];
+  const bundleProductsResult = bundleItemProductIds.length
+    ? await supabase.from("products").select("id, name").in("id", bundleItemProductIds).eq("status", "published").is("archived_at", null)
+    : { data: [], error: null };
+  if (bundleProductsResult.error && !isSchemaCompatibilityError(bundleProductsResult.error)) {
+    console.error("Could not load catalog bundle product names:", bundleProductsResult.error.message);
+    throw new Error("Les packs du catalogue sont temporairement indisponibles.");
+  }
+  const bundleItemNames = new Map((bundleProductsResult.data ?? []).map((item) => [item.id, item.name]));
+  const bundleNamesByProductId = new Map<string, string[]>();
+  for (const item of bundleItems) {
+    const itemName = bundleItemNames.get(item.item_product_id);
+    if (!itemName) continue;
+    const current = bundleNamesByProductId.get(item.bundle_product_id) ?? [];
+    current.push(itemName);
+    bundleNamesByProductId.set(item.bundle_product_id, current);
+  }
   let versions: VersionRow[] = [];
 
   if (productIds.length) {
@@ -165,12 +192,16 @@ export async function getCatalogProducts(): Promise<Product[]> {
       status: row.status,
       zipFile,
       isMemberSkill: memberSkillProductIds.has(row.id),
+      includedSkills: bundleNamesByProductId.get(row.id) ?? [],
       compatibleAgents: existingProduct?.compatibleAgents ?? ["Claude", "ChatGPT"],
       versions: publishedVersions.length ? publishedVersions : existingProduct?.versions ?? [],
     };
   });
 
-  return products.sort((left, right) => Number(right.slug === "go-pro-mlm") - Number(left.slug === "go-pro-mlm"));
+  return products.sort((left, right) => {
+    const bundleRank = Number(Boolean(right.includedSkills?.length)) - Number(Boolean(left.includedSkills?.length));
+    return bundleRank || Number(right.slug === "go-pro-mlm") - Number(left.slug === "go-pro-mlm");
+  });
 }
 
 export type CatalogSkillPreview = {

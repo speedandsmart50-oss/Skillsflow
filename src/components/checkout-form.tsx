@@ -20,7 +20,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
   const requestId = useRef<string | null>(null);
   let price: ReturnType<typeof calculateProductPrice>;
   try {
-    price = calculateProductPrice(coupon, product.slug, product.price, product.priceXof);
+    price = calculateProductPrice(coupon, product.slug, product.price, product.priceXof, !product.includedSkills?.length);
   } catch (caught) {
     if (!(caught instanceof InvalidCouponError)) throw caught;
     price = calculateProductPrice("", product.slug, product.price, product.priceXof);
@@ -85,6 +85,14 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
         <form onSubmit={startCheckout} className="mt-8 grid gap-8 lg:grid-cols-[1fr_0.8fr]">
           <section className="rounded-2xl border border-cyan-400/15 bg-slate-900/60 p-6 sm:p-8">
             <h2 className="text-xl font-semibold">{product.name}</h2>
+            {Boolean(product.includedSkills?.length) && (
+              <div className="mt-4 rounded-xl border border-violet-300/20 bg-violet-300/5 p-4 text-sm text-slate-200">
+                <p className="font-semibold">Pack MLM · {product.includedSkills?.length} skills inclus</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-300">
+                  {product.includedSkills?.map((skill) => <li key={skill}>{skill}</li>)}
+                </ul>
+              </div>
+            )}
             <p className="mt-2 text-sm text-slate-400">Compte SkillFlow obligatoire pour suivre l’achat.</p>
             <label htmlFor="coupon" className="mt-8 block text-sm font-medium text-slate-200">Code promo (optionnel)</label>
             <div className="mt-2 flex gap-2">

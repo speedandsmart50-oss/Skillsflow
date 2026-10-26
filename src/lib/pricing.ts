@@ -19,8 +19,13 @@ export function calculateProductPrice(
   productSlug = PRODUCT_SLUG,
   productPriceEur = PRODUCT_PRICE_EUR,
   productPriceXof = eurosToXof(productPriceEur),
+  allowSmartCoupon = true,
 ) {
   const couponCode = couponInput.trim().toUpperCase();
+
+  if (couponCode === SMART_COUPON_CODE && !allowSmartCoupon) {
+    throw new InvalidCouponError("Le coupon SMART s’applique à un skill individuel, pas à un pack.");
+  }
 
   if (couponCode && couponCode !== BOOST_COUPON_CODE && couponCode !== SMART_COUPON_CODE && couponCode !== GOPRO_COUPON_CODE) {
     throw new InvalidCouponError();

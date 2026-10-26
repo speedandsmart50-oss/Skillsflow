@@ -20,6 +20,7 @@ export type Product = {
   status: ProductStatus;
   zipFile: string;
   isMemberSkill?: boolean;
+  includedSkills?: string[];
   compatibleAgents: string[];
   versions: VersionEntry[];
 };
