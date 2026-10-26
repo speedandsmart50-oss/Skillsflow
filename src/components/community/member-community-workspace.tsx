@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 type WorkspaceData = {
@@ -53,7 +54,7 @@ export function MemberCommunityWorkspace({ communityId, userId }: { communityId:
   const myDone = myTasks.filter((task) => doneIds.has(task.id)).length;
   const progress = myTasks.length ? Math.round((myDone / myTasks.length) * 100) : 0;
   return <main className="animate-rise space-y-6 pb-10">
-    <div className="flex flex-wrap items-center justify-between gap-3"><Link href="/community/my" className="text-sm font-semibold text-[#70E9F5] transition hover:text-white">â† Mes communautÃ©s</Link><Link href="/community/private-messages" className="inline-flex min-h-10 items-center rounded-xl border border-[#29425D] px-3.5 text-sm font-semibold text-[#DCE6F0] transition hover:border-[#20DDF2]/45 hover:text-[#70E9F5]">Messages privÃ©s</Link></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><BackLink href="/community/my">Mes communautés</BackLink><Link href="/community/private-messages" className="inline-flex min-h-10 items-center rounded-xl border border-[#29425D] px-3.5 text-sm font-semibold text-[#DCE6F0] transition hover:border-[#20DDF2]/45 hover:text-[#70E9F5]">Messages privés</Link></div>
     {error && <p role="alert" className="rounded-xl border border-rose-300/25 bg-rose-300/[.07] p-4 text-sm text-rose-100">{error}</p>}
     <section className="relative overflow-hidden rounded-2xl border border-[#203650] bg-[radial-gradient(ellipse_at_90%_0%,rgba(32,221,242,.10),transparent_40%),linear-gradient(135deg,#0B1729,#0E1D32)] p-6 sm:p-8"><div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-start"><div><p className="text-[11px] font-bold uppercase tracking-[.18em] text-[#70E9F5]">Espace privÃ© Â· {data.members.length} membre{data.members.length === 1 ? "" : "s"}</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-white">{data.community.name}</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-[#A8B7CB]">{data.community.description || "Un espace pour Ã©changer, partager vos objectifs et avancer ensemble."}</p></div>{data.inviteUrl && <button type="button" onClick={() => { void navigator.clipboard.writeText(new URL(data.inviteUrl!, window.location.origin).toString()).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); }); }} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-[#29425D] bg-[#07111F]/45 px-4 text-sm font-semibold text-[#DCE6F0] transition hover:-translate-y-0.5 hover:border-[#20DDF2]/55 hover:text-[#70E9F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#70E9F5]">{copied ? "Lien copiÃ©" : "Inviter des partenaires"}</button>}</div></section>
     <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,.76fr)]">

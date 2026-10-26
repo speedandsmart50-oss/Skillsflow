@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -41,7 +41,7 @@ export default function ResetPasswordPage() {
           {message && <p role="status" className="text-sm text-emerald-100">{message}</p>}
           <button disabled={pending} className="min-h-[3.35rem] w-full rounded-full bg-cyan-300 px-5 py-3 text-sm font-bold text-[#07111e] disabled:opacity-60">{pending ? "Patientez…" : "Enregistrer le mot de passe"}</button>
         </form>
-        <Link href="/login" className="mt-6 inline-block text-sm text-cyan-200 underline">Retour à la connexion</Link>
+        <BackLink href="/login" className="mt-6">Retour à la connexion</BackLink>
       </section>
     </main>
   );

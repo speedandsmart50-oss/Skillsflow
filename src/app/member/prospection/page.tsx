@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { connection } from "next/server";
 import { requirePageUser } from "@/lib/security/page-auth";
 
@@ -18,7 +18,7 @@ export default async function MemberProspectionPage() {
 
   return <main className="min-h-screen bg-[#07111F] px-4 py-8 text-[#F4F7FC] sm:px-6 sm:py-12">
     <div className="mx-auto max-w-6xl">
-      <Link href="/account" className="inline-flex min-h-11 items-center text-sm font-semibold text-[#70E9F5] transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#70E9F5]">← Retour à mon espace</Link>
+      <BackLink href="/account">Retour à mon espace</BackLink>
       <section className="relative mt-6 overflow-hidden rounded-[2rem] border border-[#203650] bg-[radial-gradient(ellipse_at_85%_5%,rgba(32,221,242,.14),transparent_38%),linear-gradient(135deg,#0B1729,#0E1D32)] p-6 sm:p-10">
         <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
           <div><p className="text-xs font-bold uppercase tracking-[.2em] text-[#20DDF2]">Espace SkillFlow</p><h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl">SkillFlow Prospection</h1><p className="mt-4 max-w-2xl text-base leading-7 text-[#A8B7CB] sm:text-lg">Votre espace de suivi commercial : contacts, pipelines, vidéos, formations et statistiques, réunis au même endroit.</p></div>

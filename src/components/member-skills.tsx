@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
@@ -59,7 +60,7 @@ export function MemberSkills({ skillId }: { skillId?: string }) {
   }
 
   return <main className="min-h-screen bg-[#0b1020] px-4 py-8 text-slate-100 sm:px-8"><div className="mx-auto max-w-6xl">
-    <header className="mb-8 flex flex-wrap items-center justify-between gap-4"><Link href="/account" className="font-semibold text-cyan-200">← Espace SkillFlow</Link><Link href="/member/skills" className="text-sm text-slate-300">Tous les skills</Link></header>
+    <header className="mb-8 flex flex-wrap items-center justify-between gap-4"><BackLink href="/account">Espace SkillFlow</BackLink><Link href="/member/skills" className="text-sm text-slate-300">Tous les skills</Link></header>
     <p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">SkillFlow · espace membre</p><h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-3xl font-semibold sm:text-4xl">{skillId ? detail?.skill.name ?? "Votre skill" : "Bibliothèque de skills"}</h1><p className="mt-3 max-w-2xl text-slate-300">Configurez vos outils métier. Vos réglages restent privés à votre compte.</p>
     <Link href="/member/prospection" className="mt-5 inline-flex min-h-11 items-center rounded-full border border-cyan-200/20 bg-cyan-200/[.06] px-4 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50 hover:bg-cyan-200/[.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">Ouvrir SkillFlow Prospection <span aria-hidden="true" className="ml-2">↗</span></Link>
     {error && <p role="alert" className="mt-6 rounded-2xl border border-rose-300/30 bg-rose-300/10 p-4 text-rose-100">{error}</p>}{notice && <p role="status" className="mt-6 rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-4 text-cyan-100">{notice}</p>}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { connection } from "next/server";
 
 export const metadata = {
@@ -87,9 +87,7 @@ export default async function ClosingNegociationPage() {
   await connection();
   return (
     <main className="mx-auto max-w-6xl">
-      <Link href="/community" className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-300/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
-        <span aria-hidden="true">←</span> Retour aux salons
-      </Link>
+      <BackLink href="/community">Retour aux salons</BackLink>
 
       <section className="animate-rise relative mt-4 overflow-hidden rounded-3xl border border-cyan-300/25 bg-[radial-gradient(ellipse_at_82%_15%,rgba(34,211,238,.18),transparent_38%),linear-gradient(130deg,#10283a,#101a2b_58%,#15162f)] p-6 shadow-[0_20px_65px_rgba(0,0,0,.22)] sm:p-9">
         <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full border border-cyan-200/10 bg-cyan-300/[.04] blur-2xl" />

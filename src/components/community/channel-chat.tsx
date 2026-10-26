@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { WeeklyGoalPanel } from "@/components/community/weekly-goal-panel";
@@ -155,7 +155,7 @@ export function ChannelChat({ channelId, channelSlug, channelName, description, 
     <main className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
       {channelSlug === "organisation" && <WeeklyGoalPanel />}
       <aside className="h-fit rounded-2xl border border-slate-700 bg-[#101a2b] p-5">
-        <Link href="/community" className="text-sm font-semibold text-cyan-200 hover:text-white">← Tous les salons</Link>
+        <BackLink href="/community">Tous les salons</BackLink>
         <h1 className="mt-5 text-xl font-bold text-white">{channelName}</h1>
         <p className="mt-2 text-sm leading-6 text-slate-300">{description}</p>
         <p className="mt-5 border-t border-slate-700 pt-4 text-xs leading-5 text-slate-400">Échangez avec respect. Pas de promesse de revenus, de pression ni de messages répétés.</p>

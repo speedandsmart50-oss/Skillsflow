@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 import { calculateProductPrice, InvalidCouponError } from "@/lib/pricing";
@@ -141,7 +142,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
             </div>
             <p className="mt-2 text-sm text-slate-400">{formatXof(price.totalXof)} XOF</p>
             <p className="mt-4 border-t border-slate-700 pt-4 text-xs leading-5 text-slate-500">{price.couponCode === "SMART" ? "L’accès est activé après validation du coupon." : "L’accès est activé uniquement après confirmation du paiement."} <Link href="/legal" className="text-cyan-200 underline underline-offset-2">Conditions de vente</Link></p>
-            <Link href="/shop" className="mt-6 block text-center text-sm font-medium text-slate-400 hover:text-cyan-300">Retour au catalogue</Link>
+            <BackLink href="/shop" className="mt-6">Retour au catalogue</BackLink>
           </aside>
         </form>
       </div>

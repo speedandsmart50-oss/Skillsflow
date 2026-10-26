@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 
 export default function Forbidden() {
   return (
@@ -12,12 +12,7 @@ export default function Forbidden() {
       <p className="mt-4 max-w-lg text-base leading-7 text-slate-300">
         Votre compte ne dispose pas des droits nécessaires pour consulter cette page.
       </p>
-      <Link
-        href="/"
-        className="mt-8 rounded-full bg-cyan-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
-      >
-        Retour à l’accueil
-      </Link>
+      <BackLink href="/" className="mt-8">Retour à l’accueil</BackLink>
     </main>
   );
 }

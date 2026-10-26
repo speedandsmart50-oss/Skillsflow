@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -46,9 +47,7 @@ async function ProductDetailContent({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-      <Link href="/shop" className="mb-6 inline-flex text-sm font-medium text-slate-600 hover:text-slate-900">
-        ← Retour au catalogue
-      </Link>
+      <BackLink href="/shop" className="mb-6">Retour au catalogue</BackLink>
       <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-4 flex items-center justify-between gap-4">

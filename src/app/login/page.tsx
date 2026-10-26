@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { Suspense } from "react";
 import { LoginForm } from "@/components/login-form";
 
@@ -48,9 +49,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <Link href="/" className="mt-10 inline-flex items-center gap-2 text-xs font-medium text-slate-400 transition hover:text-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
-            <span aria-hidden="true">←</span> Retour à SkillFlow
-          </Link>
+          <BackLink href="/" className="mt-10">Retour à SkillFlow</BackLink>
         </section>
 
         <div className="animate-rise animate-delay-2 mx-auto w-full max-w-[34rem] lg:mx-0 lg:justify-self-end">
