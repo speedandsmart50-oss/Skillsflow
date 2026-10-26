@@ -619,6 +619,18 @@ body:has(.landing-home) .app-shell-chrome button { color: #18324d; border-color:
 body:has(.landing-home) .app-shell-chrome nav[id="mobile-site-menu"] { background: #f8fcff; }
 body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; color: #61738a; }
 
+/* Keep the dark demo readable when the member's global light theme is active. */
+.landing-home .landing-demo-wrap [class~="bg-[#0b1221]"] { background-color: #0b1221 !important; color: #f4f7fc !important; }
+.landing-home .landing-demo-wrap [class*="text-white"] { color: #f4f7fc !important; }
+.landing-home .landing-demo-wrap [class*="text-slate-100"],
+.landing-home .landing-demo-wrap [class*="text-slate-200"],
+.landing-home .landing-demo-wrap [class*="text-slate-300"] { color: #dce6f1 !important; }
+.landing-home .landing-demo-wrap [class*="text-slate-400"],
+.landing-home .landing-demo-wrap [class*="text-slate-500"],
+.landing-home .landing-demo-wrap [class*="text-slate-600"] { color: #9eafc3 !important; }
+.landing-home .landing-demo-wrap [class*="text-cyan-100"],
+.landing-home .landing-demo-wrap [class*="text-cyan-200"] { color: #a5f3fc !important; }
+
 .landing-home {
   --landing-ink: #10203a;
   --landing-muted: #526984;
