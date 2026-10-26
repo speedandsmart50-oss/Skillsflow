@@ -138,7 +138,7 @@ returns table (
   name text,
   description text,
   required_tier integer,
-  position integer,
+  "position" integer,
   accessible boolean
 )
 language sql stable security definer set search_path = public
