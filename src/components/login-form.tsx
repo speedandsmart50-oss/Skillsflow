@@ -27,7 +27,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = safeNextPath(searchParams.get("next"));
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(() => searchParams.get("mode") === "signup" ? "signup" : "signin");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -122,7 +122,7 @@ export function LoginForm() {
         <p className="mt-3 max-w-md text-sm leading-6 text-slate-300 sm:text-base">
           {mode === "signin"
             ? "Accédez à votre espace pour gérer vos skills et retrouver vos téléchargements."
-            : "Créez votre espace SkillFlow pour suivre vos achats et gérer vos accès."}
+            : "Inscrivez-vous avec votre e-mail et un mot de passe, ou continuez avec Google."}
         </p>
       </div>
 

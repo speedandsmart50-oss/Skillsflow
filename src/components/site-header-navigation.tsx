@@ -36,6 +36,7 @@ export function SiteHeaderNavigation() {
 
     <div className="hidden shrink-0 items-center gap-2.5 lg:flex">
       <Link href="/login" className={actionLink}>Connexion</Link>
+      <Link href="/login?mode=signup" className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#20DDF2]/50 px-5 text-sm font-semibold text-[#70E9F5] transition duration-200 hover:-translate-y-0.5 hover:border-[#20DDF2] hover:bg-[#20DDF2]/[.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]">Inscription</Link>
       <Link href="/account" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#20DDF2] px-5 text-sm font-bold text-[#06131F] transition duration-200 hover:-translate-y-0.5 hover:bg-[#70E9F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]">Mes skills</Link>
     </div>
 
@@ -56,7 +57,8 @@ export function SiteHeaderNavigation() {
         })}
         <div className="mt-2 grid grid-cols-2 gap-2 border-t border-[#203650]/75 pt-3">
           <Link href="/login" onClick={() => setMenuOpen(false)} className={`${actionLink} w-full`}>Connexion</Link>
-          <Link href="/account" onClick={() => setMenuOpen(false)} className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#20DDF2] px-4 text-sm font-bold text-[#06131F] transition hover:bg-[#70E9F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]">Mes skills</Link>
+          <Link href="/login?mode=signup" onClick={() => setMenuOpen(false)} className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#20DDF2]/50 px-4 text-sm font-semibold text-[#70E9F5] transition hover:border-[#20DDF2] hover:bg-[#20DDF2]/[.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]">Inscription</Link>
+          <Link href="/account" onClick={() => setMenuOpen(false)} className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-full bg-[#20DDF2] px-4 text-sm font-bold text-[#06131F] transition hover:bg-[#70E9F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]">Mes skills</Link>
         </div>
       </div>
     </nav>}

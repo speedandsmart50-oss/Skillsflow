@@ -613,6 +613,8 @@ body:has(.landing-home) .app-shell-chrome a[aria-label="SkillFlow, accueil"] { c
 body:has(.landing-home) .app-shell-chrome nav a:not([aria-current="page"]) { color: #50647e; }
 body:has(.landing-home) .app-shell-chrome nav a:not([aria-current="page"]):hover { color: #087f9a; }
 body:has(.landing-home) .app-shell-chrome nav a[aria-current="page"] { color: #087f9a; }
+body:has(.landing-home) .app-shell-chrome a[href="/login?mode=signup"] { border-color: #a5dce8; background: #eafaff; color: #087f9a; }
+body:has(.landing-home) .app-shell-chrome a[href="/login?mode=signup"]:hover { border-color: #55bfd2; background: #def7fc; }
 body:has(.landing-home) .app-shell-chrome button { color: #18324d; border-color: #cbdbe9; }
 body:has(.landing-home) .app-shell-chrome nav[id="mobile-site-menu"] { background: #f8fcff; }
 body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; color: #61738a; }
