@@ -120,7 +120,7 @@ export async function getCatalogProducts(): Promise<Product[]> {
     versions = (data ?? []) as VersionRow[];
   }
 
-  return rows.map((row) => {
+  const products = rows.map((row) => {
     const existingProduct = getProductBySlug(row.slug);
     const publishedVersions: VersionEntry[] = versions
       .filter((version) => version.product_id === row.id)
@@ -169,6 +169,8 @@ export async function getCatalogProducts(): Promise<Product[]> {
       versions: publishedVersions.length ? publishedVersions : existingProduct?.versions ?? [],
     };
   });
+
+  return products.sort((left, right) => Number(right.slug === "go-pro-mlm") - Number(left.slug === "go-pro-mlm"));
 }
 
 export type CatalogSkillPreview = {
