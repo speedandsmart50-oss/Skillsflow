@@ -37,3 +37,14 @@ test("the community header groups academy, training and values with visible valu
   assert.match(home, /id="valeurs"/);
   assert.match(home, /Partager avec respect[\s\S]*Apprendre par la pratique[\s\S]*Avancer sans pression/);
 });
+
+test("the community sidebar replaces Organisation with the academy and puts refresh last", async () => {
+  const home = await readFile(new URL("../src/components/community/community-home.tsx", import.meta.url), "utf8");
+  assert.match(home, /filter\(\(channel\) => channel\.slug !== "organisation"\)/);
+  assert.match(home, /beforeChannelIndex[\s\S]*coachIndex[\s\S]*channelItems\.splice\(beforeChannelIndex, 0, \{ type: "academy" \}\)/);
+  assert.match(home, /item\.type === "academy"[\s\S]*Closing &amp; Négociation/);
+  const sidebar = home.indexOf('aria-label="Salons et académie de la communauté"');
+  const sidebarEnd = home.indexOf("</nav>", sidebar);
+  const refresh = home.indexOf("Actualiser les salons", sidebar);
+  assert.ok(sidebar >= 0 && sidebarEnd > sidebar && refresh > sidebarEnd, "refresh should follow every sidebar item");
+});

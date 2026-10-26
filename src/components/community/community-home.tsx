@@ -15,12 +15,12 @@ type Channel = {
 };
 type Rules = { version: string; body: string };
 type Payload = { channels?: Channel[]; rules?: Rules | null; error?: string };
+type SidebarItem = { type: "academy" } | { type: "channel"; channel: Channel };
 
 const iconBySlug: Record<string, string> = {
   bienvenue: "✦",
   prospection: "↗",
   "confiance-et-rejet": "◇",
-  organisation: "◷",
   "questions-au-coach": "?",
 };
 
@@ -84,6 +84,20 @@ export function CommunityHome({ initialName }: { initialName: string }) {
   }
 
   const accessibleChannels = useMemo(() => channels.filter((channel) => channel.accessible), [channels]);
+  const sidebarItems = useMemo<SidebarItem[]>(() => {
+    const organisationIndex = channels.findIndex((channel) => channel.slug === "organisation");
+    const coachIndex = channels.findIndex((channel) => channel.slug === "questions-au-coach");
+    const channelItems: SidebarItem[] = channels
+      .filter((channel) => channel.slug !== "organisation")
+      .map((channel) => ({ type: "channel", channel }));
+    const beforeChannelIndex = coachIndex >= 0
+      ? channels.slice(0, coachIndex).filter((channel) => channel.slug !== "organisation").length
+      : organisationIndex >= 0
+        ? channels.slice(0, organisationIndex).filter((channel) => channel.slug !== "organisation").length
+        : channelItems.length;
+    channelItems.splice(beforeChannelIndex, 0, { type: "academy" });
+    return channelItems;
+  }, [channels]);
   const unreadCount = accessibleChannels.reduce((total, channel) => total + channel.unread_count, 0);
   const organisation = accessibleChannels.find((channel) => channel.slug === "organisation");
 
@@ -144,28 +158,30 @@ export function CommunityHome({ initialName }: { initialName: string }) {
               <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-cyan-300">Explorer</p><h2 className="mt-1 text-lg font-bold text-white">Les salons</h2></div>
               <span className="rounded-full border border-slate-700 bg-slate-950/40 px-2.5 py-1 text-xs font-semibold text-slate-300">{accessibleChannels.length} ouverts</span>
             </div>
-            {channels.length === 0 ? <p className="rounded-xl border border-slate-700 bg-slate-950/30 p-4 text-sm text-slate-300">Aucun salon n’est disponible pour le moment.</p> : <nav aria-label="Salons de la communauté" className="grid gap-2">
-              {channels.map((channel, index) => channel.accessible ? (
-                <Link key={channel.id} href={`/community/channels/${channel.id}`} style={{ animationDelay: `${index * 65}ms` }} className="group animate-rise relative flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-950/25 p-3.5 transition duration-300 hover:translate-x-1 hover:border-cyan-300/45 hover:bg-cyan-300/[.055] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 motion-reduce:transform-none">
-                  <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/15 bg-cyan-300/[.07] text-lg font-bold text-cyan-200 transition duration-300 group-hover:scale-105 group-hover:border-cyan-300/40 group-hover:bg-cyan-300/15">{iconBySlug[channel.slug] ?? "✦"}</span>
-                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-slate-100 transition-colors group-hover:text-white">{channel.name}</span><span className="mt-0.5 block truncate text-xs text-slate-400">{channel.description}</span></span>
-                  {channel.unread_count > 0 ? <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[11px] font-black text-slate-950" aria-label={`${channel.unread_count} message(s) non lu(s)`}>{channel.unread_count}</span> : <span aria-hidden="true" className="shrink-0 text-sm text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-cyan-200">→</span>}
+            <nav aria-label="Salons et académie de la communauté" className="grid gap-2">
+              {channels.length === 0 && <p className="rounded-xl border border-slate-700 bg-slate-950/30 p-4 text-sm text-slate-300">Aucun salon n’est disponible pour le moment.</p>}
+              {sidebarItems.map((item, index) => item.type === "academy" ? (
+                <Link key="closing-negociation" href="/community/closing-negociation" style={{ animationDelay: `${index * 65}ms` }} className="group animate-rise relative flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-cyan-300/35 bg-cyan-300/[.08] p-3.5 transition duration-300 hover:translate-x-1 hover:border-cyan-300/60 hover:bg-cyan-300/[.12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 motion-reduce:transform-none">
+                  <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-300/10 text-lg font-bold text-cyan-200">◎</span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-white">Closing &amp; Négociation</span><span className="mt-0.5 block truncate text-xs text-slate-300">Apprenez à accompagner une décision éclairée.</span></span>
+                  <span aria-hidden="true" className="shrink-0 text-sm text-cyan-200 transition group-hover:translate-x-0.5">→</span>
+                </Link>
+              ) : item.channel.accessible ? (
+                <Link key={item.channel.id} href={`/community/channels/${item.channel.id}`} style={{ animationDelay: `${index * 65}ms` }} className="group animate-rise relative flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-950/25 p-3.5 transition duration-300 hover:translate-x-1 hover:border-cyan-300/45 hover:bg-cyan-300/[.055] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 motion-reduce:transform-none">
+                  <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/15 bg-cyan-300/[.07] text-lg font-bold text-cyan-200 transition duration-300 group-hover:scale-105 group-hover:border-cyan-300/40 group-hover:bg-cyan-300/15">{iconBySlug[item.channel.slug] ?? "✦"}</span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-slate-100 transition-colors group-hover:text-white">{item.channel.name}</span><span className="mt-0.5 block truncate text-xs text-slate-400">{item.channel.description}</span></span>
+                  {item.channel.unread_count > 0 ? <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[11px] font-black text-slate-950" aria-label={`${item.channel.unread_count} message(s) non lu(s)`}>{item.channel.unread_count}</span> : <span aria-hidden="true" className="shrink-0 text-sm text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-cyan-200">→</span>}
                   <span aria-hidden="true" className="absolute bottom-3 left-0 top-3 w-0.5 origin-center scale-y-0 rounded-full bg-cyan-300 transition-transform duration-300 group-hover:scale-y-100" />
                 </Link>
               ) : (
-                <div key={channel.id} style={{ animationDelay: `${index * 65}ms` }} className="animate-rise flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-[#0c1422]/75 p-3.5 opacity-75">
+                <div key={item.channel.id} style={{ animationDelay: `${index * 65}ms` }} className="animate-rise flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-[#0c1422]/75 p-3.5 opacity-75">
                   <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/35 text-sm text-slate-500">⌑</span>
-                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-slate-300">{channel.name}</span><span className="mt-0.5 block text-xs text-slate-500">Niveau {channel.required_tier} requis</span></span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-slate-300">{item.channel.name}</span><span className="mt-0.5 block text-xs text-slate-500">Niveau {item.channel.required_tier} requis</span></span>
                   <span aria-label="Salon verrouillé" className="text-xs text-slate-500">🔒</span>
                 </div>
               ))}
-            </nav>}
+            </nav>
             <button type="button" onClick={() => void loadChannels()} className="mt-4 w-full rounded-xl border border-slate-700 px-3 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">↻ Actualiser les salons</button>
-            <Link href="/community/closing-negociation" className="group mt-4 flex min-w-0 items-center gap-3 rounded-2xl border border-cyan-300/30 bg-cyan-300/[.07] p-3.5 transition duration-300 hover:translate-x-1 hover:border-cyan-300/60 hover:bg-cyan-300/[.11] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 motion-reduce:transform-none">
-              <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-300/10 text-lg font-bold text-cyan-200">◎</span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-white">Closing &amp; Négociation</span><span className="mt-0.5 block text-xs text-slate-300">Apprenez à accompagner une décision éclairée.</span></span>
-              <span aria-hidden="true" className="shrink-0 text-sm text-cyan-200 transition group-hover:translate-x-0.5">→</span>
-            </Link>
           </aside>
 
           <section className="animate-rise relative min-h-[360px] overflow-hidden rounded-3xl border border-cyan-300/15 bg-[radial-gradient(ellipse_at_80%_10%,rgba(34,211,238,.12),transparent_35%),linear-gradient(145deg,#111c2e,#0c1422_70%)] p-6 shadow-[0_20px_65px_rgba(0,0,0,.2)] sm:min-h-[440px] sm:p-8" style={{ animationDelay: "100ms" }}>
