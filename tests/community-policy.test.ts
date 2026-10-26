@@ -43,4 +43,6 @@ test("community migration enables RLS and limits channel and message access", as
   const moderationMigration = await readFile(new URL("../supabase/migrations/033_community_report_moderation.sql", import.meta.url), "utf8");
   assert.match(moderationMigration, /grant update \(status\) on public\.reports to authenticated/i);
   assert.match(moderationMigration, /create policy reports_staff_update[\s\S]*public\.community_is_staff\(\)/i);
+  const messagesRoute = await readFile(new URL("../src/app/api/community/channels/[channelId]/messages/route.ts", import.meta.url), "utf8");
+  assert.equal((messagesRoute.match(/reactions!reactions_message_id_channel_id_fkey\(/g) ?? []).length, 2);
 });

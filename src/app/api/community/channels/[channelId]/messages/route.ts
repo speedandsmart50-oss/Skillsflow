@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: RouteContext) {
   if (search && !isValidCommunitySearchQuery(search)) return NextResponse.json({ error: "La recherche doit contenir entre 2 et 100 caractères." }, { status: 400 });
   let query = context.supabase
     .from("messages")
-    .select("id, channel_id, author_id, content, parent_id, pinned_at, deleted_at, created_at, updated_at, community_members(display_name), reactions(id, user_id, emoji)")
+    .select("id, channel_id, author_id, content, parent_id, pinned_at, deleted_at, created_at, updated_at, community_members(display_name), reactions!reactions_message_id_channel_id_fkey(id, user_id, emoji)")
     .eq("channel_id", channelId)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -70,7 +70,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   const { data, error } = await context.supabase
     .from("messages")
     .insert({ channel_id: channelId, author_id: context.user.id, content: content.trim(), parent_id: parentId ?? null })
-    .select("id, channel_id, author_id, content, parent_id, pinned_at, deleted_at, created_at, updated_at, community_members(display_name), reactions(id, user_id, emoji)")
+    .select("id, channel_id, author_id, content, parent_id, pinned_at, deleted_at, created_at, updated_at, community_members(display_name), reactions!reactions_message_id_channel_id_fkey(id, user_id, emoji)")
     .single();
   if (error) {
     const tooFast = /quelques secondes|déjà été envoyé/i.test(error.message);
