@@ -31,9 +31,9 @@ test("the academy is available in the site header on desktop and mobile", async 
 test("the community header groups academy, training and values with visible value cards", async () => {
   const shell = await readFile(new URL("../src/components/community/community-shell.tsx", import.meta.url), "utf8");
   const home = await readFile(new URL("../src/components/community/community-home.tsx", import.meta.url), "utf8");
-  assert.match(shell, /href="\/community\/closing-negociation">Académies/);
-  assert.match(shell, /href="\/community\/closing-negociation#parcours">Formations/);
-  assert.match(shell, /href="\/community#valeurs">Nos valeurs/);
+  assert.match(shell, /label: "Académies", href: "\/community\/closing-negociation"/);
+  assert.match(shell, /label: "Formations", href: "\/community\/closing-negociation#parcours"/);
+  assert.match(shell, /label: "Nos valeurs", href: "\/community#valeurs"/);
   assert.match(home, /id="valeurs"/);
   assert.match(home, /Partager avec respect[\s\S]*Apprendre par la pratique[\s\S]*Avancer sans pression/);
 });

@@ -23,7 +23,8 @@ test("suggestions are reachable from the community navigation and allowed by the
   const shell = read("../src/components/community/community-shell.tsx");
   const migration = read("../supabase/migrations/037_community_suggestions.sql");
 
-  assert.match(shell, /href="\/community#suggestion">Faire une suggestion/);
+  assert.match(shell, /href="\/community#suggestion"/);
+  assert.match(shell, /Faire une suggestion/);
   assert.match(migration, /drop constraint if exists support_tickets_category_check/);
   assert.match(migration, /'question', 'refund', 'other', 'suggestion'/);
 });
