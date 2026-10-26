@@ -172,7 +172,7 @@ export function AnimatedShowcase() {
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <span className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1">Claude</span>
             <span className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1">ChatGPT</span>
-            <span className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1">MCP</span>
+            <span className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1">Exemple illustratif</span>
           </div>
           <span className="text-[11px] text-slate-500">Instructions + guide inclus</span>
         </div>
