@@ -1,7 +1,13 @@
 import { CommunityShell } from "@/components/community/community-shell";
 import { requirePageUser } from "@/lib/security/page-auth";
+import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
 
 export default async function CommunityLayout({ children }: { children: React.ReactNode }) {
   const user = await requirePageUser("/community");
-  return <CommunityShell userId={user.id}>{children}</CommunityShell>;
+  const supabase = await getSupabaseSessionClient();
+  const [{ data: profile }, { data: staff }] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+    supabase.from("community_staff").select("user_id").eq("user_id", user.id).maybeSingle(),
+  ]);
+  return <CommunityShell userId={user.id} isStaff={profile?.role === "admin" || Boolean(staff)}>{children}</CommunityShell>;
 }

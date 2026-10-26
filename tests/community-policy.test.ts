@@ -40,4 +40,7 @@ test("community migration enables RLS and limits channel and message access", as
   assert.match(notificationsMigration, /alter table public\.community_notifications enable row level security/i);
   assert.match(notificationsMigration, /user_id = auth\.uid\(\)/i);
   assert.match(notificationsMigration, /after insert on public\.messages/i);
+  const moderationMigration = await readFile(new URL("../supabase/migrations/033_community_report_moderation.sql", import.meta.url), "utf8");
+  assert.match(moderationMigration, /grant update \(status\) on public\.reports to authenticated/i);
+  assert.match(moderationMigration, /create policy reports_staff_update[\s\S]*public\.community_is_staff\(\)/i);
 });
