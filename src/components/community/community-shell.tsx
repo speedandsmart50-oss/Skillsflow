@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CommunityNotifications } from "@/components/community/community-notifications";
+import { CommunitySectionNav } from "@/components/community/community-section-nav";
 
 const actionClass = "inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-[#203650] bg-[#0B1729]/70 px-3.5 text-sm font-semibold text-[#C7D4E3] transition duration-200 hover:border-[#20DDF2]/50 hover:bg-[#20DDF2]/[.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]";
 
@@ -35,6 +36,7 @@ export function CommunityShell({ children, userId, isStaff }: { children: React.
           </div>
         </div>
       </header>
+      <CommunitySectionNav />
       {children}
       </div>
     </div>

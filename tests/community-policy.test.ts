@@ -59,3 +59,31 @@ test("community migration enables RLS and limits channel and message access", as
   assert.match(weeklyGoalRoute, /export async function PUT\(request: Request\)/);
   assert.match(weeklyGoalRoute, /export async function PATCH\(request: Request\)/);
 });
+
+test("member communities isolate team data and private messages to their participants", async () => {
+  const migration = await readFile(new URL("../supabase/migrations/039_member_communities_and_messaging.sql", import.meta.url), "utf8");
+  for (const table of ["member_communities", "member_community_memberships", "member_community_channels", "member_community_messages", "member_community_tasks", "member_community_task_checks", "member_direct_threads", "member_direct_messages"]) {
+    assert.match(migration, new RegExp(`alter table public\\.${table} enable row level security`, "i"));
+  }
+  assert.match(migration, /member_community_messages_read[\s\S]*member_is_community_member\(community_id\)/i);
+  assert.match(migration, /member_community_messages_write[\s\S]*author_id = auth\.uid\(\)/i);
+  assert.match(migration, /member_community_tasks_write[\s\S]*member_manages_community\(community_id\)/i);
+  assert.match(migration, /member_community_checks_insert[\s\S]*user_id = auth\.uid\(\)/i);
+  assert.match(migration, /member_direct_threads_read[\s\S]*auth\.uid\(\) in \(user_one, user_two\)/i);
+  assert.match(migration, /member_direct_messages_write[\s\S]*auth\.uid\(\) in \(t\.user_one, t\.user_two\)/i);
+  assert.match(migration, /open_member_direct_thread[\s\S]*share a community|open_member_direct_thread[\s\S]*communaut/i);
+  assert.match(migration, /grant select \(id, name, description, created_at\) on public\.member_communities/i);
+  assert.match(migration, /get_member_community_invite_token[\s\S]*member_manages_community/i);
+  assert.match(migration, /member_community_members_self_preferences[\s\S]*user_id = auth\.uid\(\)/i);
+  assert.match(migration, /share_progress boolean not null default false/i);
+  assert.match(migration, /share_avatar boolean not null default false/i);
+
+  const communityRoute = await readFile(new URL("../src/app/api/community/my/[communityId]/route.ts", import.meta.url), "utf8");
+  assert.match(communityRoute, /isSameOriginRequest\(request\)/);
+  assert.match(communityRoute, /member_role/);
+  const directRoute = await readFile(new URL("../src/app/api/community/private-messages/route.ts", import.meta.url), "utf8");
+  assert.match(directRoute, /open_member_direct_thread/);
+  assert.match(directRoute, /isSameOriginRequest\(request\)/);
+  const memberProfileRoute = await readFile(new URL("../src/app/api/community/members/[userId]/route.ts", import.meta.url), "utf8");
+  assert.match(memberProfileRoute, /if \(!shared\.length\)/);
+});
