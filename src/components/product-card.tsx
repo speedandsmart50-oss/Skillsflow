@@ -10,7 +10,7 @@ export function ProductCard({ product }: { product: Product }) {
   } as const;
 
   return (
-    <article className="group flex h-full flex-col rounded-3xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50 hover:shadow-[0_12px_36px_rgba(57,123,255,0.2)]">
+    <article className="catalog-product-card group flex h-full flex-col rounded-3xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50 hover:shadow-[0_12px_36px_rgba(57,123,255,0.2)]">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div className="flex flex-col items-start gap-2">
           {Boolean(product.includedSkills?.length) && (
@@ -28,7 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         </div>
 
-        <span className="text-right text-lg font-black text-white">
+        <span className="catalog-product-price text-right text-lg font-black text-white">
           €{product.price.toFixed(2)}
           <span className="block text-xs font-medium text-[#8F9CAE]">
             {new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF
