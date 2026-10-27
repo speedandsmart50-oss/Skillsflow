@@ -17,7 +17,6 @@ import {
   NavIconMcp,
   NavIconCommunity,
   NavIconMyCommunity,
-  NavIconProspection,
   NavIconBilling,
   NavIconPrivacy,
   NavIconHelp,
@@ -566,13 +565,6 @@ export function AccountDashboard() {
                   <span>Ma communauté</span>
                 </Link>
 
-                <Link
-                  href="/member/prospection"
-                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
-                >
-                  <NavIconProspection active={false} />
-                  <span>SkillFlow Prospection</span>
-                </Link>
               </nav>
 
               {/* Secondary Navigation: VOTRE ESPACE */}
