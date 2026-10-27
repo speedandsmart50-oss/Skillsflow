@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import type { AuthStatus } from "@/components/auth-session-provider";
 
 const navItems = [
   { label: "Accueil", href: "/" },
@@ -20,9 +21,14 @@ function isCurrentPage(pathname: string, href: string) {
 
 const actionLink = "inline-flex min-h-11 items-center justify-center rounded-full border border-[#203650] px-5 text-sm font-semibold text-[#D6E1EF] transition duration-200 hover:border-[#20DDF2]/55 hover:bg-[#20DDF2]/[.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#70E9F5]";
 
-export function SiteHeaderNavigation({ isAuthenticated }: { isAuthenticated: boolean }) {
+export function SiteHeaderNavigation({ authStatus }: { authStatus: AuthStatus }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAuthenticated = authStatus === "authenticated";
+
+  if (authStatus === "loading") {
+    return <div aria-label="Chargement de la session" className="h-11 w-48 animate-pulse rounded-xl bg-white/[.025]" />;
+  }
 
   return <>
     <nav aria-label="Navigation principale" className="hidden items-center gap-1 lg:flex">

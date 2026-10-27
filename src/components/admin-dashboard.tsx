@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { pricingOffers } from "@/features/pricing/offers";
 
-type Section = "overview" | "catalog" | "orders" | "customers" | "mcp" | "waitlist" | "support" | "settings";
+type Section = "overview" | "premium" | "catalog" | "orders" | "customers" | "mcp" | "waitlist" | "support" | "settings";
 type CatalogStatus = "a_venir" | "en_preparation" | "disponible";
 type OrderStatus = "pending" | "paid" | "failed";
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
@@ -116,6 +117,7 @@ type AdminData = {
 
 const sections: { id: Section; label: string }[] = [
   { id: "overview", label: "Vue d’ensemble" },
+  { id: "premium", label: "Offres Premium" },
   { id: "catalog", label: "Catalogue" },
   { id: "orders", label: "Commandes" },
   { id: "customers", label: "Clients" },
@@ -211,6 +213,7 @@ export function AdminDashboard() {
       setViewerId(authData.user?.id ?? "");
       const endpoint: Record<Section, string> = {
         overview: "/api/admin/dashboard",
+        premium: "/api/admin/dashboard",
         catalog: "/api/admin/skills",
         orders: `/api/admin/orders${orderFilter ? `?status=${encodeURIComponent(orderFilter)}` : ""}`,
         customers: `/api/admin/customers${search ? `?search=${encodeURIComponent(search)}` : ""}`,
@@ -484,6 +487,30 @@ export function AdminDashboard() {
           {loading ? <p className="mt-8 text-[#52645E]" role="status">Chargement des données…</p> : (
             <section className="admin-panel mt-6 space-y-5" key={section}>
               {section === "overview" && <Overview data={data} onRefresh={() => void loadData()} onViewOrders={() => setSection("orders")} />}
+
+              {section === "premium" && (
+                <>
+                  <section className={`${cardClass} border-cyan-300/30 bg-gradient-to-br from-[#071a39] to-[#0b2044] text-white`}>
+                    <p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Offres commerciales</p>
+                    <h2 className="mt-2 text-2xl font-bold">Les offres présentées sur la landing page</h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">Cette vue permet de vérifier les formules, leurs avantages et leur statut de paiement. Les offres achetables utilisent le parcours SasPay existant.</p>
+                  </section>
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    {pricingOffers.map((offer) => (
+                      <article key={offer.id} className={cardClass}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div><p className="text-xs font-bold uppercase tracking-wider text-[#087F8C]">{offer.availability === "available" ? "Paiement actif" : offer.availability === "free" ? "Gratuit" : "À préparer"}</p><h2 className="mt-2 text-xl font-bold">{offer.name}</h2></div>
+                          <div className="text-right"><p className="text-xl font-black">{offer.price}</p><p className="text-xs text-[#52645E]">{offer.priceXof}</p></div>
+                        </div>
+                        <p className="mt-4 text-sm leading-6 text-[#52645E]">{offer.description}</p>
+                        <ul className="mt-4 space-y-2 text-sm text-[#29413A]">{offer.features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul>
+                        {offer.checkoutHref && <Link href={offer.checkoutHref} className={`${secondaryButtonClass} mt-5`}>Voir le parcours de paiement</Link>}
+                      </article>
+                    ))}
+                  </div>
+                  <p className="text-sm leading-6 text-[#52645E]">Les abonnements Plus, Pro et le projet AIOS sont présentés comme offres avancées. Leur paiement récurrent devra être activé avec une intégration d’abonnement avant leur mise en vente.</p>
+                </>
+              )}
 
               {section === "catalog" && (
                 <>

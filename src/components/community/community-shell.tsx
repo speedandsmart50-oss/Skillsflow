@@ -15,7 +15,8 @@ export function CommunityShell({ children, userId, isStaff }: { children: React.
             <h1 className="mt-1.5 text-xl font-bold tracking-[-.025em] text-[#F4F7FC] sm:text-2xl">Progressez avec méthode</h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link className={actionClass} href="/account">Retour à mon espace</Link>
             <CommunityNotifications userId={userId} />
             <div className="hidden items-center gap-2 md:flex">
               {isStaff && <Link className={actionClass} href="/community/moderation">Modération</Link>}

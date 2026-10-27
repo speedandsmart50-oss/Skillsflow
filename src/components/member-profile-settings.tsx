@@ -56,7 +56,7 @@ function MemberProfileSettingsForm({ profile, saveProfile, uploadAvatar, removeA
 
   const initials = (name || profile?.email || "M").trim().slice(0, 1).toUpperCase();
   return <main className="min-h-screen bg-[#0b1020] px-4 py-8 text-slate-100 sm:px-8"><div className="mx-auto max-w-5xl">
-    <BackLink href="/member/skills"><span>Retour à mes skills</span></BackLink>
+    <BackLink href="/account"><span>Retour à mon espace</span></BackLink>
     <header className="mt-7 max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Espace membre · Personnalisation</p><h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-3xl font-semibold sm:text-4xl">Votre profil et vos réglages</h1><p className="mt-3 leading-7 text-slate-300">Choisissez l’identité visuelle de SkillFlow. Votre thème vous suit sur l’ensemble du site et reste lié à votre compte.</p></header>
     {(error || message) && <p role={error ? "alert" : "status"} className={`mt-6 rounded-2xl border p-4 text-sm ${error ? "border-rose-300/30 bg-rose-300/10 text-rose-100" : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"}`}>{error || message}</p>}
     <div className="mt-7 grid gap-5 lg:grid-cols-[.82fr_1.18fr]">

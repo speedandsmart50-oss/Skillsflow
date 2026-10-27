@@ -3,6 +3,7 @@ import { AnimatedShowcase } from "@/components/landing/animated-showcase";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { products as bundledProducts } from "@/features/products/products";
 import { canCheckout } from "@/lib/commerce";
+import { pricingOffers } from "@/features/pricing/offers";
 
 const benefits = [
   {
@@ -78,6 +79,34 @@ export default function HomePage() {
           {featuredProduct ? <article className="landing-featured-product"><div className="landing-product-meta"><span className="landing-status"><i />{salesEnabled ? "Disponible" : "À découvrir dans le catalogue"}</span><span>{featuredProduct.domain} · v{featuredProduct.version}</span></div><div className="landing-product-title"><span aria-hidden="true">✳</span><div><h3>{featuredProduct.name}</h3><p>{featuredProduct.tagline}</p></div></div><div className="landing-product-footer"><p><small>Prix du skill</small><strong>€{featuredProduct.price.toFixed(2)} <span>· {new Intl.NumberFormat("fr-FR").format(featuredProduct.priceXof)} XOF</span></strong></p><Link href={`/products/${featuredProduct.slug}`} className="landing-button landing-button-primary">Voir le skill <span aria-hidden="true">→</span></Link></div></article> : <p className="landing-empty">Le catalogue se prépare. Revenez bientôt découvrir les premiers skills.</p>}
         </section>
       </ScrollReveal>
+
+      <section id="tarifs" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="landing-eyebrow">Des offres pour chaque étape</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">Commencez gratuitement, évoluez à votre rythme.</h2>
+          <p className="mt-4 text-base leading-7 text-slate-300">Choisissez un skill à l’unité ou préparez votre passage vers un espace de travail IA plus personnalisé.</p>
+        </div>
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {pricingOffers.map((offer) => (
+            <article key={offer.id} className={`relative flex h-full flex-col rounded-3xl border p-6 ${offer.highlight ? "border-cyan-300/55 bg-gradient-to-br from-cyan-300/[.14] to-blue-500/[.08] shadow-[0_18px_60px_rgba(32,221,242,.12)]" : "border-white/10 bg-white/[.035]"}`}>
+              {offer.highlight && <span className="absolute right-5 top-5 rounded-full bg-cyan-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950">{offer.highlight}</span>}
+              <p className="text-sm font-bold uppercase tracking-wider text-cyan-200">{offer.name}</p>
+              <p className="mt-5 text-3xl font-black text-white">{offer.price}</p>
+              <p className="mt-1 text-sm text-slate-400">{offer.priceXof}</p>
+              <p className="mt-5 min-h-14 text-sm leading-6 text-slate-300">{offer.description}</p>
+              <ul className="mt-5 space-y-2 border-t border-white/10 pt-5 text-sm text-slate-200">
+                {offer.features.map((feature) => <li key={feature} className="flex gap-2"><span className="text-cyan-300">✓</span><span>{feature}</span></li>)}
+              </ul>
+              {offer.checkoutHref ? (
+                <Link href={offer.checkoutHref} className="mt-7 inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">{offer.cta}</Link>
+              ) : (
+                <Link href="/login?mode=signup" className="mt-7 inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-300/35 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/[.08]">{offer.cta}</Link>
+              )}
+            </article>
+          ))}
+        </div>
+        <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-slate-500">Les abonnements Claude et ChatGPT sont facturés séparément par leurs éditeurs. SkillFlow fournit les skills, les méthodes, les guides et l’accompagnement.</p>
+      </section>
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { AccountCatalog } from "@/components/account-catalog";
+import { CommunityNotifications } from "@/components/community/community-notifications";
 import { useMemberPreferences } from "@/components/member-preferences-provider";
 
 type AccountOrder = {
@@ -395,8 +396,19 @@ export function AccountDashboard() {
               <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-full border border-[#244b80] bg-[#0b2148] px-4 py-2.5 text-sm text-[#9bb3d4] sm:flex"><span aria-hidden="true" className="text-xl">⌕</span><span className="truncate">Rechercher un skill, une formation, un outil...</span><kbd className="ml-auto rounded-lg bg-white/[.08] px-2 py-1 text-xs text-[#a8c0df]">Ctrl K</kbd></div>
             </div>
             <div className="flex items-center gap-3">
-              <button type="button" aria-label="Notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/[.04] text-2xl text-[#b7c9e2] hover:bg-white/[.09]">♧<span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-[#06132d]" /></button>
-              <Link href="/member/settings" aria-label="Ouvrir mon profil" className="flex items-center gap-2 rounded-full border-l border-[#17345e] pl-3 text-sm font-semibold text-white"><span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-200 to-orange-400 text-lg text-slate-950">{profile?.avatarUrl ? <Image src={profile.avatarUrl} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}</span><span className="hidden max-w-40 truncate sm:block">{profile?.displayName || account?.user.email || "Mon profil"}</span><span aria-hidden="true">⌄</span></Link>
+              {account && <CommunityNotifications userId={account.user.id} />}
+              <details className="group relative">
+                <summary aria-label="Ouvrir le menu du profil" className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-full border-l border-[#17345e] pl-3 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 [&::-webkit-details-marker]:hidden">
+                  <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-200 to-orange-400 text-lg text-slate-950">{profile?.avatarUrl ? <Image src={profile?.avatarUrl ?? ""} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}</span>
+                  <span className="hidden max-w-40 truncate sm:block">{profile?.displayName || account?.user.email || "Mon profil"}</span>
+                  <span aria-hidden="true" className="text-xs transition-transform group-open:rotate-180">⌄</span>
+                </summary>
+                <nav aria-label="Menu du profil" className="absolute right-0 z-30 mt-2 grid w-56 gap-1 rounded-2xl border border-[#203650] bg-[#0b1729] p-2 shadow-2xl">
+                  <Link href="/account" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Mon espace client</Link>
+                  <Link href="/member/settings" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Profil et réglages</Link>
+                  <button type="button" onClick={() => void signOut()} className="rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-rose-200 hover:bg-rose-300/[.08]">Se déconnecter</button>
+                </nav>
+              </details>
             </div>
           </header>
           <div className="px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
@@ -415,7 +427,7 @@ export function AccountDashboard() {
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/member/settings" aria-label="Ouvrir mon profil" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-cyan-200/25 bg-cyan-300/10 font-semibold text-cyan-100 transition hover:border-cyan-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">
-              {profile?.avatarUrl ? <Image src={profile.avatarUrl} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}
+              {profile?.avatarUrl ? <Image src={profile?.avatarUrl ?? ""} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}
             </Link>
             <Link href="/member/settings" className={secondaryButtonClass}>Profil &amp; apparence</Link>
             <button type="button" onClick={() => changeSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
@@ -446,12 +458,12 @@ export function AccountDashboard() {
             <p className="mt-2 text-sm leading-6 text-[#52645E]">{error || "Réessayez dans quelques instants."}</p>
           </section>
         ) : (
-          <div className="account-layout mt-7 block" aria-live="polite">
+          <div className="mt-7 w-full" aria-live="polite">
             {false && <aside className="account-nav-stack" aria-label="Navigation de votre espace">
               <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} showCommunityLinks selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
               <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
             </aside>}
-            <section className="account-content" key={section}>
+            <section className="account-content w-full" key={section}>
             {section === "catalog" && <AccountCatalog />}
             {section === "overview" && (
               <div>
@@ -460,8 +472,10 @@ export function AccountDashboard() {
                   <SummaryCard label="Commandes" value={account.orders.length} detail="Votre historique complet" />
                   <SummaryCard label="Tutoriel Claude" value="Disponible" detail="Connexion MCP" />
                 </div>
-                <section className={`${cardClass} mt-5`}>
-                  <p className="text-sm font-semibold text-[#0B6A5A]">Bienvenue</p>
+                <section className={`${cardClass} mt-5 overflow-hidden bg-gradient-to-br from-[#0b2044] via-[#0b1c3d] to-[#101e4b]`}>
+                  <div className="grid gap-7 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+                  <div>
+                  <p className="inline-flex rounded-full bg-blue-500/20 px-4 py-2 text-sm font-bold text-cyan-300">👋 Bienvenue</p>
                   <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold">
                     {profile?.displayName || account.user.email}
                   </h2>
@@ -476,6 +490,9 @@ export function AccountDashboard() {
                       </Link>
                     </div>
                   )}
+                  </div>
+                  <div className="space-y-2 border-t border-[#23446e] pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0"><Link href="/shop" className="group flex items-center gap-3 rounded-xl p-2 transition hover:bg-white/[.05]"><DashboardGlyph className="bg-violet-500/40 text-violet-100">✦</DashboardGlyph><span className="min-w-0 flex-1"><b className="block text-sm text-white">{account.skills.length ? "Gérer mes skills" : "Aucun skill pour le moment"}</b><small className="block text-xs text-[#8fa9ce]">{account.skills.length ? "Retrouvez vos compétences actives" : "Découvrez le catalogue"}</small></span><span className="text-xl text-[#8fa9ce]">›</span></Link><Link href="/shop" className="group flex items-center gap-3 rounded-xl p-2 transition hover:bg-white/[.05]"><DashboardGlyph className="bg-teal-500/40 text-teal-100">▣</DashboardGlyph><span className="min-w-0 flex-1"><b className="block text-sm text-white">Explorer le catalogue</b><small className="block text-xs text-[#8fa9ce]">Trouvez les skills qui vous intéressent</small></span><span className="text-xl text-[#8fa9ce]">›</span></Link><Link href="/community" className="group flex items-center gap-3 rounded-xl p-2 transition hover:bg-white/[.05]"><DashboardGlyph className="bg-blue-500/40 text-blue-100">♟</DashboardGlyph><span className="min-w-0 flex-1"><b className="block text-sm text-white">Rejoindre la communauté</b><small className="block text-xs text-[#8fa9ce]">Échangez et progressez ensemble</small></span><span className="text-xl text-[#8fa9ce]">›</span></Link></div>
+                  </div>
                 </section>
                 {account.orders[0] && (
                   <section className={`${cardClass} mt-5`}>
@@ -661,16 +678,25 @@ export function AccountDashboard() {
           </div>
         )}
       </div>
+        </div>
+      </div>
     </main>
   );
 }
 
 function SummaryCard({ label, value, detail }: { label: string; value: string | number; detail: string }) {
+  const accent = label === "Tutoriel Claude"
+    ? "border-violet-400/35 bg-gradient-to-br from-[#352084] via-[#27205f] to-[#171d50]"
+    : label === "Commandes"
+      ? "border-teal-400/35 bg-gradient-to-br from-[#0b4a56] via-[#0a354c] to-[#0b2744]"
+      : "border-blue-400/70 bg-gradient-to-br from-[#0d4bc1] via-[#103d99] to-[#0b2458]";
+  const glyph = label === "Tutoriel Claude" ? "⌘" : label === "Commandes" ? "⚡" : "♟";
   return (
-    <article className={cardClass}>
-      <p className="text-sm font-medium text-[#66766F]">{label}</p>
-      <p className="mt-2 font-[family-name:var(--font-bricolage)] text-3xl font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-[#66766F]">{detail}</p>
+    <article className={`group rounded-2xl border p-5 shadow-[0_12px_36px_rgba(16,81,200,.16)] transition hover:-translate-y-1 hover:border-cyan-300 ${accent}`}>
+      <div className="flex items-start justify-between gap-4"><DashboardGlyph className="bg-white/10">{glyph}</DashboardGlyph><span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-2xl transition group-hover:translate-x-1">→</span></div>
+      <p className="mt-5 text-sm font-semibold text-[#b4c8eb]">{label}</p>
+      <p className="mt-1 text-4xl font-black text-white">{value}</p>
+      <p className="mt-1 text-sm text-[#a7c2ea]">{detail}</p>
     </article>
   );
 }
