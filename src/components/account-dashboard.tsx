@@ -403,10 +403,10 @@ export function AccountDashboard() {
                   <span className="hidden max-w-40 truncate sm:block">{profile?.displayName || account?.user.email || "Mon profil"}</span>
                   <span aria-hidden="true" className="text-xs transition-transform group-open:rotate-180">⌄</span>
                 </summary>
-                <nav aria-label="Menu du profil" className="absolute right-0 z-30 mt-2 grid w-56 gap-1 rounded-2xl border border-[#203650] bg-[#0b1729] p-2 shadow-2xl">
-                  <Link href="/account" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Mon espace client</Link>
-                  <Link href="/member/settings" className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Profil et réglages</Link>
-                  <button type="button" onClick={() => void signOut()} className="rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-rose-200 hover:bg-rose-300/[.08]">Se déconnecter</button>
+                <nav aria-label="Menu du profil" className="pointer-events-auto absolute right-0 top-full z-[100] mt-2 grid w-56 gap-1 rounded-2xl border border-[#203650] bg-[#0b1729] p-2 shadow-2xl">
+                  <Link href="/account" className="pointer-events-auto relative z-[101] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Mon espace client</Link>
+                  <Link href="/member/settings" className="pointer-events-auto relative z-[101] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Profil et réglages</Link>
+                  <button type="button" onClick={() => void signOut()} className="pointer-events-auto relative z-[101] rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-rose-200 hover:bg-rose-300/[.08]">Se déconnecter</button>
                 </nav>
               </details>
             </div>
