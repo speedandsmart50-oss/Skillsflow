@@ -22,6 +22,7 @@ import {
   NavIconPrivacy,
   NavIconHelp,
   ArrowRightIcon,
+  SearchIcon,
   BellIcon,
   CheckIcon,
   MoreVerticalIcon,
@@ -190,6 +191,8 @@ export function AccountDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const browserOrigin = useSyncExternalStore(subscribeToLocation, getBrowserOrigin, getServerOrigin);
   const mcpUrl = browserOrigin ? `${browserOrigin}/api/mcp` : "";
@@ -493,7 +496,13 @@ export function AccountDashboard() {
     ];
   }, [account]);
 
-  const filteredSkills = displaySkills;
+  const filteredSkills = useMemo(() => {
+    if (!searchQuery.trim()) return displaySkills;
+    const q = searchQuery.toLowerCase().trim();
+    return displaySkills.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.domain.toLowerCase().includes(q)
+    );
+  }, [displaySkills, searchQuery]);
 
   return (
     <main className="app-shell-bare account-premium min-h-screen bg-[#F5F7FC] text-[#111827] font-[family-name:var(--font-instrument-sans),sans-serif] selection:bg-[#4F46E5] selection:text-white">
@@ -669,17 +678,23 @@ export function AccountDashboard() {
                 </svg>
               </button>
 
-              <Link href="/" aria-label="Skillsflow, accueil" className="site-logo account-mobile-logo lg:hidden">
-                <ElectricLogo />
-              </Link>
-
-              {/*
+              {/* Search bar matching the reference image */}
+              <div className="relative z-10 w-full max-w-xl">
+                <div
+                  className="flex min-h-12 cursor-text items-center gap-3 rounded-[18px] border border-[#E5EAF2] bg-white px-4 text-sm shadow-[0_2px_8px_rgba(23,32,51,0.03)] transition duration-200 hover:border-[#C9D2E3] hover:shadow-[0_4px_14px_rgba(23,32,51,0.06)] focus-within:border-[#4361EE] focus-within:ring-4 focus-within:ring-[#4361EE]/10"
+                  onClick={() => searchInputRef.current?.focus()}
+                >
+                  <SearchIcon className="h-[18px] w-[18px] shrink-0 text-[#78849A]" />
+                  <input
+                    ref={searchInputRef}
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Rechercher un skill, une fonctionnalité..."
                     className="w-full min-w-0 bg-transparent text-sm text-[#172033] outline-none placeholder:text-[#78849A]"
                   />
                 </div>
               </div>
-              */}
             </div>
 
             {/* Right: Notifications + User Profile Pill */}
@@ -726,7 +741,7 @@ export function AccountDashboard() {
                   </div>
 
                   {/* Name and Premium status badge */}
-                  <div className="text-left">
+                  <div className="hidden text-left sm:block">
                     <p className="max-w-36 truncate text-sm font-bold leading-tight text-[#172033]">
                       {userDisplayName}
                     </p>
@@ -748,12 +763,12 @@ export function AccountDashboard() {
                 {profileMenuOpen && (
                   <nav
                     aria-label="Menu du compte utilisateur"
-                    className="account-profile-menu pointer-events-auto absolute right-0 top-full z-[120] mt-3 max-h-[calc(100vh-6rem)] w-[min(28rem,calc(100vw-1.5rem))] overflow-y-auto rounded-3xl border border-[#2A3C70] bg-[#0D1326] p-3 shadow-[0_24px_70px_rgba(4,10,30,0.45)]"
+                    className="account-profile-menu pointer-events-auto absolute right-0 top-full z-[120] mt-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-[#E5EAF2] bg-white p-2 shadow-[0_20px_50px_rgba(23,32,51,0.14)]"
                   >
                     {/* User Header Info Card */}
-                    <div className="mb-3 rounded-2xl border border-[#263A72] bg-[#162554] p-4">
+                    <div className="mb-1.5 rounded-xl border border-[#E5EAF2] bg-[#F7F9FC] p-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#7AA7FF] bg-gradient-to-br from-[#3D8BFF] to-[#5948F5] text-base font-bold text-white shadow-[0_0_22px_rgba(67,97,238,.35)]">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#C9D2FF] bg-gradient-to-br from-[#4361EE] to-[#6C63FF] text-sm font-bold text-white shadow-sm">
                           {profile?.avatarUrl ? (
                             <Image
                               src={profile.avatarUrl}
@@ -768,9 +783,9 @@ export function AccountDashboard() {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-lg font-bold text-white">{userDisplayName}</p>
-                          <p className="truncate text-sm text-[#AFC2F5]">{account?.user.email || ""}</p>
-                          <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#596DFF] bg-[#3844A9]/40 px-3 py-1 text-xs font-bold text-[#BFC8FF]">
+                          <p className="truncate text-sm font-bold text-white">{userDisplayName}</p>
+                          <p className="truncate text-xs text-[#8F9CAE]">{account?.user.email || ""}</p>
+                          <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-[#B3A4FF]/30 bg-[#B3A4FF]/10 px-2 py-0.5 text-[10px] font-bold text-[#B3A4FF]">
                             <span>👑</span>
                             <span>Premium</span>
                           </div>
@@ -779,14 +794,14 @@ export function AccountDashboard() {
                     </div>
 
                     {/* Nav Actions */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <button
                         type="button"
                         onClick={() => {
                           changeSection("overview");
                           setProfileMenuOpen(false);
                         }}
-                        className="group flex w-full items-center gap-4 rounded-2xl px-3.5 py-3.5 text-left text-sm font-medium text-[#D8E2FF] transition-all hover:bg-[#1A2B5E] hover:text-white"
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#397BFF]/15 text-[#397BFF] transition-colors group-hover:bg-[#397BFF] group-hover:text-white">
                           <NavIconOverview active />
@@ -803,7 +818,7 @@ export function AccountDashboard() {
                           changeSection("skills");
                           setProfileMenuOpen(false);
                         }}
-                        className="group flex w-full items-center gap-4 rounded-2xl px-3.5 py-3.5 text-left text-sm font-medium text-[#D8E2FF] transition-all hover:bg-[#1A2B5E] hover:text-white"
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00E5FF]/15 text-[#00E5FF] transition-colors group-hover:bg-[#00E5FF] group-hover:text-slate-950">
                           <NavIconSkills active />
@@ -817,7 +832,7 @@ export function AccountDashboard() {
                       <Link
                         href="/member/settings"
                         onClick={() => setProfileMenuOpen(false)}
-                        className="group flex w-full items-center gap-4 rounded-2xl px-3.5 py-3.5 text-left text-sm font-medium text-[#D8E2FF] transition-all hover:bg-[#1A2B5E] hover:text-white"
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#B3A4FF]/15 text-[#B3A4FF] transition-colors group-hover:bg-[#B3A4FF] group-hover:text-[#0B1020]">
                           <GearIcon className="h-4 w-4" />
@@ -834,7 +849,7 @@ export function AccountDashboard() {
                           changeSection("billing");
                           setProfileMenuOpen(false);
                         }}
-                        className="group flex w-full items-center gap-4 rounded-2xl px-3.5 py-3.5 text-left text-sm font-medium text-[#D8E2FF] transition-all hover:bg-[#1A2B5E] hover:text-white"
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#6557FF]/15 text-[#6557FF] transition-colors group-hover:bg-[#6557FF] group-hover:text-white">
                           <CreditCardIcon className="h-4 w-4" />
@@ -856,7 +871,7 @@ export function AccountDashboard() {
                         setProfileMenuOpen(false);
                         void signOut();
                       }}
-                      className="group flex w-full items-center gap-4 rounded-2xl px-3.5 py-3.5 text-left text-sm font-medium text-rose-300 transition-all hover:bg-rose-500/15 hover:text-rose-200"
+                      className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-300 transition-all hover:bg-rose-500/15 hover:text-rose-200"
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400 transition-colors group-hover:bg-rose-500 group-hover:text-white">
                         <LogOutIcon className="h-4 w-4" />

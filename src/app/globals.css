@@ -508,19 +508,6 @@ body:has(.admin-shell) .app-shell-chrome {
   opacity: .2;
 }
 
-.account-profile-menu [class*="text-white"] {
-  color: #ffffff !important;
-}
-
-.account-profile-menu [class*="text-[#8F9CAE]"] {
-  color: #9FB3DE !important;
-}
-
-.account-profile-menu [class*="text-[#C5D3E8]"],
-.account-profile-menu [class*="text-[#D8E2FF]"] {
-  color: #D8E2FF !important;
-}
-
 /* Premium account header: keep the existing dark workspace navigation while
    giving the top-level controls a lighter, calmer SaaS treatment. */
 .account-dashboard-header {
@@ -551,10 +538,6 @@ body:has(.admin-shell) .app-shell-chrome {
 }
 
 @media (max-width: 640px) {
-  .account-mobile-logo > div > div {
-    display: none;
-  }
-
   .account-premium-content > header {
     min-height: 68px;
   }
