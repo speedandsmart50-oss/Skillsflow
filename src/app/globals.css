@@ -514,6 +514,15 @@ body:has(.admin-shell) .app-shell-chrome {
   box-shadow: 0 1px 0 rgba(23, 32, 51, .02);
 }
 
+.account-profile-pill {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.account-profile-pill p {
+  visibility: visible !important;
+}
+
 .account-dashboard-header input[type="search"]::-webkit-search-cancel-button {
   opacity: .45;
 }

@@ -722,7 +722,7 @@ export function AccountDashboard() {
                   aria-expanded={profileMenuOpen}
                   aria-haspopup="menu"
                   aria-label="Menu du profil utilisateur"
-                  className="group flex cursor-pointer items-center gap-2 rounded-full border border-transparent p-1 pr-1.5 transition-all duration-200 hover:border-[#E5EAF2] hover:bg-[#F7F9FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4361EE]/30 sm:gap-3 sm:pr-3"
+                  className="account-profile-pill group flex min-w-0 cursor-pointer items-center gap-2 rounded-full border border-transparent p-1 pr-1.5 transition-all duration-200 hover:border-[#E5EAF2] hover:bg-[#F7F9FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4361EE]/30 sm:gap-3 sm:pr-3"
                 >
                   {/* Avatar circle with status dot */}
                   <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#C9D2FF] bg-gradient-to-br from-[#4361EE] to-[#6C63FF] text-sm font-bold text-white shadow-[0_4px_10px_rgba(67,97,238,0.2)] transition-transform group-hover:scale-105">
@@ -741,7 +741,7 @@ export function AccountDashboard() {
                   </div>
 
                   {/* Name and Premium status badge */}
-                  <div className="hidden text-left sm:block">
+                  <div className="flex min-w-0 max-w-[9rem] flex-col text-left sm:max-w-36">
                     <p className="max-w-36 truncate text-sm font-bold leading-tight text-[#172033]">
                       {userDisplayName}
                     </p>
