@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ElectricLogo } from "@/components/electric-icons";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -446,11 +447,8 @@ export function AdminDashboard() {
       <div className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header className="admin-brand-bar flex flex-wrap items-center justify-between gap-4 rounded-[2rem] border border-cyan-400/20 bg-slate-950/90 p-4 shadow-[0_18px_60px_rgba(0,190,255,.08)] sm:p-5">
           <Link href="/" className="flex min-h-11 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B6A5A]">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 to-cyan-600 font-[family-name:var(--font-bricolage)] text-lg font-bold text-slate-950">S</span>
-            <span>
-              <span className="block font-[family-name:var(--font-bricolage)] text-lg font-bold">SkillFlow</span>
-              <span className="block text-xs text-slate-400">ADMIN CONSOLE</span>
-            </span>
+            <ElectricLogo />
+            <span className="hidden text-xs font-bold tracking-[0.16em] text-slate-400 sm:block">ADMIN CONSOLE</span>
           </Link>
           <Link href="/account" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 hover:border-cyan-400">Voir l’espace client</Link>
         </header>

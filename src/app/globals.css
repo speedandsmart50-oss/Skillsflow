@@ -383,6 +383,14 @@ body:has(.admin-shell) .app-shell-chrome {
   color: var(--account-ink) !important;
 }
 
+.site-logo > div > p {
+  display: none;
+}
+
+.site-logo > div > div > span {
+  color: currentColor !important;
+}
+
 .account-premium > div > aside {
   width: 16rem;
   background: var(--account-sidebar) !important;

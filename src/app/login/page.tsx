@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BackLink } from "@/components/back-link";
 import { Suspense } from "react";
 import { LoginForm } from "@/components/login-form";
+import { ElectricLogo } from "@/components/electric-icons";
 
 const accountBenefits = [
   { icon: "↗", title: "Retrouvez vos skills", detail: "Vos achats et téléchargements au même endroit." },
@@ -18,9 +19,8 @@ export default function LoginPage() {
 
       <div className="mx-auto grid w-full max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:gap-16">
         <section className="auth-copy animate-rise mx-auto w-full max-w-xl lg:mx-0">
-          <Link href="/" className="inline-flex items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-200 to-cyan-400 text-xl font-black text-[#07111e] shadow-[0_0_30px_rgba(34,211,238,0.3)]">S</span>
-            <span className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-[-0.05em] text-white">SkillFlow</span>
+          <Link href="/" className="site-logo inline-flex items-center rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
+            <ElectricLogo />
           </Link>
 
           <div className="mt-12 sm:mt-16">

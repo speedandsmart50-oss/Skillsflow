@@ -4,13 +4,11 @@ export function ElectricLogo({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#397BFF] to-[#6557FF] p-2 shadow-[0_4px_16px_rgba(57,123,255,0.45)]">
-        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="white" stroke="none" />
-        </svg>
+        <span className="font-[family-name:var(--font-geist-sans),sans-serif] text-xl font-black leading-none text-white">S</span>
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="font-[family-name:var(--font-geist-sans),sans-serif] text-lg font-black tracking-[-0.03em] text-white">SkillFlow</span>
+          <span className="font-[family-name:var(--font-geist-sans),sans-serif] text-lg font-black tracking-[-0.03em] text-white">Skillsflow</span>
         </div>
         <p className="text-[10px] font-medium tracking-wide text-[#8F9CAE]">Skills IA • MCP • Automatisation</p>
       </div>
