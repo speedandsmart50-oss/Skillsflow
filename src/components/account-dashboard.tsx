@@ -22,7 +22,6 @@ import {
   NavIconPrivacy,
   NavIconHelp,
   ArrowRightIcon,
-  SearchIcon,
   BellIcon,
   CheckIcon,
   MoreVerticalIcon,
@@ -191,8 +190,6 @@ export function AccountDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const browserOrigin = useSyncExternalStore(subscribeToLocation, getBrowserOrigin, getServerOrigin);
   const mcpUrl = browserOrigin ? `${browserOrigin}/api/mcp` : "";
@@ -496,13 +493,7 @@ export function AccountDashboard() {
     ];
   }, [account]);
 
-  const filteredSkills = useMemo(() => {
-    if (!searchQuery.trim()) return displaySkills;
-    const q = searchQuery.toLowerCase().trim();
-    return displaySkills.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.domain.toLowerCase().includes(q)
-    );
-  }, [displaySkills, searchQuery]);
+  const filteredSkills = displaySkills;
 
   return (
     <main className="app-shell-bare account-premium min-h-screen bg-[#F5F7FC] text-[#111827] font-[family-name:var(--font-instrument-sans),sans-serif] selection:bg-[#4F46E5] selection:text-white">
@@ -678,23 +669,13 @@ export function AccountDashboard() {
                 </svg>
               </button>
 
-              {/* Search bar matching the reference image */}
-              <div className="relative z-10 w-full max-w-xl">
-                <div
-                  className="flex min-h-12 cursor-text items-center gap-3 rounded-[18px] border border-[#E5EAF2] bg-white px-4 text-sm shadow-[0_2px_8px_rgba(23,32,51,0.03)] transition duration-200 hover:border-[#C9D2E3] hover:shadow-[0_4px_14px_rgba(23,32,51,0.06)] focus-within:border-[#4361EE] focus-within:ring-4 focus-within:ring-[#4361EE]/10"
-                  onClick={() => searchInputRef.current?.focus()}
-                >
-                  <SearchIcon className="h-[18px] w-[18px] shrink-0 text-[#78849A]" />
-                  <input
-                    ref={searchInputRef}
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+              {/*
                     placeholder="Rechercher un skill, une fonctionnalité..."
                     className="w-full min-w-0 bg-transparent text-sm text-[#172033] outline-none placeholder:text-[#78849A]"
                   />
                 </div>
               </div>
+              */}
             </div>
 
             {/* Right: Notifications + User Profile Pill */}
