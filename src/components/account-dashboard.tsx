@@ -218,17 +218,6 @@ export function AccountDashboard() {
   }, [profileMenuOpen]);
 
   useEffect(() => {
-    function focusSearch(event: KeyboardEvent) {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    }
-    document.addEventListener("keydown", focusSearch);
-    return () => document.removeEventListener("keydown", focusSearch);
-  }, []);
-
-  useEffect(() => {
     let active = true;
 
     async function load() {
@@ -673,13 +662,13 @@ export function AccountDashboard() {
         {/* ===================== MAIN CONTENT WRAPPER ===================== */}
         <div className="account-premium-content flex min-w-0 flex-col">
           {/* ===================== TOP HEADER ===================== */}
-          <header className="sticky top-0 z-[100] isolate flex min-h-[72px] items-center justify-between gap-4 border-b border-[#1E2B4C] bg-[#0B1020]/95 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
+          <header className="account-dashboard-header sticky top-0 z-[100] isolate flex min-h-[80px] items-center justify-between gap-3 border-b border-[#E5EAF2] bg-white px-4 sm:gap-5 sm:px-8 lg:px-10">
             {/* Left: Mobile hamburger + Search input */}
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#202E50] bg-[#151F38] text-[#8F9CAE] hover:text-white lg:hidden"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#E5EAF2] bg-[#F7F9FC] text-[#78849A] transition hover:border-[#4361EE]/40 hover:text-[#4361EE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4361EE]/30 lg:hidden"
                 aria-label="Ouvrir le menu"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2">
@@ -690,41 +679,37 @@ export function AccountDashboard() {
               </button>
 
               {/* Search bar matching the reference image */}
-              <div className="relative z-10 w-full max-w-md">
+              <div className="relative z-10 w-full max-w-xl">
                 <div
-                  className="flex cursor-text items-center gap-2.5 rounded-xl border border-[#202E50] bg-[#131B31] px-3.5 py-2 text-sm transition focus-within:border-[#397BFF] focus-within:ring-2 focus-within:ring-[#397BFF]/25"
+                  className="flex min-h-12 cursor-text items-center gap-3 rounded-[18px] border border-[#E5EAF2] bg-white px-4 text-sm shadow-[0_2px_8px_rgba(23,32,51,0.03)] transition duration-200 hover:border-[#C9D2E3] hover:shadow-[0_4px_14px_rgba(23,32,51,0.06)] focus-within:border-[#4361EE] focus-within:ring-4 focus-within:ring-[#4361EE]/10"
                   onClick={() => searchInputRef.current?.focus()}
                 >
-                  <SearchIcon className="h-4 w-4 shrink-0 text-[#8F9CAE]" />
+                  <SearchIcon className="h-[18px] w-[18px] shrink-0 text-[#78849A]" />
                   <input
                     ref={searchInputRef}
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Rechercher un skill, une fonctionnalité..."
-                    className="w-full bg-transparent text-sm text-white placeholder:text-[#64748B] outline-none"
+                    className="w-full min-w-0 bg-transparent text-sm text-[#172033] outline-none placeholder:text-[#78849A]"
                   />
-                  <kbd className="hidden rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-[#8F9CAE] sm:inline-block">
-                    Ctrl K
-                  </kbd>
                 </div>
               </div>
             </div>
 
             {/* Right: Notifications + User Profile Pill */}
-            <div className="flex items-center gap-4">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-4">
               {/* Notification Bell */}
               <div className="relative">
                 {account ? (
-                  <CommunityNotifications userId={account.user.id} />
+                  <CommunityNotifications userId={account.user.id} variant="light" />
                 ) : (
                   <button
                     type="button"
                     aria-label="Notifications"
-                    className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#202E50] bg-[#151F38] text-[#8F9CAE] transition hover:border-[#397BFF]/40 hover:text-white"
+                    className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#E5EAF2] bg-white text-[#78849A] transition hover:border-[#4361EE]/40 hover:bg-[#F7F9FC] hover:text-[#4361EE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4361EE]/30"
                   >
                     <BellIcon className="h-5 w-5" />
-                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-[#0B1020]" />
                   </button>
                 )}
               </div>
@@ -737,10 +722,10 @@ export function AccountDashboard() {
                   aria-expanded={profileMenuOpen}
                   aria-haspopup="menu"
                   aria-label="Menu du profil utilisateur"
-                  className="group flex cursor-pointer items-center gap-3 rounded-full border border-transparent p-1 pr-3 transition-all duration-200 hover:border-[#202E50] hover:bg-[#151F38]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#397BFF]"
+                  className="group flex cursor-pointer items-center gap-2 rounded-full border border-transparent p-1 pr-1.5 transition-all duration-200 hover:border-[#E5EAF2] hover:bg-[#F7F9FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4361EE]/30 sm:gap-3 sm:pr-3"
                 >
                   {/* Avatar circle with status dot */}
-                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#397BFF]/50 bg-gradient-to-br from-[#1A2544] to-[#0E172E] text-sm font-bold text-white shadow-[0_0_12px_rgba(57,123,255,0.3)] transition-transform group-hover:scale-105">
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#C9D2FF] bg-gradient-to-br from-[#4361EE] to-[#6C63FF] text-sm font-bold text-white shadow-[0_4px_10px_rgba(67,97,238,0.2)] transition-transform group-hover:scale-105">
                     {profile?.avatarUrl ? (
                       <Image
                         src={profile.avatarUrl}
@@ -753,18 +738,14 @@ export function AccountDashboard() {
                     ) : (
                       userInitials
                     )}
-                    <span
-                      aria-hidden="true"
-                      className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#0B1020] bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
-                    />
                   </div>
 
                   {/* Name and Premium status badge */}
                   <div className="hidden text-left sm:block">
-                    <p className="max-w-36 truncate text-sm font-bold text-white leading-tight">
+                    <p className="max-w-36 truncate text-sm font-bold leading-tight text-[#172033]">
                       {userDisplayName}
                     </p>
-                    <p className="flex items-center gap-1 text-[11px] font-semibold text-[#B3A4FF]">
+                    <p className="flex items-center gap-1 text-[11px] font-semibold text-[#6C63FF]">
                       <span>👑</span>
                       <span>Membre Premium</span>
                     </p>
@@ -772,8 +753,8 @@ export function AccountDashboard() {
 
                   {/* Animated Chevron */}
                   <ChevronDownIcon
-                    className={`h-4 w-4 text-[#8F9CAE] transition-transform duration-200 ${
-                      profileMenuOpen ? "rotate-180 text-white" : "group-hover:text-white"
+                    className={`h-4 w-4 text-[#78849A] transition-transform duration-200 ${
+                      profileMenuOpen ? "rotate-180 text-[#4361EE]" : "group-hover:text-[#4361EE]"
                     }`}
                   />
                 </button>
@@ -782,12 +763,12 @@ export function AccountDashboard() {
                 {profileMenuOpen && (
                   <nav
                     aria-label="Menu du compte utilisateur"
-                    className="pointer-events-auto absolute right-0 top-full z-[120] mt-2.5 w-72 rounded-2xl border border-[#233558] bg-[#0D1527] p-2 shadow-[0_25px_60px_-10px_rgba(0,0,0,0.9),0_0_25px_rgba(57,123,255,0.2)] backdrop-blur-2xl ring-1 ring-white/10"
+                    className="account-profile-menu pointer-events-auto absolute right-0 top-full z-[120] mt-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-[#E5EAF2] bg-white p-2 shadow-[0_20px_50px_rgba(23,32,51,0.14)]"
                   >
                     {/* User Header Info Card */}
-                    <div className="mb-1.5 rounded-xl border border-[#203154] bg-gradient-to-br from-[#141F3B] to-[#0E162B] p-3">
+                    <div className="mb-1.5 rounded-xl border border-[#E5EAF2] bg-[#F7F9FC] p-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#397BFF]/60 bg-[#1A2544] text-sm font-bold text-white shadow-md">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#C9D2FF] bg-gradient-to-br from-[#4361EE] to-[#6C63FF] text-sm font-bold text-white shadow-sm">
                           {profile?.avatarUrl ? (
                             <Image
                               src={profile.avatarUrl}

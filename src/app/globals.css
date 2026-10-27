@@ -451,11 +451,6 @@ body:has(.admin-shell) .app-shell-chrome {
   color: #64748b !important;
 }
 
-.account-premium-content > header kbd {
-  background: #f1f5f9 !important;
-  color: #475569 !important;
-}
-
 .account-premium-content > header .border-\[\#202E50\] {
   border-color: var(--account-border) !important;
   background: #ffffff !important;
