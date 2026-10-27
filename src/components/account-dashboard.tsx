@@ -7,6 +7,7 @@ import { type FormEvent, useEffect, useState, useSyncExternalStore } from "react
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { AccountCatalog } from "@/components/account-catalog";
 import { CommunityNotifications } from "@/components/community/community-notifications";
+import { pricingOffers } from "@/features/pricing/offers";
 import { useMemberPreferences } from "@/components/member-preferences-provider";
 
 type AccountOrder = {
@@ -61,7 +62,7 @@ type AccountData = {
   tickets: SupportTicket[];
 };
 
-type Section = "overview" | "skills" | "catalog" | "mcp" | "billing" | "privacy" | "help";
+type Section = "overview" | "skills" | "catalog" | "mcp" | "billing" | "subscription" | "privacy" | "help";
 
 const sections: { id: Section; label: string }[] = [
   { id: "overview", label: "Vue d’ensemble" },
@@ -69,6 +70,7 @@ const sections: { id: Section; label: string }[] = [
   { id: "catalog", label: "Catalogue" },
   { id: "mcp", label: "Tutoriel Claude" },
   { id: "billing", label: "Facturation" },
+  { id: "subscription", label: "Abonnement" },
   { id: "privacy", label: "Données et confidentialité" },
   { id: "help", label: "Aide" },
 ];
@@ -386,7 +388,7 @@ export function AccountDashboard() {
             </Link>
             <div className="mt-8 lg:sticky lg:top-6">
               <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} showCommunityLinks selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
-              <div className="mt-4"><AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} /></div>
+              <div className="mt-4"><AccountSideNav title="Votre espace" ids={["billing", "subscription", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} /></div>
             </div>
           </div>
         </aside>
@@ -465,6 +467,7 @@ export function AccountDashboard() {
             </aside>}
             <section className="account-content w-full" key={section}>
             {section === "catalog" && <AccountCatalog />}
+            {section === "subscription" && <SubscriptionOffers />}
             {section === "overview" && (
               <div>
                 <div className="grid gap-4 sm:grid-cols-3">
@@ -701,6 +704,35 @@ function SummaryCard({ label, value, detail }: { label: string; value: string | 
   );
 }
 
+function SubscriptionOffers() {
+  const offers = pricingOffers.filter((offer) => ["plus", "pro", "aios"].includes(offer.id));
+  return (
+    <div className="space-y-7">
+      <header>
+        <p className="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">Votre abonnement</p>
+        <h2 className="mt-2 text-3xl font-black tracking-tight text-white">Choisissez l’offre qui vous correspond</h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">Passez d’un usage ponctuel à un espace de travail IA accompagné, puis construisez votre assistant personnel avec AIOS.</p>
+      </header>
+      <div className="grid gap-5 xl:grid-cols-3">
+        {offers.map((offer) => (
+          <article key={offer.id} className={`flex h-full flex-col rounded-3xl border p-6 ${offer.id === "pro" ? "border-cyan-300/55 bg-gradient-to-br from-cyan-300/[.14] to-blue-500/[.08]" : "border-white/10 bg-white/[.035]"}`}>
+            {offer.highlight && <span className="w-fit rounded-full bg-cyan-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950">{offer.highlight}</span>}
+            <h3 className="mt-4 text-xl font-bold text-white">{offer.name}</h3>
+            <p className="mt-4 text-2xl font-black text-white">{offer.price}</p>
+            <p className="mt-1 text-xs text-slate-400">{offer.priceXof}</p>
+            <p className="mt-4 min-h-12 text-sm leading-6 text-slate-300">{offer.description}</p>
+            <ul className="mt-5 space-y-2 border-t border-white/10 pt-5 text-sm text-slate-200">
+              {offer.features.map((feature) => <li key={feature} className="flex gap-2"><span className="text-cyan-300">✓</span><span>{feature}</span></li>)}
+            </ul>
+            <span className="mt-auto pt-7 text-center text-xs font-semibold uppercase tracking-wider text-amber-200">Disponible prochainement</span>
+          </article>
+        ))}
+      </div>
+      <p className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[.05] p-4 text-sm leading-6 text-cyan-100">Les abonnements récurrents seront activés après la mise en place du paiement par abonnement. Les achats de skills et de packs restent disponibles depuis le catalogue.</p>
+    </div>
+  );
+}
+
 function AccountSideNav({ title, ids, showCommunityLinks = false, selected, onSelect }: {
   title: string;
   ids: Section[];
@@ -713,7 +745,7 @@ function AccountSideNav({ title, ids, showCommunityLinks = false, selected, onSe
     <ul className="space-y-1">{ids.map((id) => {
       const item = sections.find((entry) => entry.id === id);
       if (!item) return null;
-      return <li key={id}><button type="button" aria-current={selected === id ? "page" : undefined} onClick={() => onSelect(id)} className={`account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${selected === id ? "is-active bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"}`}><span aria-hidden="true" className="text-xs">{id === "overview" ? "◈" : id === "skills" ? "✳" : id === "catalog" ? "▦" : id === "mcp" ? "⌘" : id === "billing" ? "＄" : id === "privacy" ? "◉" : "?"}</span>{item.label}</button></li>;
+      return <li key={id}><button type="button" aria-current={selected === id ? "page" : undefined} onClick={() => onSelect(id)} className={`account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${selected === id ? "is-active bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"}`}><span aria-hidden="true" className="text-xs">{id === "overview" ? "◈" : id === "skills" ? "✳" : id === "catalog" ? "▦" : id === "mcp" ? "⌘" : id === "billing" ? "＄" : id === "subscription" ? "✦" : id === "privacy" ? "◉" : "?"}</span>{item.label}</button></li>;
     })}{showCommunityLinks && <><li><Link href="/community" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">✦</span>Communauté</Link></li><li><Link href="/community/my" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">◈</span>Ma communauté</Link></li><li><Link href="/member/prospection" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">↗</span>SkillFlow Prospection</Link></li></>}</ul>
   </nav>;
 }
