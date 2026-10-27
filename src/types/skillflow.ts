@@ -20,6 +20,8 @@ export type Product = {
   status: ProductStatus;
   zipFile: string;
   isMemberSkill?: boolean;
+  isSubscription?: boolean;
+  subscriptionDays?: number;
   includedSkills?: string[];
   compatibleAgents: string[];
   versions: VersionEntry[];

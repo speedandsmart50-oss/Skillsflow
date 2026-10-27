@@ -35,7 +35,7 @@ async function ProductDetailContent({
   if (!product) {
     notFound();
   }
-  const canPurchase = product.catalogStatus === "disponible" && (Boolean(product.zipFile) || Boolean(product.isMemberSkill) || Boolean(product.includedSkills?.length));
+  const canPurchase = product.catalogStatus === "disponible" && (Boolean(product.zipFile) || Boolean(product.isMemberSkill) || Boolean(product.includedSkills?.length) || Boolean(product.isSubscription));
   const getPackSkillDescription = (name: string) => {
     const normalizedName = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[’‘]/g, "'");
     if (normalizedName.includes("go pro")) return "Structure les étapes clés de votre activité, de la prospection au suivi de l’équipe.";

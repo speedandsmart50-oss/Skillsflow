@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   const supabase = getSupabaseAdminClient();
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id, slug, status, catalog_status, archived_at, zip_path, price_eur, price_xof")
+    .select("id, slug, status, catalog_status, archived_at, zip_path, price_eur, price_xof, product_type, subscription_days")
     .eq("slug", productSlug)
     .maybeSingle();
   if (productError) {
@@ -105,7 +105,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Un ou plusieurs skills de ce pack ne sont pas disponibles." }, { status: 409 });
     }
   }
-  if (!product.zip_path && !grantsMemberSkillAccess && !isBundle) {
+  const isSubscription = product.product_type === "subscription";
+  if (!product.zip_path && !grantsMemberSkillAccess && !isBundle && !isSubscription) {
     return NextResponse.json({ error: "Le pack n'est pas encore prêt pour le paiement." }, { status: 503 });
   }
 
@@ -128,7 +129,7 @@ export async function POST(request: Request) {
       product.slug,
       productPriceEur,
       productPriceXof,
-      !isBundle,
+      !isBundle && !isSubscription,
     );
   } catch (error) {
     if (error instanceof InvalidCouponError) {

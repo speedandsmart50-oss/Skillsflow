@@ -17,6 +17,8 @@ type CatalogRow = {
   version: string | null;
   zip_path: string | null;
   is_member_skill?: boolean;
+  product_type?: "skill" | "subscription";
+  subscription_days?: number | null;
 };
 
 type VersionRow = {
@@ -56,7 +58,7 @@ export async function getCatalogProducts(): Promise<Product[]> {
   });
   let { data: productData, error: productError } = await supabase
     .from("products")
-    .select("id, slug, name, description, domain, status, catalog_status, price_eur, price_xof, version, zip_path")
+    .select("id, slug, name, description, domain, status, catalog_status, price_eur, price_xof, version, zip_path, product_type, subscription_days")
     .eq("status", "published")
     .is("archived_at", null)
     .order("created_at", { ascending: true });
@@ -76,6 +78,8 @@ export async function getCatalogProducts(): Promise<Product[]> {
       price_eur: row.price,
       price_xof: Math.round(Number(row.price) * 655.957),
       archived_at: null,
+      product_type: "skill" as const,
+      subscription_days: null,
     }));
     productError = legacyResult.error;
   }
@@ -194,6 +198,8 @@ export async function getCatalogProducts(): Promise<Product[]> {
       status: row.status,
       zipFile,
       isMemberSkill: memberSkillProductIds.has(row.id),
+      isSubscription: row.product_type === "subscription",
+      subscriptionDays: row.subscription_days ?? undefined,
       includedSkills: bundleNamesByProductId.get(row.id) ?? [],
       compatibleAgents: existingProduct?.compatibleAgents ?? ["Claude", "ChatGPT"],
       versions: publishedVersions.length ? publishedVersions : existingProduct?.versions ?? [],

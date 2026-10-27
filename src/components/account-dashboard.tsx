@@ -724,7 +724,7 @@ function SubscriptionOffers() {
             <ul className="mt-5 space-y-2 border-t border-white/10 pt-5 text-sm text-slate-200">
               {offer.features.map((feature) => <li key={feature} className="flex gap-2"><span className="text-cyan-300">✓</span><span>{feature}</span></li>)}
             </ul>
-            <span className="mt-auto pt-7 text-center text-xs font-semibold uppercase tracking-wider text-amber-200">Disponible prochainement</span>
+            {offer.checkoutHref ? <Link href={offer.checkoutHref} className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">{offer.cta}</Link> : <span className="mt-auto pt-7 text-center text-xs font-semibold uppercase tracking-wider text-amber-200">Disponible prochainement</span>}
           </article>
         ))}
       </div>

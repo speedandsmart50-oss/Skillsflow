@@ -53,8 +53,9 @@ export const pricingOffers: PricingOffer[] = [
     priceXof: "9 800 XOF/mois",
     description: "Pour utiliser régulièrement les ressources SkillFlow.",
     features: ["Skills standards", "Nouvelles ressources chaque mois", "Communauté complète", "Messages privés", "Ateliers collectifs", "20 % sur les skills Premium"],
-    cta: "Bientôt disponible",
-    availability: "planned",
+    checkoutHref: "/checkout?product=skillflow-plus",
+    cta: "S’abonner",
+    availability: "available",
   },
   {
     id: "pro",
@@ -64,8 +65,9 @@ export const pricingOffers: PricingOffer[] = [
     description: "Pour les professionnels qui veulent aller plus loin.",
     features: ["Tous les skills", "Tutoriels Claude et MCP avancés", "Configurations personnalisées", "Support prioritaire", "Sessions mensuelles", "30 % sur l'accompagnement"],
     highlight: "Accès AIOS",
-    cta: "Demander un accès Pro",
-    availability: "planned",
+    checkoutHref: "/checkout?product=skillflow-pro",
+    cta: "S’abonner à Pro",
+    availability: "available",
   },
   {
     id: "aios",
