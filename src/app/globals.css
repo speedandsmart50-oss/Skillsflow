@@ -207,6 +207,18 @@ body:has(.admin-shell) .app-shell-chrome {
   --theme-border: rgba(49, 240, 209, .25);
   --theme-glow: rgba(30, 211, 238, .18);
 }
+.member-preferences-scope[data-member-theme="original"] {
+  --theme-page: #0b1220;
+  --theme-surface: #0d2938;
+  --theme-inset: #0a1b29;
+  --theme-foreground: #f6fbff;
+  --theme-muted: #a8c1df;
+  --theme-accent: #20ddf2;
+  --theme-accent-soft: #70e9f5;
+  --theme-on-accent: #07111f;
+  --theme-border: rgba(32, 221, 242, .28);
+  --theme-glow: rgba(32, 221, 242, .11);
+}
 .member-preferences-scope[data-member-theme="violet"] {
   --theme-page: #100b22;
   --theme-surface: #211638;
@@ -352,6 +364,12 @@ body:has(.admin-shell) .app-shell-chrome {
   background-color: var(--theme-surface) !important;
   border-color: var(--theme-border) !important;
 }
+.member-preferences-scope[data-member-theme="light"] [class*="bg-slate-950"],
+.member-preferences-scope[data-member-theme="light"] [class*="bg-slate-900"],
+.member-preferences-scope[data-member-theme="light"] [class*="bg-slate-800"] {
+  background-color: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+}
 .member-preferences-scope[data-member-theme="light"] [class*="text-[#C2CEDD]"],
 .member-preferences-scope[data-member-theme="light"] [class*="text-[#C5D3E2]"],
 .member-preferences-scope[data-member-theme="light"] [class*="text-[#C7D4E3]"],
@@ -494,6 +512,31 @@ body:has(.admin-shell) .app-shell-chrome {
 .account-premium .account-hero-decoration {
   opacity: .2;
 }
+
+/* Premium account header: keep the existing dark workspace navigation while
+   giving the top-level controls a lighter, calmer SaaS treatment. */
+.account-dashboard-header {
+  box-shadow: 0 1px 0 rgba(23, 32, 51, .02);
+}
+
+.account-dashboard-header input[type="search"]::-webkit-search-cancel-button {
+  opacity: .45;
+}
+
+.account-profile-menu p.text-white { color: #172033 !important; }
+.account-profile-menu [class*="text-[#C5D3E8]"],
+.account-profile-menu [class*="text-[#8F9CAE]"] { color: #536078 !important; }
+.account-profile-menu [class*="hover:bg-white"]:hover { background-color: #f7f9fc !important; }
+.account-profile-menu [class*="bg-[#397BFF]"],
+.account-profile-menu [class*="bg-[#00E5FF]"],
+.account-profile-menu [class*="bg-[#B3A4FF]"],
+.account-profile-menu [class*="bg-[#6557FF]"] { background-color: rgba(67, 97, 238, .1) !important; }
+.account-notifications-light h2 { color: #172033 !important; }
+.account-notifications-light button { color: #4361ee; }
+.account-notifications-light [role="alert"] { color: #be123c; }
+.account-notifications-light a { color: #536078; }
+.account-notifications-light a.bg-cyan-300\/\[\.06\] { background-color: rgba(67, 97, 238, .06); color: #172033; }
+.account-notifications-light a span:first-child { color: #4361ee; }
 
 @media (max-width: 1024px) {
   .account-premium > div > aside { width: 18rem; }
