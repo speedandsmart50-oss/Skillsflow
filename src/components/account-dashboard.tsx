@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState, useSyncExternalStore, useMemo } from "react";
+import { type FormEvent, useEffect, useState, useSyncExternalStore, useMemo, useRef } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { AccountCatalog } from "@/components/account-catalog";
 import { CommunityNotifications } from "@/components/community/community-notifications";
@@ -31,6 +31,10 @@ import {
   BlueWavesGraphic,
   CyanBarChartGraphic,
   VioletWaveGraphic,
+  ChevronDownIcon,
+  LogOutIcon,
+  SparklesIcon,
+  CreditCardIcon,
 } from "@/components/electric-icons";
 import { ElectricBannerGraphic } from "@/components/electric-banner-graphic";
 
@@ -186,10 +190,32 @@ export function AccountDashboard() {
   const [deleteWord, setDeleteWord] = useState("");
   const [deleteEmail, setDeleteEmail] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const browserOrigin = useSyncExternalStore(subscribeToLocation, getBrowserOrigin, getServerOrigin);
   const mcpUrl = browserOrigin ? `${browserOrigin}/api/mcp` : "";
+
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [profileMenuOpen]);
 
   useEffect(() => {
     let active = true;
@@ -636,7 +662,7 @@ export function AccountDashboard() {
         {/* ===================== MAIN CONTENT WRAPPER ===================== */}
         <div className="flex min-w-0 flex-col">
           {/* ===================== TOP HEADER ===================== */}
-          <header className="sticky top-0 z-30 flex min-h-[72px] items-center justify-between gap-4 border-b border-[#1E2B4C] bg-[#0B1020]/90 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
+          <header className="sticky top-0 z-40 flex min-h-[72px] items-center justify-between gap-4 border-b border-[#1E2B4C] bg-[#0B1020]/95 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
             {/* Left: Mobile hamburger + Search input */}
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <button
@@ -688,14 +714,18 @@ export function AccountDashboard() {
                 )}
               </div>
 
-              {/* User Profile Pill matching reference */}
-              <details className="group relative">
-                <summary
-                  aria-label="Ouvrir le menu du profil"
-                  className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1 pl-1 pr-2 transition hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#397BFF] [&::-webkit-details-marker]:hidden"
+              {/* User Profile Pill & Dropdown */}
+              <div ref={profileMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileMenuOpen((prev) => !prev)}
+                  aria-expanded={profileMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Menu du profil utilisateur"
+                  className="group flex cursor-pointer items-center gap-3 rounded-full border border-transparent p-1 pr-3 transition-all duration-200 hover:border-[#202E50] hover:bg-[#151F38]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#397BFF]"
                 >
-                  {/* Avatar circle with initials */}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#397BFF]/40 bg-[#1A2544] text-sm font-bold text-white shadow-sm">
+                  {/* Avatar circle with status dot */}
+                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#397BFF]/50 bg-gradient-to-br from-[#1A2544] to-[#0E172E] text-sm font-bold text-white shadow-[0_0_12px_rgba(57,123,255,0.3)] transition-transform group-hover:scale-105">
                     {profile?.avatarUrl ? (
                       <Image
                         src={profile.avatarUrl}
@@ -708,6 +738,10 @@ export function AccountDashboard() {
                     ) : (
                       userInitials
                     )}
+                    <span
+                      aria-hidden="true"
+                      className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#0B1020] bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
+                    />
                   </div>
 
                   {/* Name and Premium status badge */}
@@ -715,53 +749,150 @@ export function AccountDashboard() {
                     <p className="max-w-36 truncate text-sm font-bold text-white leading-tight">
                       {userDisplayName}
                     </p>
-                    <p className="flex items-center gap-1 text-[11px] font-medium text-[#B3A4FF]">
+                    <p className="flex items-center gap-1 text-[11px] font-semibold text-[#B3A4FF]">
                       <span>👑</span>
                       <span>Membre Premium</span>
                     </p>
                   </div>
 
-                  <span aria-hidden="true" className="text-xs text-[#8F9CAE] transition-transform group-open:rotate-180">
-                    ⌄
-                  </span>
-                </summary>
+                  {/* Animated Chevron */}
+                  <ChevronDownIcon
+                    className={`h-4 w-4 text-[#8F9CAE] transition-transform duration-200 ${
+                      profileMenuOpen ? "rotate-180 text-white" : "group-hover:text-white"
+                    }`}
+                  />
+                </button>
 
-                {/* Dropdown Menu */}
-                <nav
-                  aria-label="Menu du profil"
-                  className="absolute right-0 top-full z-[100] mt-2 grid w-60 gap-1 rounded-2xl border border-[#202E50] bg-[#11182B] p-2 shadow-2xl backdrop-blur-xl"
-                >
-                  <div className="border-b border-[#202E50] px-3 py-2 sm:hidden">
-                    <p className="truncate text-sm font-bold text-white">{userDisplayName}</p>
-                    <p className="text-xs text-[#B3A4FF]">👑 Membre Premium</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => changeSection("overview")}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#A5B4CB] transition hover:bg-white/[0.06] hover:text-white"
+                {/* Dropdown Menu Card */}
+                {profileMenuOpen && (
+                  <nav
+                    aria-label="Menu du compte utilisateur"
+                    className="absolute right-0 top-full z-[9999] mt-2.5 w-72 rounded-2xl border border-[#233558] bg-[#0D1527] p-2 shadow-[0_25px_60px_-10px_rgba(0,0,0,0.9),0_0_25px_rgba(57,123,255,0.2)] backdrop-blur-2xl ring-1 ring-white/10"
                   >
-                    <span>Mon espace client</span>
-                  </button>
-                  <Link
-                    href="/member/settings"
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#A5B4CB] transition hover:bg-white/[0.06] hover:text-white"
-                  >
-                    <span>Profil et réglages</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => void signOut()}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-rose-500/[0.1]"
-                  >
-                    <span>Se déconnecter</span>
-                  </button>
-                </nav>
-              </details>
+                    {/* User Header Info Card */}
+                    <div className="mb-1.5 rounded-xl border border-[#203154] bg-gradient-to-br from-[#141F3B] to-[#0E162B] p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#397BFF]/60 bg-[#1A2544] text-sm font-bold text-white shadow-md">
+                          {profile?.avatarUrl ? (
+                            <Image
+                              src={profile.avatarUrl}
+                              alt=""
+                              width={44}
+                              height={44}
+                              unoptimized
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            userInitials
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-white">{userDisplayName}</p>
+                          <p className="truncate text-xs text-[#8F9CAE]">{account?.user.email || ""}</p>
+                          <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-[#B3A4FF]/30 bg-[#B3A4FF]/10 px-2 py-0.5 text-[10px] font-bold text-[#B3A4FF]">
+                            <span>👑</span>
+                            <span>Membre VIP</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Nav Actions */}
+                    <div className="space-y-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          changeSection("overview");
+                          setProfileMenuOpen(false);
+                        }}
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#397BFF]/15 text-[#397BFF] transition-colors group-hover:bg-[#397BFF] group-hover:text-white">
+                          <NavIconOverview active />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-tight text-white">Mon espace client</p>
+                          <p className="text-[11px] text-[#8F9CAE]">Tableau de bord & vue globale</p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          changeSection("skills");
+                          setProfileMenuOpen(false);
+                        }}
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00E5FF]/15 text-[#00E5FF] transition-colors group-hover:bg-[#00E5FF] group-hover:text-slate-950">
+                          <NavIconSkills active />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-tight text-white">Mes skills & IA</p>
+                          <p className="text-[11px] text-[#8F9CAE]">Accéder à vos outils actifs</p>
+                        </div>
+                      </button>
+
+                      <Link
+                        href="/member/settings"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#B3A4FF]/15 text-[#B3A4FF] transition-colors group-hover:bg-[#B3A4FF] group-hover:text-[#0B1020]">
+                          <GearIcon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-tight text-white">Profil et réglages</p>
+                          <p className="text-[11px] text-[#8F9CAE]">Photo, clés MCP & sécurité</p>
+                        </div>
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          changeSection("billing");
+                          setProfileMenuOpen(false);
+                        }}
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#6557FF]/15 text-[#6557FF] transition-colors group-hover:bg-[#6557FF] group-hover:text-white">
+                          <CreditCardIcon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-tight text-white">Commandes & Factures</p>
+                          <p className="text-[11px] text-[#8F9CAE]">Historique et reçus</p>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="my-1.5 h-px bg-gradient-to-r from-transparent via-[#233558] to-transparent" />
+
+                    {/* Sign Out Action */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        void signOut();
+                      }}
+                      className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-300 transition-all hover:bg-rose-500/15 hover:text-rose-200"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400 transition-colors group-hover:bg-rose-500 group-hover:text-white">
+                        <LogOutIcon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold leading-tight text-rose-200">Se déconnecter</p>
+                        <p className="text-[11px] text-rose-300/70">Fermer votre session</p>
+                      </div>
+                    </button>
+                  </nav>
+                )}
+              </div>
             </div>
           </header>
 
           {/* ===================== MAIN BODY VIEW ===================== */}
-          <div className="flex-1 px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
+          <div className="relative z-10 flex-1 px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
             {/* Notifications / Alerts */}
             {(error || notice) && (
               <div
@@ -808,19 +939,19 @@ export function AccountDashboard() {
                       </div>
 
                       {/* Right Decorative Glass Elements matching the reference image */}
-                      <div aria-hidden="true" className="relative hidden select-none lg:block">
-                        <div className="relative h-28 w-64">
+                      <div aria-hidden="true" className="pointer-events-none relative z-0 hidden select-none lg:block">
+                        <div className="pointer-events-none relative h-24 w-60">
                           {/* Floating Glass Tile 1 (Blue) */}
-                          <div className="absolute right-12 top-0 h-16 w-24 rotate-[12deg] rounded-2xl border border-white/20 bg-gradient-to-br from-[#397BFF]/40 to-[#6557FF]/20 backdrop-blur-md shadow-[0_8px_32px_rgba(57,123,255,0.3)] animate-electric-float" />
+                          <div className="pointer-events-none absolute right-12 top-2 h-14 w-24 rotate-[10deg] rounded-2xl border border-white/20 bg-gradient-to-br from-[#397BFF]/35 to-[#6557FF]/20 backdrop-blur-md shadow-[0_8px_24px_rgba(57,123,255,0.25)] animate-electric-float" />
                           {/* Floating Glass Tile 2 (Violet) */}
                           <div
-                            className="absolute right-0 top-5 h-16 w-20 rotate-[-8deg] rounded-2xl border border-white/25 bg-gradient-to-br from-[#6557FF]/40 to-[#B3A4FF]/25 backdrop-blur-md shadow-[0_8px_32px_rgba(101,87,255,0.3)] animate-electric-float"
+                            className="pointer-events-none absolute right-2 top-5 h-14 w-20 rotate-[-6deg] rounded-2xl border border-white/25 bg-gradient-to-br from-[#6557FF]/35 to-[#B3A4FF]/20 backdrop-blur-md shadow-[0_8px_24px_rgba(101,87,255,0.25)] animate-electric-float"
                             style={{ animationDelay: "1.2s" }}
                           />
                           {/* Sparkle and Lavender Text */}
-                          <div className="absolute right-6 top-1 text-right">
-                            <span className="text-xl text-[#B3A4FF]">✦</span>
-                            <p className="mt-1 text-[11px] font-bold text-[#B3A4FF]">Plus de skills.</p>
+                          <div className="pointer-events-none absolute right-4 top-2 text-right">
+                            <span className="text-lg text-[#B3A4FF]">✦</span>
+                            <p className="mt-0.5 text-[11px] font-bold text-[#B3A4FF]">Plus de skills.</p>
                             <p className="text-[11px] font-bold text-[#B3A4FF]">Plus de possibilités.</p>
                           </div>
                         </div>
