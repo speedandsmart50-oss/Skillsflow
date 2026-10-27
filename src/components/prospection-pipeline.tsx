@@ -46,6 +46,7 @@ export function ProspectionPipeline() {
   const loadedRef = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState<PipelineStage | "all">("all");
   const [form, setForm] = useState({ name: "", company: "", channel: "WhatsApp", note: "" });
 
   useEffect(() => {
@@ -71,9 +72,12 @@ export function ProspectionPipeline() {
 
   const visibleProspects = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return prospects;
-    return prospects.filter((prospect) => `${prospect.name} ${prospect.company} ${prospect.channel}`.toLowerCase().includes(normalized));
-  }, [prospects, query]);
+    return prospects.filter((prospect) => {
+      const matchesQuery = !normalized || `${prospect.name} ${prospect.company} ${prospect.channel}`.toLowerCase().includes(normalized);
+      const matchesStage = stageFilter === "all" || prospect.stage === stageFilter;
+      return matchesQuery && matchesStage;
+    });
+  }, [prospects, query, stageFilter]);
 
   const activeCount = prospects.filter((prospect) => prospect.stage !== "won" && prospect.stage !== "lost").length;
   const wonCount = prospects.filter((prospect) => prospect.stage === "won").length;
@@ -124,6 +128,14 @@ export function ProspectionPipeline() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-white">Votre pipeline</p>
           <label className="relative block sm:w-72"><span className="sr-only">Rechercher un contact</span><span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#71809B]">⌕</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher un contact" className="min-h-10 w-full rounded-xl border border-[#27375B] bg-[#0D1527] pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-[#71809B] focus:border-[#55DDF0] focus:ring-2 focus:ring-[#55DDF0]/15" /></label>
+        </div>
+
+        <div className="flex justify-end">
+          <label className="sr-only" htmlFor="prospection-stage-filter">Filtrer par étape</label>
+          <select id="prospection-stage-filter" value={stageFilter} onChange={(event) => setStageFilter(event.target.value as PipelineStage | "all")} className="min-h-10 rounded-xl border border-[#27375B] bg-[#0D1527] px-3 text-sm text-[#C5D3E2] outline-none focus:border-[#55DDF0]">
+            <option value="all">Toutes les étapes</option>
+            {stages.map((stage) => <option key={stage.id} value={stage.id}>{stage.label}</option>)}
+          </select>
         </div>
 
         <div className="flex min-w-0 gap-4 overflow-x-auto pb-3 [scrollbar-color:#397BFF_#0D1527]">
