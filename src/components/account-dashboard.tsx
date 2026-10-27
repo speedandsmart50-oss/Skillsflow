@@ -33,7 +33,6 @@ import {
   VioletWaveGraphic,
   ChevronDownIcon,
   LogOutIcon,
-  SparklesIcon,
   CreditCardIcon,
 } from "@/components/electric-icons";
 import { ElectricBannerGraphic } from "@/components/electric-banner-graphic";
@@ -192,6 +191,7 @@ export function AccountDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const browserOrigin = useSyncExternalStore(subscribeToLocation, getBrowserOrigin, getServerOrigin);
@@ -216,6 +216,17 @@ export function AccountDashboard() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [profileMenuOpen]);
+
+  useEffect(() => {
+    function focusSearch(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", focusSearch);
+    return () => document.removeEventListener("keydown", focusSearch);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -662,7 +673,7 @@ export function AccountDashboard() {
         {/* ===================== MAIN CONTENT WRAPPER ===================== */}
         <div className="flex min-w-0 flex-col">
           {/* ===================== TOP HEADER ===================== */}
-          <header className="sticky top-0 z-40 flex min-h-[72px] items-center justify-between gap-4 border-b border-[#1E2B4C] bg-[#0B1020]/95 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
+          <header className="sticky top-0 z-[100] isolate flex min-h-[72px] items-center justify-between gap-4 border-b border-[#1E2B4C] bg-[#0B1020]/95 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
             {/* Left: Mobile hamburger + Search input */}
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <button
@@ -679,10 +690,14 @@ export function AccountDashboard() {
               </button>
 
               {/* Search bar matching the reference image */}
-              <div className="relative w-full max-w-md">
-                <div className="flex items-center gap-2.5 rounded-xl border border-[#202E50] bg-[#131B31] px-3.5 py-2 text-sm transition focus-within:border-[#397BFF] focus-within:ring-2 focus-within:ring-[#397BFF]/25">
+              <div className="relative z-10 w-full max-w-md">
+                <div
+                  className="flex cursor-text items-center gap-2.5 rounded-xl border border-[#202E50] bg-[#131B31] px-3.5 py-2 text-sm transition focus-within:border-[#397BFF] focus-within:ring-2 focus-within:ring-[#397BFF]/25"
+                  onClick={() => searchInputRef.current?.focus()}
+                >
                   <SearchIcon className="h-4 w-4 shrink-0 text-[#8F9CAE]" />
                   <input
+                    ref={searchInputRef}
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -715,7 +730,7 @@ export function AccountDashboard() {
               </div>
 
               {/* User Profile Pill & Dropdown */}
-              <div ref={profileMenuRef} className="relative">
+              <div ref={profileMenuRef} className="relative z-[110]">
                 <button
                   type="button"
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
@@ -767,7 +782,7 @@ export function AccountDashboard() {
                 {profileMenuOpen && (
                   <nav
                     aria-label="Menu du compte utilisateur"
-                    className="absolute right-0 top-full z-[9999] mt-2.5 w-72 rounded-2xl border border-[#233558] bg-[#0D1527] p-2 shadow-[0_25px_60px_-10px_rgba(0,0,0,0.9),0_0_25px_rgba(57,123,255,0.2)] backdrop-blur-2xl ring-1 ring-white/10"
+                    className="pointer-events-auto absolute right-0 top-full z-[120] mt-2.5 w-72 rounded-2xl border border-[#233558] bg-[#0D1527] p-2 shadow-[0_25px_60px_-10px_rgba(0,0,0,0.9),0_0_25px_rgba(57,123,255,0.2)] backdrop-blur-2xl ring-1 ring-white/10"
                   >
                     {/* User Header Info Card */}
                     <div className="mb-1.5 rounded-xl border border-[#203154] bg-gradient-to-br from-[#141F3B] to-[#0E162B] p-3">
