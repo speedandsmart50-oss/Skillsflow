@@ -1,7 +1,7 @@
 import { BackLink } from "@/components/back-link";
 import { connection } from "next/server";
 import { requirePageUser } from "@/lib/security/page-auth";
-import { ArrowRightIcon } from "@/components/electric-icons";
+import { ProspectionPipeline } from "@/components/prospection-pipeline";
 
 export const instant = false;
 
@@ -38,21 +38,18 @@ export default async function MemberProspectionPage() {
               </p>
             </div>
 
-            <a
-              href="https://app.clarkup.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-6 py-3 text-sm font-bold text-white shadow-[0_4px_16px_rgba(57,123,255,0.4)] transition hover:brightness-110 active:scale-95"
-            >
-              <span>Ouvrir mon espace ClarkUp</span>
-              <ArrowRightIcon className="h-4 w-4" />
-            </a>
+            <div className="rounded-2xl border border-[#20DDF2]/20 bg-[#20DDF2]/[.06] px-5 py-4 text-sm text-[#B8EAF0] lg:max-w-xs">
+              <p className="font-bold text-white">Votre pipeline est intégré à Skillsflow.</p>
+              <p className="mt-1 leading-5 text-[#8FBDCA]">Gérez vos contacts et vos prochaines actions sans changer d’espace.</p>
+            </div>
           </div>
 
           <p className="relative mt-8 border-t border-[#202E50] pt-4 text-xs leading-5 text-[#8F9CAE]">
-            Cette entrée ouvre ClarkUp dans un nouvel onglet. La connexion des comptes et la synchronisation des données restent indépendantes.
+            Un espace de travail Skillsflow pour organiser vos conversations avec clarté, dans le respect du consentement et du rythme de chaque contact.
           </p>
         </section>
+
+        <ProspectionPipeline />
 
         {/* Modules Grid */}
         <section className="mt-12 sm:mt-16" aria-labelledby="prospection-modules">
@@ -63,7 +60,7 @@ export default async function MemberProspectionPage() {
                 Un espace pour garder le cap
               </h2>
             </div>
-            <p className="max-w-lg text-sm text-[#8F9CAE]">Les modules ci-dessous sont accessibles depuis votre compte ClarkUp.</p>
+            <p className="max-w-lg text-sm text-[#8F9CAE]">Le pipeline est disponible directement ici. Les prochains modules viendront compléter votre espace de suivi.</p>
           </div>
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -88,7 +85,7 @@ export default async function MemberProspectionPage() {
                 </div>
 
                 <div className="mt-6 border-t border-[#202E50] pt-4">
-                  <span className="text-xs font-semibold text-[#00E5FF]">Disponible dans ClarkUp ↗</span>
+                  <span className="text-xs font-semibold text-[#00E5FF]">Bientôt dans Skillsflow</span>
                 </div>
               </article>
             ))}
