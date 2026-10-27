@@ -357,6 +357,137 @@ body:has(.admin-shell) .app-shell-chrome {
   .member-preferences-scope :is(main, header, footer, section, article, aside, nav, button, a, input, textarea, select) { transition: none; }
 }
 
+/* Electric Indigo client workspace refresh. Scoped to the authenticated dashboard so
+   the public catalogue and community keep their own visual language. */
+.account-premium {
+  --account-page: #f5f7fc;
+  --account-surface: #ffffff;
+  --account-sidebar: #0d1326;
+  --account-ink: #111827;
+  --account-muted: #64748b;
+  --account-border: #e2e8f0;
+  background: var(--account-page) !important;
+  color: var(--account-ink) !important;
+}
+
+.account-premium > div > aside {
+  width: 16rem;
+  background: var(--account-sidebar) !important;
+  border-color: rgba(148, 163, 184, .18) !important;
+}
+
+.account-premium > div > aside .border-b {
+  border-color: rgba(148, 163, 184, .16) !important;
+}
+
+.account-premium > div > aside nav button:not([aria-current="page"]),
+.account-premium > div > aside nav a {
+  color: #cbd5e1 !important;
+}
+
+.account-premium > div > aside nav button[aria-current="page"] {
+  background: linear-gradient(135deg, #4f46e5, #2563eb) !important;
+  color: #ffffff !important;
+}
+
+.account-premium > div > aside nav button:hover,
+.account-premium > div > aside nav a:hover {
+  color: #ffffff !important;
+  background: rgba(79, 70, 229, .24) !important;
+}
+
+.account-premium-content > header {
+  min-height: 76px;
+  background: rgba(255, 255, 255, .96) !important;
+  border-color: var(--account-border) !important;
+  color: var(--account-ink) !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .04);
+}
+
+.account-premium-content > header input {
+  color: var(--account-ink) !important;
+}
+
+.account-premium-content > header input::placeholder {
+  color: #64748b !important;
+}
+
+.account-premium-content > header kbd {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+.account-premium-content > header .border-\[\#202E50\] {
+  border-color: var(--account-border) !important;
+  background: #ffffff !important;
+}
+
+.account-premium-content > header button {
+  color: #475569 !important;
+}
+
+.account-premium-content > header button:hover {
+  color: #4f46e5 !important;
+}
+
+.account-premium-content > div:last-child {
+  background: var(--account-page);
+}
+
+.account-premium-content > div:last-child h1,
+.account-premium-content > div:last-child h2,
+.account-premium-content > div:last-child h3,
+.account-premium-content > div:last-child p.text-white,
+.account-premium-content > div:last-child li.text-slate-200 {
+  color: var(--account-ink) !important;
+}
+
+.account-premium-content > div:last-child p.text-\[\#8F9CAE\],
+.account-premium-content > div:last-child p.text-slate-400,
+.account-premium-content > div:last-child p.text-slate-500 {
+  color: var(--account-muted) !important;
+}
+
+.account-premium-content > div:last-child [class~="bg-[#151F38]"],
+.account-premium-content > div:last-child [class~="bg-[#11182B]"],
+.account-premium-content > div:last-child [class~="bg-[#10192D]"] {
+  background: var(--account-surface) !important;
+  border-color: var(--account-border) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .06) !important;
+}
+
+.account-premium-content > div:last-child [class~="border-[#202E50]"],
+.account-premium-content > div:last-child [class~="border-[#202E50]/70"] {
+  border-color: var(--account-border) !important;
+}
+
+.account-premium-content > div:last-child .account-stat-card {
+  min-height: 190px;
+}
+
+.account-premium-content > div:last-child .account-stat-card:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, .35);
+  outline-offset: 3px;
+}
+
+.account-premium .account-hero-decoration {
+  opacity: .2;
+}
+
+@media (max-width: 1024px) {
+  .account-premium > div > aside { width: 18rem; }
+}
+
+@media (max-width: 640px) {
+  .account-premium-content > header {
+    min-height: 68px;
+  }
+
+  .account-premium-content > div:last-child {
+    padding: 1.25rem !important;
+  }
+}
+
 .admin-shell > div > header {
   animation: workspace-card-in 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }

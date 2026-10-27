@@ -516,7 +516,7 @@ export function AccountDashboard() {
   }, [displaySkills, searchQuery]);
 
   return (
-    <main className="app-shell-bare min-h-screen bg-[#0B1020] text-slate-100 font-[family-name:var(--font-instrument-sans),sans-serif] selection:bg-[#397BFF] selection:text-white">
+    <main className="app-shell-bare account-premium min-h-screen bg-[#F5F7FC] text-[#111827] font-[family-name:var(--font-instrument-sans),sans-serif] selection:bg-[#4F46E5] selection:text-white">
       {/* Layout Grid: Left Sidebar + Main Content */}
       <div className="min-h-screen lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
         {/* ===================== SIDEBAR ===================== */}
@@ -671,7 +671,7 @@ export function AccountDashboard() {
         )}
 
         {/* ===================== MAIN CONTENT WRAPPER ===================== */}
-        <div className="flex min-w-0 flex-col">
+        <div className="account-premium-content flex min-w-0 flex-col">
           {/* ===================== TOP HEADER ===================== */}
           <header className="sticky top-0 z-[100] isolate flex min-h-[72px] items-center justify-between gap-4 border-b border-[#1E2B4C] bg-[#0B1020]/95 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
             {/* Left: Mobile hamburger + Search input */}
@@ -806,7 +806,7 @@ export function AccountDashboard() {
                           <p className="truncate text-xs text-[#8F9CAE]">{account?.user.email || ""}</p>
                           <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-[#B3A4FF]/30 bg-[#B3A4FF]/10 px-2 py-0.5 text-[10px] font-bold text-[#B3A4FF]">
                             <span>👑</span>
-                            <span>Membre VIP</span>
+                            <span>Premium</span>
                           </div>
                         </div>
                       </div>
@@ -942,19 +942,20 @@ export function AccountDashboard() {
                     {/* 1. Header Section: Big Title + Floating Decorative Graphics */}
                     <div className="relative flex flex-col justify-between gap-6 pb-2 lg:flex-row lg:items-center">
                       <div className="max-w-2xl">
-                        <h1 id="account-title" className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-                          Espace{" "}
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#4F46E5]">Espace membre</p>
+                        <h1 id="account-title" className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                          Votre espace Skill
                           <span className="bg-gradient-to-r from-[#00E5FF] via-[#397BFF] to-[#6557FF] bg-clip-text text-transparent">
-                            Client
+                            Flow
                           </span>
                         </h1>
                         <p className="mt-3 text-base leading-relaxed text-[#8F9CAE] sm:text-lg">
-                          Vos skills, vos achats et votre agent personnel, réunis dans un espace cohérent.
+                          Retrouvez vos skills IA, gérez vos achats et accédez à votre assistant personnel.
                         </p>
                       </div>
 
                       {/* Right Decorative Glass Elements matching the reference image */}
-                      <div aria-hidden="true" className="pointer-events-none relative z-0 hidden select-none lg:block">
+                      <div aria-hidden="true" className="account-hero-decoration pointer-events-none relative z-0 hidden select-none lg:block">
                         <div className="pointer-events-none relative h-24 w-60">
                           {/* Floating Glass Tile 1 (Blue) */}
                           <div className="pointer-events-none absolute right-12 top-2 h-14 w-24 rotate-[10deg] rounded-2xl border border-white/20 bg-gradient-to-br from-[#397BFF]/35 to-[#6557FF]/20 backdrop-blur-md shadow-[0_8px_24px_rgba(57,123,255,0.25)] animate-electric-float" />
@@ -978,7 +979,10 @@ export function AccountDashboard() {
                       {/* Card 1: Skills accessibles (Blue) */}
                       <article
                         onClick={() => changeSection("skills")}
-                        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50 hover:shadow-[0_12px_36px_rgba(57,123,255,0.2)]"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); changeSection("skills"); } }}
+                        className="account-stat-card group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50 hover:shadow-[0_12px_36px_rgba(57,123,255,0.2)]"
                       >
                         <BlueWavesGraphic />
                         <div className="relative z-10 flex items-start justify-between">
@@ -1006,7 +1010,10 @@ export function AccountDashboard() {
                       {/* Card 2: Commandes (Cyan) */}
                       <article
                         onClick={() => changeSection("billing")}
-                        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#00E5FF]/50 hover:shadow-[0_12px_36px_rgba(0,229,255,0.2)]"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); changeSection("billing"); } }}
+                        className="account-stat-card group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#00E5FF]/50 hover:shadow-[0_12px_36px_rgba(0,229,255,0.2)]"
                       >
                         <CyanBarChartGraphic />
                         <div className="relative z-10 flex items-start justify-between">
@@ -1034,7 +1041,10 @@ export function AccountDashboard() {
                       {/* Card 3: Tutoriel Claude (Violet) */}
                       <article
                         onClick={() => changeSection("mcp")}
-                        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#6557FF]/50 hover:shadow-[0_12px_36px_rgba(101,87,255,0.2)]"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); changeSection("mcp"); } }}
+                        className="account-stat-card group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#6557FF]/50 hover:shadow-[0_12px_36px_rgba(101,87,255,0.2)]"
                       >
                         <VioletWaveGraphic />
                         <div className="relative z-10 flex items-start justify-between">
