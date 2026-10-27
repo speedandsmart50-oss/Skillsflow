@@ -10,6 +10,14 @@
   --accent: #2563eb;
   --accent-soft: #eff6ff;
   --border: #e4e7ec;
+  --electric-navy: #0B1020;
+  --electric-sidebar: #11182B;
+  --electric-card: #151F38;
+  --electric-blue: #397BFF;
+  --electric-indigo: #6557FF;
+  --electric-lavender: #B3A4FF;
+  --electric-cyan: #00E5FF;
+  --electric-mint: #00F0A0;
 }
 
 @theme inline {
@@ -24,9 +32,52 @@ html {
 }
 
 body {
-  background: #0d1321;
+  background: #0B1020;
   color: #dce2f5;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes electric-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.8deg);
+  }
+}
+
+@keyframes electric-pulse-subtle {
+  0%, 100% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes electric-glow-drift {
+  0% {
+    opacity: 0.4;
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(12px, -8px) scale(1.08);
+  }
+  100% {
+    opacity: 0.4;
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-electric-float {
+  animation: electric-float 5s ease-in-out infinite;
+}
+
+.animate-electric-pulse {
+  animation: electric-pulse-subtle 4s ease-in-out infinite;
 }
 
 body:has(.auth-page) .app-shell-chrome,

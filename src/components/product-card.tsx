@@ -10,24 +10,50 @@ export function ProductCard({ product }: { product: Product }) {
   } as const;
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-cyan-400/15 bg-slate-900/60 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-1 hover:border-cyan-400/35">
-      <div className="mb-5 flex items-center justify-between gap-4">
+    <article className="group flex h-full flex-col rounded-3xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50 hover:shadow-[0_12px_36px_rgba(57,123,255,0.2)]">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div className="flex flex-col items-start gap-2">
-          {Boolean(product.includedSkills?.length) && <span className="rounded-full border border-violet-300/30 bg-violet-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-200">Pack - {product.includedSkills?.length} skills</span>}
-          {isTopSeller && <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-cyan-200"><span aria-hidden="true">★</span> Parmi les plus achetés</span>}
-          <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-300">{catalogStatusLabels[product.catalogStatus]}</span>
+          {Boolean(product.includedSkills?.length) && (
+            <span className="rounded-full border border-[#B3A4FF]/30 bg-[#6557FF]/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#B3A4FF]">
+              Pack • {product.includedSkills?.length} skills
+            </span>
+          )}
+          {isTopSeller && (
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#397BFF]/30 bg-[#397BFF]/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#8FB5FF]">
+              <span aria-hidden="true">★</span> Top vente
+            </span>
+          )}
+          <span className="rounded-full border border-[#00E5FF]/20 bg-[#00E5FF]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#00E5FF]">
+            {catalogStatusLabels[product.catalogStatus]}
+          </span>
         </div>
+
         <span className="text-right text-lg font-black text-white">
           €{product.price.toFixed(2)}
-          <span className="block text-xs font-medium text-cyan-200">
+          <span className="block text-xs font-medium text-[#8F9CAE]">
             {new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF
           </span>
         </span>
       </div>
-      <h3 className="mt-5 text-xl font-semibold text-white">{product.name}</h3>
-      {Boolean(product.includedSkills?.length) && <p className="mt-2 min-h-12 text-sm leading-6 text-slate-300">{product.includedSkills?.join(" / ")}</p>}
-      <div className="mt-auto flex justify-end border-t border-slate-800 pt-5">
-        <Link href={`/products/${product.slug}`} className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Continuer</Link>
+
+      <h3 className="mt-3 text-xl font-bold text-white group-hover:text-[#8FB5FF] transition">
+        {product.name}
+      </h3>
+
+      {Boolean(product.includedSkills?.length) && (
+        <p className="mt-2 min-h-12 text-sm leading-6 text-[#8F9CAE]">
+          {product.includedSkills?.join(" • ")}
+        </p>
+      )}
+
+      <div className="mt-auto flex justify-end border-t border-[#202E50] pt-5">
+        <Link
+          href={`/products/${product.slug}`}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:brightness-110 active:scale-95"
+        >
+          <span>Continuer</span>
+          <span>→</span>
+        </Link>
       </div>
     </article>
   );

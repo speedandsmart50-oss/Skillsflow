@@ -3,12 +3,36 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState, useSyncExternalStore } from "react";
+import { type FormEvent, useEffect, useState, useSyncExternalStore, useMemo } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { AccountCatalog } from "@/components/account-catalog";
 import { CommunityNotifications } from "@/components/community/community-notifications";
 import { pricingOffers } from "@/features/pricing/offers";
 import { useMemberPreferences } from "@/components/member-preferences-provider";
+import {
+  ElectricLogo,
+  NavIconOverview,
+  NavIconSkills,
+  NavIconCatalog,
+  NavIconMcp,
+  NavIconCommunity,
+  NavIconMyCommunity,
+  NavIconProspection,
+  NavIconBilling,
+  NavIconPrivacy,
+  NavIconHelp,
+  ArrowRightIcon,
+  SearchIcon,
+  BellIcon,
+  CheckIcon,
+  MoreVerticalIcon,
+  GearIcon,
+  PlayIcon,
+  BlueWavesGraphic,
+  CyanBarChartGraphic,
+  VioletWaveGraphic,
+} from "@/components/electric-icons";
+import { ElectricBannerGraphic } from "@/components/electric-banner-graphic";
 
 type AccountOrder = {
   id: string;
@@ -64,29 +88,22 @@ type AccountData = {
 
 type Section = "overview" | "skills" | "catalog" | "mcp" | "billing" | "subscription" | "privacy" | "help";
 
-const sections: { id: Section; label: string }[] = [
-  { id: "overview", label: "Vue d’ensemble" },
-  { id: "skills", label: "Mes skills" },
-  { id: "catalog", label: "Catalogue" },
-  { id: "mcp", label: "Tutoriel Claude" },
-  { id: "billing", label: "Facturation" },
-  { id: "subscription", label: "Abonnement" },
-  { id: "privacy", label: "Données et confidentialité" },
-  { id: "help", label: "Aide" },
+const navSections: { id: Section; label: string; icon: typeof NavIconOverview }[] = [
+  { id: "overview", label: "Vue d’ensemble", icon: NavIconOverview },
+  { id: "skills", label: "Mes skills", icon: NavIconSkills },
+  { id: "catalog", label: "Catalogue", icon: NavIconCatalog },
+  { id: "mcp", label: "Tutoriel Claude", icon: NavIconMcp },
 ];
 
-const pageClass = "min-h-screen bg-[#06132d] text-slate-100";
-const cardClass = "account-card rounded-3xl border border-white/10 bg-[#0b2044]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.2)] sm:p-7";
-const buttonClass = "inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-cyan-200 disabled:cursor-wait disabled:opacity-60";
-const secondaryButtonClass = "inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-cyan-200 disabled:cursor-wait disabled:opacity-60";
-const inputClass = "min-h-11 w-full rounded-xl border border-white/15 bg-[#0b1524] px-3.5 py-2.5 text-base text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300";
+const yourSpaceSections: { id: Section; label: string; icon: typeof NavIconBilling }[] = [
+  { id: "billing", label: "Facturation", icon: NavIconBilling },
+  { id: "privacy", label: "Données et confidentialité", icon: NavIconPrivacy },
+  { id: "help", label: "Aide", icon: NavIconHelp },
+];
+
 const subscribeToLocation = () => () => {};
 const getBrowserOrigin = () => window.location.origin;
 const getServerOrigin = () => "";
-
-function DashboardGlyph({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <span aria-hidden="true" className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-xl ${className}`}>{children}</span>;
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -94,14 +111,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function parseAccountData(payload: unknown): AccountData {
   if (
-    !isRecord(payload)
-    || !isRecord(payload.user)
-    || typeof payload.user.id !== "string"
-    || typeof payload.user.email !== "string"
-    || !Array.isArray(payload.orders)
-    || !Array.isArray(payload.skills)
-    || !Array.isArray(payload.mcpKeys)
-    || !Array.isArray(payload.tickets)
+    !isRecord(payload) ||
+    !isRecord(payload.user) ||
+    typeof payload.user.id !== "string" ||
+    typeof payload.user.email !== "string" ||
+    !Array.isArray(payload.orders) ||
+    !Array.isArray(payload.skills) ||
+    !Array.isArray(payload.mcpKeys) ||
+    !Array.isArray(payload.tickets)
   ) {
     throw new Error("Les informations reçues ne sont pas valides.");
   }
@@ -168,6 +185,8 @@ export function AccountDashboard() {
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deleteWord, setDeleteWord] = useState("");
   const [deleteEmail, setDeleteEmail] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const browserOrigin = useSyncExternalStore(subscribeToLocation, getBrowserOrigin, getServerOrigin);
   const mcpUrl = browserOrigin ? `${browserOrigin}/api/mcp` : "";
@@ -212,6 +231,7 @@ export function AccountDashboard() {
   function changeSection(next: Section) {
     if (next !== "mcp") setNewMcpKey("");
     setSection(next);
+    setMobileMenuOpen(false);
   }
 
   async function refreshAccount() {
@@ -236,6 +256,7 @@ export function AccountDashboard() {
     try {
       await navigator.clipboard.writeText(mcpUrl);
       setMcpUrlCopied(true);
+      window.setTimeout(() => setMcpUrlCopied(false), 2500);
     } catch {
       setError("La copie automatique n’a pas fonctionné. Sélectionnez l’adresse du serveur et copiez-la.");
     }
@@ -376,397 +397,1359 @@ export function AccountDashboard() {
     }
   }
 
+  // Derived user details
+  const userDisplayName = profile?.displayName || account?.user.email?.split("@")[0] || "Membre";
+  const userInitials = profile?.displayName
+    ? profile.displayName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : (account?.user.email || "HQ").slice(0, 2).toUpperCase();
+
+  // Highlighted / Recent skills data logic
+  const displaySkills = useMemo(() => {
+    if (!account) return [];
+    if (account.skills.length > 0) {
+      return account.skills.slice(0, 6);
+    }
+    // Fallback featured skills when user has no purchases yet
+    return [
+      {
+        entitlementId: "featured-1",
+        productId: "prod-1",
+        slug: "go-pro-mlm",
+        memberSkillSlug: "go-pro-mlm",
+        name: "MLM Go Pro Routine Coach",
+        description: "Votre assistant pour une routine quotidienne structurée et efficace en MLM.",
+        domain: "Productivité",
+        grantedAt: new Date().toISOString(),
+        version: "1.0.0",
+        hasClaudeFile: true,
+        hasChatGptFile: true,
+        hasArchive: true,
+        isDemo: true,
+        tags: ["Productivité", "Business"],
+        iconColor: "from-[#6557FF] to-[#B3A4FF]",
+      },
+      {
+        entitlementId: "featured-2",
+        productId: "prod-2",
+        slug: "prospection-intelligente",
+        memberSkillSlug: "prospection-intelligente",
+        name: "Prospection intelligente",
+        description: "Trouvez et contactez vos prospects avec des messages personnalisés par l'IA.",
+        domain: "Vente",
+        grantedAt: new Date().toISOString(),
+        version: "1.2.0",
+        hasClaudeFile: true,
+        hasChatGptFile: true,
+        hasArchive: true,
+        isDemo: true,
+        tags: ["Vente", "Marketing"],
+        iconColor: "from-[#397BFF] to-[#00E5FF]",
+      },
+      {
+        entitlementId: "featured-3",
+        productId: "prod-3",
+        slug: "assistant-contenu-ia",
+        memberSkillSlug: "assistant-contenu-ia",
+        name: "Assistant de contenu IA",
+        description: "Créez du contenu de qualité en quelques clics avec l'assistance de l'IA.",
+        domain: "Création",
+        grantedAt: new Date().toISOString(),
+        version: "1.1.0",
+        hasClaudeFile: true,
+        hasChatGptFile: true,
+        hasArchive: true,
+        isDemo: true,
+        tags: ["Création", "Productivité"],
+        iconColor: "from-[#6557FF] to-[#397BFF]",
+      },
+    ];
+  }, [account]);
+
+  const filteredSkills = useMemo(() => {
+    if (!searchQuery.trim()) return displaySkills;
+    const q = searchQuery.toLowerCase().trim();
+    return displaySkills.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.domain.toLowerCase().includes(q)
+    );
+  }, [displaySkills, searchQuery]);
 
   return (
-    <main className={`app-shell-bare ${pageClass} font-[family-name:var(--font-instrument-sans)]`}>
-      <div className="min-h-screen lg:grid lg:grid-cols-[19.5rem_minmax(0,1fr)]">
-        <aside className="border-b border-[#17345e] bg-[#071a39]/95 lg:min-h-screen lg:border-b-0 lg:border-r">
-          <div className="flex h-full flex-col px-5 py-5 sm:px-7 lg:px-6 lg:py-7">
-            <Link href="/" className="flex items-center gap-3 rounded-xl text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-500 text-xl shadow-[0_0_25px_rgba(30,174,255,.45)]">◉</span>
-              <span className="text-lg font-black uppercase tracking-[.08em]">Espace <span className="text-cyan-300">client</span></span>
+    <main className="app-shell-bare min-h-screen bg-[#0B1020] text-slate-100 font-[family-name:var(--font-instrument-sans),sans-serif] selection:bg-[#397BFF] selection:text-white">
+      {/* Layout Grid: Left Sidebar + Main Content */}
+      <div className="min-h-screen lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
+        {/* ===================== SIDEBAR ===================== */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-[#1E2B4C] bg-[#11182B] transition-transform duration-300 ease-in-out lg:static lg:w-auto lg:translate-x-0 ${
+            mobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+          }`}
+        >
+          {/* Sidebar Top: Logo */}
+          <div className="flex items-center justify-between border-b border-[#1E2B4C]/80 px-6 py-6">
+            <Link href="/" className="group flex items-center transition">
+              <ElectricLogo />
             </Link>
-            <div className="mt-8 lg:sticky lg:top-6">
-              <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} showCommunityLinks selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
-              <div className="mt-4"><AccountSideNav title="Votre espace" ids={["billing", "subscription", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} /></div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg p-1.5 text-[#8F9CAE] hover:bg-white/[0.06] hover:text-white lg:hidden"
+              aria-label="Fermer le menu"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Sidebar Navigation */}
+          <div className="flex flex-1 flex-col justify-between overflow-y-auto px-4 py-6">
+            <div className="space-y-6">
+              {/* Primary Navigation */}
+              <nav aria-label="Navigation principale" className="space-y-1.5">
+                {navSections.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = section === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-current={isActive ? "page" : undefined}
+                      onClick={() => {
+                        clearFeedback();
+                        changeSection(item.id);
+                      }}
+                      className={`group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#397BFF] to-[#6557FF] text-white shadow-[0_8px_24px_rgba(57,123,255,0.35)] font-semibold"
+                          : "text-[#8F9CAE] hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                      }`}
+                    >
+                      <Icon active={isActive} />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+
+                {/* External Community Links */}
+                <Link
+                  href="/community"
+                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                >
+                  <NavIconCommunity active={false} />
+                  <span>Communauté</span>
+                </Link>
+
+                <Link
+                  href="/community/my"
+                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                >
+                  <NavIconMyCommunity active={false} />
+                  <span>Ma communauté</span>
+                </Link>
+
+                <Link
+                  href="/member/prospection"
+                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                >
+                  <NavIconProspection active={false} />
+                  <span>SkillFlow Prospection</span>
+                </Link>
+              </nav>
+
+              {/* Secondary Navigation: VOTRE ESPACE */}
+              <div className="pt-2">
+                <p className="px-4 pb-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#64748B]">
+                  Votre espace
+                </p>
+                <nav aria-label="Votre espace" className="space-y-1.5">
+                  {yourSpaceSections.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = section === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        aria-current={isActive ? "page" : undefined}
+                        onClick={() => {
+                          clearFeedback();
+                          changeSection(item.id);
+                        }}
+                        className={`group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium transition-all duration-200 ${
+                          isActive
+                            ? "bg-gradient-to-r from-[#397BFF] to-[#6557FF] text-white shadow-[0_8px_24px_rgba(57,123,255,0.35)] font-semibold"
+                            : "text-[#8F9CAE] hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                        }`}
+                      >
+                        <Icon active={isActive} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>
+
+            {/* Sidebar Bottom: Promo Card ("Passez au niveau supérieur") */}
+            <div className="relative mt-8 overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-4 shadow-lg">
+              {/* Subtle ambient glow arc in card corner */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 rounded-full bg-gradient-to-br from-[#6557FF]/30 to-[#397BFF]/20 blur-xl"
+              />
+
+              <div className="relative z-10">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#397BFF] to-[#6557FF] text-white shadow-[0_3px_12px_rgba(57,123,255,0.4)]">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="white" stroke="none" />
+                  </svg>
+                </div>
+
+                <h3 className="mt-3 text-sm font-bold text-white">Passez au niveau supérieur</h3>
+                <p className="mt-1 text-xs leading-5 text-[#8F9CAE]">
+                  Découvrez tous les avantages de votre abonnement
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => changeSection("subscription")}
+                  className="mt-3.5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-3.5 py-2 text-xs font-semibold text-white shadow-[0_4px_14px_rgba(57,123,255,0.35)] transition duration-200 hover:brightness-110 active:scale-[0.98]"
+                >
+                  <span>Voir mon offre</span>
+                  <ArrowRightIcon className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           </div>
         </aside>
-        <div className="min-w-0">
-          <header className="flex min-h-[78px] flex-wrap items-center justify-between gap-4 border-b border-[#17345e] bg-[#06132d]/90 px-5 py-4 backdrop-blur-xl sm:px-8 lg:px-10">
-            <div className="flex min-w-0 flex-1 items-center gap-4">
-              <div className="hidden max-w-xl flex-1 items-center gap-3 rounded-full border border-[#244b80] bg-[#0b2148] px-4 py-2.5 text-sm text-[#9bb3d4] sm:flex"><span aria-hidden="true" className="text-xl">⌕</span><span className="truncate">Rechercher un skill, une formation, un outil...</span><kbd className="ml-auto rounded-lg bg-white/[.08] px-2 py-1 text-xs text-[#a8c0df]">Ctrl K</kbd></div>
+
+        {/* Mobile backdrop */}
+        {mobileMenuOpen && (
+          <div
+            aria-hidden="true"
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          />
+        )}
+
+        {/* ===================== MAIN CONTENT WRAPPER ===================== */}
+        <div className="flex min-w-0 flex-col">
+          {/* ===================== TOP HEADER ===================== */}
+          <header className="sticky top-0 z-30 flex min-h-[72px] items-center justify-between gap-4 border-b border-[#1E2B4C] bg-[#0B1020]/90 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
+            {/* Left: Mobile hamburger + Search input */}
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#202E50] bg-[#151F38] text-[#8F9CAE] hover:text-white lg:hidden"
+                aria-label="Ouvrir le menu"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2">
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+
+              {/* Search bar matching the reference image */}
+              <div className="relative w-full max-w-md">
+                <div className="flex items-center gap-2.5 rounded-xl border border-[#202E50] bg-[#131B31] px-3.5 py-2 text-sm transition focus-within:border-[#397BFF] focus-within:ring-2 focus-within:ring-[#397BFF]/25">
+                  <SearchIcon className="h-4 w-4 shrink-0 text-[#8F9CAE]" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Rechercher un skill, une fonctionnalité..."
+                    className="w-full bg-transparent text-sm text-white placeholder:text-[#64748B] outline-none"
+                  />
+                  <kbd className="hidden rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-[#8F9CAE] sm:inline-block">
+                    Ctrl K
+                  </kbd>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              {account && <CommunityNotifications userId={account.user.id} />}
+
+            {/* Right: Notifications + User Profile Pill */}
+            <div className="flex items-center gap-4">
+              {/* Notification Bell */}
+              <div className="relative">
+                {account ? (
+                  <CommunityNotifications userId={account.user.id} />
+                ) : (
+                  <button
+                    type="button"
+                    aria-label="Notifications"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#202E50] bg-[#151F38] text-[#8F9CAE] transition hover:border-[#397BFF]/40 hover:text-white"
+                  >
+                    <BellIcon className="h-5 w-5" />
+                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-[#0B1020]" />
+                  </button>
+                )}
+              </div>
+
+              {/* User Profile Pill matching reference */}
               <details className="group relative">
-                <summary aria-label="Ouvrir le menu du profil" className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-full border-l border-[#17345e] pl-3 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 [&::-webkit-details-marker]:hidden">
-                  <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-200 to-orange-400 text-lg text-slate-950">{profile?.avatarUrl ? <Image src={profile?.avatarUrl ?? ""} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}</span>
-                  <span className="hidden max-w-40 truncate sm:block">{profile?.displayName || account?.user.email || "Mon profil"}</span>
-                  <span aria-hidden="true" className="text-xs transition-transform group-open:rotate-180">⌄</span>
+                <summary
+                  aria-label="Ouvrir le menu du profil"
+                  className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1 pl-1 pr-2 transition hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#397BFF] [&::-webkit-details-marker]:hidden"
+                >
+                  {/* Avatar circle with initials */}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#397BFF]/40 bg-[#1A2544] text-sm font-bold text-white shadow-sm">
+                    {profile?.avatarUrl ? (
+                      <Image
+                        src={profile.avatarUrl}
+                        alt=""
+                        width={40}
+                        height={40}
+                        unoptimized
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      userInitials
+                    )}
+                  </div>
+
+                  {/* Name and Premium status badge */}
+                  <div className="hidden text-left sm:block">
+                    <p className="max-w-36 truncate text-sm font-bold text-white leading-tight">
+                      {userDisplayName}
+                    </p>
+                    <p className="flex items-center gap-1 text-[11px] font-medium text-[#B3A4FF]">
+                      <span>👑</span>
+                      <span>Membre Premium</span>
+                    </p>
+                  </div>
+
+                  <span aria-hidden="true" className="text-xs text-[#8F9CAE] transition-transform group-open:rotate-180">
+                    ⌄
+                  </span>
                 </summary>
-                <nav aria-label="Menu du profil" className="pointer-events-auto absolute right-0 top-full z-[100] mt-2 grid w-56 gap-1 rounded-2xl border border-[#203650] bg-[#0b1729] p-2 shadow-2xl">
-                  <Link href="/account" className="pointer-events-auto relative z-[101] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Mon espace client</Link>
-                  <Link href="/member/settings" className="pointer-events-auto relative z-[101] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#d6e1ef] hover:bg-white/[.06]">Profil et réglages</Link>
-                  <button type="button" onClick={() => void signOut()} className="pointer-events-auto relative z-[101] rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-rose-200 hover:bg-rose-300/[.08]">Se déconnecter</button>
+
+                {/* Dropdown Menu */}
+                <nav
+                  aria-label="Menu du profil"
+                  className="absolute right-0 top-full z-[100] mt-2 grid w-60 gap-1 rounded-2xl border border-[#202E50] bg-[#11182B] p-2 shadow-2xl backdrop-blur-xl"
+                >
+                  <div className="border-b border-[#202E50] px-3 py-2 sm:hidden">
+                    <p className="truncate text-sm font-bold text-white">{userDisplayName}</p>
+                    <p className="text-xs text-[#B3A4FF]">👑 Membre Premium</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => changeSection("overview")}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#A5B4CB] transition hover:bg-white/[0.06] hover:text-white"
+                  >
+                    <span>Mon espace client</span>
+                  </button>
+                  <Link
+                    href="/member/settings"
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#A5B4CB] transition hover:bg-white/[0.06] hover:text-white"
+                  >
+                    <span>Profil et réglages</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => void signOut()}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-rose-500/[0.1]"
+                  >
+                    <span>Se déconnecter</span>
+                  </button>
                 </nav>
               </details>
             </div>
           </header>
-          <div className="px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
-            <section className="relative overflow-hidden border-b border-[#17345e] pb-8" aria-labelledby="account-title">
-              <div className="relative z-10 max-w-3xl">
-                <p className="text-sm font-bold uppercase tracking-[.15em] text-[#a9bddc]">Bienvenue dans <span className="text-cyan-300">votre</span></p>
-                <h1 id="account-title" className="mt-1 text-5xl font-black tracking-[-.06em] text-white sm:text-6xl">Espace <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-violet-400 bg-clip-text text-transparent">Client</span></h1>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-[#a4b9d7]">Vos skills, vos achats et votre agent personnel, réunis dans un espace cohérent pour vous accompagner au quotidien.</p>
-              </div>
-              <div aria-hidden="true" className="pointer-events-none absolute -right-5 bottom-0 hidden h-44 w-[24rem] md:block"><div className="absolute bottom-3 left-4 h-16 w-48 rotate-[-8deg] rounded-[2rem] border border-cyan-300/30 bg-gradient-to-br from-blue-500/50 to-cyan-300/10 shadow-[0_0_45px_rgba(29,142,255,.35)]" /><div className="absolute right-16 top-5 h-24 w-32 rotate-[8deg] rounded-2xl border border-blue-300/30 bg-gradient-to-br from-blue-400/55 to-indigo-700/30" /><div className="absolute right-0 top-12 h-20 w-28 rotate-[-9deg] rounded-2xl border border-indigo-300/30 bg-indigo-500/25" /><span className="absolute right-5 top-0 text-4xl text-violet-400">✦</span></div>
-            </section>
-          {false && <>
-          <Link href="/" className="flex items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B6A5A]">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0B6A5A] font-[family-name:var(--font-bricolage)] text-lg font-bold text-white">S</span>
-            <span className="font-[family-name:var(--font-bricolage)] text-xl font-bold tracking-tight">SkillFlow</span>
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/member/settings" aria-label="Ouvrir mon profil" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-cyan-200/25 bg-cyan-300/10 font-semibold text-cyan-100 transition hover:border-cyan-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">
-              {profile?.avatarUrl ? <Image src={profile?.avatarUrl ?? ""} alt="" width={40} height={40} unoptimized className="h-full w-full object-cover" /> : (profile?.displayName || account?.user.email || "M").slice(0, 1).toUpperCase()}
-            </Link>
-            <Link href="/member/settings" className={secondaryButtonClass}>Profil &amp; apparence</Link>
-            <button type="button" onClick={() => changeSection("mcp")} className={secondaryButtonClass}>Tutoriel Claude</button>
-            <button type="button" onClick={() => void signOut()} className={secondaryButtonClass}>Se déconnecter</button>
-          </div>
-        <div className="mt-9 border-b border-white/10 pb-6 sm:mt-12">
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-300">Espace client</p>
-          <h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-            Votre espace SkillFlow
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">
-            Vos skills, vos achats et votre agent personnel, réunis dans un espace cohérent.
-          </p>
-        </div>
-        </>}
 
-        {(error || notice) && (
-          <div className={`mt-5 rounded-2xl border p-4 text-sm ${error ? "border-[#E7B9B3] bg-[#FFF3F1] text-[#8A2F25]" : "border-[#B9D6CC] bg-[#EAF5F0] text-[#16473D]"}`} role={error ? "alert" : "status"}>
-            {error || notice}
-          </div>
-        )}
-
-        {loading ? (
-          <p className="mt-8 text-sm text-[#52645E]" role="status">Chargement de votre espace…</p>
-        ) : !account ? (
-          <section className={`${cardClass} mt-8`} role="alert">
-            <h2 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold">Votre espace est momentanément indisponible</h2>
-            <p className="mt-2 text-sm leading-6 text-[#52645E]">{error || "Réessayez dans quelques instants."}</p>
-          </section>
-        ) : (
-          <div className="mt-7 w-full" aria-live="polite">
-            {false && <aside className="account-nav-stack" aria-label="Navigation de votre espace">
-              <AccountSideNav title="Espace" ids={["overview", "skills", "catalog", "mcp"]} showCommunityLinks selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
-              <AccountSideNav title="Votre espace" ids={["billing", "privacy", "help"]} selected={section} onSelect={(id) => { clearFeedback(); changeSection(id); }} />
-            </aside>}
-            <section className="account-content w-full" key={section}>
-            {section === "catalog" && <AccountCatalog />}
-            {section === "subscription" && <SubscriptionOffers />}
-            {section === "overview" && (
-              <div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <SummaryCard label="Skills accessibles" value={account.skills.length} detail="Vos accès actifs" />
-                  <SummaryCard label="Commandes" value={account.orders.length} detail="Votre historique complet" />
-                  <SummaryCard label="Tutoriel Claude" value="Disponible" detail="Connexion MCP" />
-                </div>
-                <section className={`${cardClass} mt-5 overflow-hidden bg-gradient-to-br from-[#0b2044] via-[#0b1c3d] to-[#101e4b]`}>
-                  <div className="grid gap-7 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
-                  <div>
-                  <p className="inline-flex rounded-full bg-blue-500/20 px-4 py-2 text-sm font-bold text-cyan-300">👋 Bienvenue</p>
-                  <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold">
-                    {profile?.displayName || account.user.email}
-                  </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#52645E]">
-                    Retrouvez vos skills et le tutoriel pour les connecter à Claude.
-                  </p>
-                  {account.skills.length === 0 && (
-                    <div className="mt-5 rounded-2xl bg-[#F1F6F4] p-4">
-                      <p className="font-semibold">Aucun skill pour le moment.</p>
-                      <Link href="/shop" className="mt-2 inline-flex min-h-10 items-center font-semibold text-[#0B6A5A] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B6A5A]">
-                        Découvrir le catalogue
-                      </Link>
-                    </div>
-                  )}
-                  </div>
-                  <div className="space-y-2 border-t border-[#23446e] pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0"><Link href="/shop" className="group flex items-center gap-3 rounded-xl p-2 transition hover:bg-white/[.05]"><DashboardGlyph className="bg-violet-500/40 text-violet-100">✦</DashboardGlyph><span className="min-w-0 flex-1"><b className="block text-sm text-white">{account.skills.length ? "Gérer mes skills" : "Aucun skill pour le moment"}</b><small className="block text-xs text-[#8fa9ce]">{account.skills.length ? "Retrouvez vos compétences actives" : "Découvrez le catalogue"}</small></span><span className="text-xl text-[#8fa9ce]">›</span></Link><Link href="/shop" className="group flex items-center gap-3 rounded-xl p-2 transition hover:bg-white/[.05]"><DashboardGlyph className="bg-teal-500/40 text-teal-100">▣</DashboardGlyph><span className="min-w-0 flex-1"><b className="block text-sm text-white">Explorer le catalogue</b><small className="block text-xs text-[#8fa9ce]">Trouvez les skills qui vous intéressent</small></span><span className="text-xl text-[#8fa9ce]">›</span></Link><Link href="/community" className="group flex items-center gap-3 rounded-xl p-2 transition hover:bg-white/[.05]"><DashboardGlyph className="bg-blue-500/40 text-blue-100">♟</DashboardGlyph><span className="min-w-0 flex-1"><b className="block text-sm text-white">Rejoindre la communauté</b><small className="block text-xs text-[#8fa9ce]">Échangez et progressez ensemble</small></span><span className="text-xl text-[#8fa9ce]">›</span></Link></div>
-                  </div>
-                </section>
-                {account.orders[0] && (
-                  <section className={`${cardClass} mt-5`}>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm text-[#52645E]">Dernière commande</p>
-                        <h2 className="mt-1 font-[family-name:var(--font-bricolage)] text-xl font-semibold">
-                          {account.orders[0].products?.name ?? "SkillFlow"}
-                        </h2>
-                      </div>
-                      <button type="button" onClick={() => changeSection("billing")} className={secondaryButtonClass}>Voir la facturation</button>
-                    </div>
-                    <p className="mt-3 text-sm text-[#52645E]">
-                      {statusLabel(account.orders[0].payment_status)} · {new Date(account.orders[0].created_at).toLocaleDateString("fr-FR")}
-                    </p>
-                  </section>
-                )}
+          {/* ===================== MAIN BODY VIEW ===================== */}
+          <div className="flex-1 px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
+            {/* Notifications / Alerts */}
+            {(error || notice) && (
+              <div
+                className={`mb-6 rounded-2xl border p-4 text-sm font-medium ${
+                  error
+                    ? "border-rose-400/30 bg-rose-500/10 text-rose-200"
+                    : "border-cyan-400/30 bg-cyan-500/10 text-cyan-200"
+                }`}
+                role={error ? "alert" : "status"}
+              >
+                {error || notice}
               </div>
             )}
 
-            {section === "skills" && (
-              <div>
-                <SectionHeading title="Mes skills" description="Vos accès disponibles dans votre compte." />
-                {account.skills.length === 0 ? (
-                  <EmptyState title="Aucun skill pour le moment" description="Vos accès apparaîtront ici après confirmation d’un paiement ou attribution d’un accès." href="/shop" linkLabel="Voir le catalogue" />
-                ) : (
-                  <ul className="mt-5 grid gap-4 lg:grid-cols-2">
-                    {account.skills.map((skill) => (
-                      <li key={skill.entitlementId} className={`${cardClass} flex flex-wrap items-center justify-between gap-4`}>
-                        <h2 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold">{skill.name}</h2>
-                        <button type="button" onClick={() => changeSection("mcp")} className={buttonClass}>Tutoriel de connexion</button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
-            {section === "mcp" && (
-              <section className={cardClass}>
-                <SectionHeading title="Tutoriel de connexion à Claude" description="Connectez SkillFlow à votre compte Claude en quelques étapes." />
-                <div className="mt-6 rounded-2xl border border-white/10 bg-[#0b1524] p-4">
-                  <h3 className="font-semibold">Clé de connexion</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">Une clé est nécessaire pour accéder à vos skills depuis MCP. Elle est affichée une seule fois à sa création.</p>
-                  {newMcpKey && <div className="mt-4 space-y-2"><label htmlFor="new-mcp-key" className="text-sm font-medium">Copiez cette clé dans la configuration de connexion Claude</label><input id="new-mcp-key" readOnly value={newMcpKey} onFocus={(event) => event.currentTarget.select()} className={`${inputClass} font-mono text-sm`} autoComplete="off" /><button type="button" className={secondaryButtonClass} onClick={() => void navigator.clipboard.writeText(newMcpKey).then(() => setNotice("Clé copiée."), () => setError("Copie impossible. Sélectionnez la clé et copiez-la."))}>Copier la clé</button><button type="button" className="ml-2 text-sm text-slate-400 underline" onClick={() => setNewMcpKey("")}>Masquer</button></div>}
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button type="button" className={buttonClass} disabled={pending} onClick={() => void createMcpKey()}>{account?.mcpKeys.some((key) => key.status === "active") ? "Remplacer ma clé" : "Créer ma clé MCP"}</button>
-                    {account?.mcpKeys.some((key) => key.status === "active") && <button type="button" className={secondaryButtonClass} disabled={pending} onClick={() => void revokeMcpKey()}>Révoquer ma clé</button>}
-                  </div>
+            {loading ? (
+              <div className="flex min-h-[300px] items-center justify-center text-sm text-[#8F9CAE]">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#397BFF] border-t-transparent" />
+                  <span>Chargement de votre espace…</span>
                 </div>
-                <ol className="mt-6 space-y-5">
-                  <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">1</span><div><h3 className="font-semibold">Ouvrez les connecteurs Claude</h3><a href="https://claude.ai/settings/connectors" target="_blank" rel="noreferrer" className="mt-1 inline-flex text-sm font-semibold text-[#087F8C] underline underline-offset-4">Ouvrir les paramètres Claude ↗</a></div></li>
-                  <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">2</span><div className="min-w-0 flex-1"><h3 className="font-semibold">Ajoutez SkillFlow</h3><p className="mt-1 text-sm leading-6 text-[#52645E]">Choisissez « Ajouter un connecteur personnalisé », puis indiquez le nom et l’adresse ci-dessous.</p><div className="mt-3 grid gap-3 sm:grid-cols-[10rem_1fr]"><input aria-label="Nom du connecteur" readOnly value="SkillFlow" className={inputClass} onFocus={(event) => event.currentTarget.select()} /><div className="flex flex-col gap-2 sm:flex-row"><input aria-label="Adresse du connecteur SkillFlow" readOnly value={mcpUrl} placeholder="Chargement…" className={`${inputClass} min-w-0 font-mono text-sm`} onFocus={(event) => event.currentTarget.select()} /><button type="button" onClick={() => void copyMcpUrl()} disabled={!mcpUrl} className={secondaryButtonClass}>{mcpUrlCopied ? "Copiée" : "Copier l’adresse"}</button></div></div></div></li>
-                  <li className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B6A5A] text-sm font-bold text-white">3</span><div><h3 className="font-semibold">Activez SkillFlow dans une conversation</h3><p className="mt-1 text-sm leading-6 text-[#52645E]">Dans Claude, ouvrez « Recherche et outils », puis sélectionnez SkillFlow.</p></div></li>
-                </ol>
+              </div>
+            ) : !account ? (
+              <section className="rounded-3xl border border-[#202E50] bg-[#151F38] p-8 text-center" role="alert">
+                <h2 className="text-xl font-bold text-white">Votre espace est momentanément indisponible</h2>
+                <p className="mt-2 text-sm text-[#8F9CAE]">{error || "Réessayez dans quelques instants."}</p>
               </section>
-            )}
+            ) : (
+              <div className="space-y-8" key={section}>
+                {/* ===================== VIEW: OVERVIEW ===================== */}
+                {section === "overview" && (
+                  <div className="space-y-8">
+                    {/* 1. Header Section: Big Title + Floating Decorative Graphics */}
+                    <div className="relative flex flex-col justify-between gap-6 pb-2 lg:flex-row lg:items-center">
+                      <div className="max-w-2xl">
+                        <h1 id="account-title" className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                          Espace{" "}
+                          <span className="bg-gradient-to-r from-[#00E5FF] via-[#397BFF] to-[#6557FF] bg-clip-text text-transparent">
+                            Client
+                          </span>
+                        </h1>
+                        <p className="mt-3 text-base leading-relaxed text-[#8F9CAE] sm:text-lg">
+                          Vos skills, vos achats et votre agent personnel, réunis dans un espace cohérent.
+                        </p>
+                      </div>
 
-            {section === "billing" && (
-              <div>
-                <SectionHeading title="Facturation" description="Consultez le statut et le montant de chaque commande." />
-                {account.orders.length === 0 ? (
-                  <EmptyState title="Aucune commande pour le moment" description="Vos achats confirmés apparaîtront ici." href="/shop" linkLabel="Voir le catalogue" />
-                ) : (
-                  <ul className="mt-5 space-y-3">
-                    {account.orders.map((order) => (
-                      <li key={order.id} className={cardClass}>
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
-                            <h2 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold">{order.products?.name ?? "SkillFlow"}</h2>
-                            <p className="mt-1 text-sm text-[#66766F]">Commande du {new Date(order.created_at).toLocaleDateString("fr-FR")}</p>
-                            <p className="mt-2 text-sm text-[#52645E]">Référence {order.id}</p>
-                          </div>
-                          <div className="text-left sm:text-right">
-                            <p className="font-semibold">€{Number(order.total).toFixed(2)}</p>
-                            <p className="text-sm text-[#52645E]">{new Intl.NumberFormat("fr-FR").format(order.total_xof ?? 0)} XOF</p>
-                            <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${order.payment_status === "paid" ? "bg-[#EAF5F0] text-[#16473D]" : order.payment_status === "failed" ? "bg-[#FFF0EE] text-[#8A2F25]" : "bg-[#FFF8E6] text-[#705717]"}`}>{statusLabel(order.payment_status)}</span>
-                            {order.payment_status === "paid" && <button type="button" disabled={pending} onClick={() => void downloadOrderReceipt(order.id)} className={`${secondaryButtonClass} mt-3 w-full sm:w-auto`}>{pending ? "Préparation…" : "Télécharger le reçu PDF"}</button>}
-                            {order.payment_status !== "paid" && <p className="mt-3 text-xs text-[#52645E]">Reçu disponible après paiement confirmé.</p>}
+                      {/* Right Decorative Glass Elements matching the reference image */}
+                      <div aria-hidden="true" className="relative hidden select-none lg:block">
+                        <div className="relative h-28 w-64">
+                          {/* Floating Glass Tile 1 (Blue) */}
+                          <div className="absolute right-12 top-0 h-16 w-24 rotate-[12deg] rounded-2xl border border-white/20 bg-gradient-to-br from-[#397BFF]/40 to-[#6557FF]/20 backdrop-blur-md shadow-[0_8px_32px_rgba(57,123,255,0.3)] animate-electric-float" />
+                          {/* Floating Glass Tile 2 (Violet) */}
+                          <div
+                            className="absolute right-0 top-5 h-16 w-20 rotate-[-8deg] rounded-2xl border border-white/25 bg-gradient-to-br from-[#6557FF]/40 to-[#B3A4FF]/25 backdrop-blur-md shadow-[0_8px_32px_rgba(101,87,255,0.3)] animate-electric-float"
+                            style={{ animationDelay: "1.2s" }}
+                          />
+                          {/* Sparkle and Lavender Text */}
+                          <div className="absolute right-6 top-1 text-right">
+                            <span className="text-xl text-[#B3A4FF]">✦</span>
+                            <p className="mt-1 text-[11px] font-bold text-[#B3A4FF]">Plus de skills.</p>
+                            <p className="text-[11px] font-bold text-[#B3A4FF]">Plus de possibilités.</p>
                           </div>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
+                      </div>
+                    </div>
+
+                    {/* 2. Three Statistics Cards: Blue, Cyan, Violet */}
+                    <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
+                      {/* Card 1: Skills accessibles (Blue) */}
+                      <article
+                        onClick={() => changeSection("skills")}
+                        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50 hover:shadow-[0_12px_36px_rgba(57,123,255,0.2)]"
+                      >
+                        <BlueWavesGraphic />
+                        <div className="relative z-10 flex items-start justify-between">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#397BFF]/20 text-[#397BFF] shadow-[0_0_15px_rgba(57,123,255,0.3)]">
+                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+                              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                              <polyline points="2 17 12 22 22 17" />
+                              <polyline points="2 12 12 17 22 12" />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-semibold text-white">Skills accessibles</p>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-[#8F9CAE] transition-all group-hover:bg-[#397BFF] group-hover:text-white group-hover:translate-x-1">
+                            <ArrowRightIcon className="h-4 w-4" />
+                          </div>
+                        </div>
+
+                        <div className="relative z-10 mt-6">
+                          <p className="text-4xl font-black tracking-tight text-white">
+                            {String(account.skills.length).padStart(2, "0")}
+                          </p>
+                          <p className="mt-1 text-sm text-[#8F9CAE]">Vos accès actifs</p>
+                        </div>
+                      </article>
+
+                      {/* Card 2: Commandes (Cyan) */}
+                      <article
+                        onClick={() => changeSection("billing")}
+                        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#00E5FF]/50 hover:shadow-[0_12px_36px_rgba(0,229,255,0.2)]"
+                      >
+                        <CyanBarChartGraphic />
+                        <div className="relative z-10 flex items-start justify-between">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#00E5FF]/20 text-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.3)]">
+                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+                              <circle cx="9" cy="21" r="1" />
+                              <circle cx="20" cy="21" r="1" />
+                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-semibold text-white">Commandes</p>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-[#8F9CAE] transition-all group-hover:bg-[#00E5FF] group-hover:text-slate-950 group-hover:translate-x-1">
+                            <ArrowRightIcon className="h-4 w-4" />
+                          </div>
+                        </div>
+
+                        <div className="relative z-10 mt-6">
+                          <p className="text-4xl font-black tracking-tight text-white">
+                            {String(account.orders.length).padStart(2, "0")}
+                          </p>
+                          <p className="mt-1 text-sm text-[#8F9CAE]">Historique de vos achats</p>
+                        </div>
+                      </article>
+
+                      {/* Card 3: Tutoriel Claude (Violet) */}
+                      <article
+                        onClick={() => changeSection("mcp")}
+                        className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#6557FF]/50 hover:shadow-[0_12px_36px_rgba(101,87,255,0.2)]"
+                      >
+                        <VioletWaveGraphic />
+                        <div className="relative z-10 flex items-start justify-between">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6557FF]/20 text-[#B3A4FF] shadow-[0_0_15px_rgba(101,87,255,0.3)]">
+                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-semibold text-white">Tutoriel Claude</p>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-[#8F9CAE] transition-all group-hover:bg-[#6557FF] group-hover:text-white group-hover:translate-x-1">
+                            <ArrowRightIcon className="h-4 w-4" />
+                          </div>
+                        </div>
+
+                        <div className="relative z-10 mt-6">
+                          <p className="text-3xl font-black tracking-tight text-[#00F0A0]">
+                            Disponible
+                          </p>
+                          <p className="mt-1 text-sm text-[#8F9CAE]">Connectez votre agent IA</p>
+                        </div>
+                      </article>
+                    </div>
+
+                    {/* 3. Welcome Hero Banner with 3D Platform Illustration & Checklist */}
+                    <section className="relative overflow-hidden rounded-3xl border border-[#202E50] bg-[#151F38] p-6 shadow-2xl transition duration-300 hover:border-[#397BFF]/30 sm:p-8 lg:p-10">
+                      {/* Ambient electric blue aura */}
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-gradient-to-br from-[#397BFF]/20 to-[#6557FF]/15 blur-3xl"
+                      />
+
+                      <div className="relative z-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                        {/* Left column: Text & CTAs */}
+                        <div>
+                          <div className="inline-flex items-center gap-2 rounded-full border border-[#397BFF]/35 bg-[#397BFF]/15 px-3.5 py-1 text-xs font-bold text-[#8FB5FF]">
+                            <span>⚡</span>
+                            <span>Bienvenue</span>
+                          </div>
+
+                          <h2 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                            Votre espace{" "}
+                            <span className="bg-gradient-to-r from-[#397BFF] to-[#6557FF] bg-clip-text text-transparent">
+                              IA est prêt
+                            </span>
+                          </h2>
+
+                          <p className="mt-3 max-w-xl text-base leading-relaxed text-[#8F9CAE]">
+                            Accédez à vos skills, configurez Claude et explorez tout ce que SkillFlow peut vous offrir pour booster votre productivité.
+                          </p>
+
+                          {/* 3 Action Buttons */}
+                          <div className="mt-7 flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => changeSection("catalog")}
+                              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-6 py-3 text-sm font-bold text-white shadow-[0_6px_22px_rgba(57,123,255,0.4)] transition hover:brightness-110 active:scale-[0.98]"
+                            >
+                              <span>Explorer le catalogue</span>
+                              <ArrowRightIcon className="h-4 w-4" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => changeSection("mcp")}
+                              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#25365E] bg-[#11182B]/80 px-5 py-3 text-sm font-semibold text-white transition hover:border-[#397BFF]/50 hover:bg-[#1E2945]"
+                            >
+                              <GearIcon className="h-4 w-4 text-[#8F9CAE]" />
+                              <span>Configurer Claude</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => changeSection("skills")}
+                              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#25365E] bg-transparent px-5 py-3 text-sm font-semibold text-[#8F9CAE] transition hover:border-white/20 hover:text-white"
+                            >
+                              <PlayIcon className="h-4 w-4 text-[#8F9CAE]" />
+                              <span>Découvrir SkillFlow</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Right column: 3D Platform Graphic + Feature Checklist */}
+                        <div className="flex flex-col items-center justify-center gap-6 sm:flex-row lg:justify-end">
+                          <ElectricBannerGraphic className="w-full max-w-[280px]" />
+
+                          {/* Checklist matching reference */}
+                          <ul className="space-y-3.5 text-sm font-medium text-slate-200">
+                            <li className="flex items-center gap-2.5">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00E5FF]/20 text-[#00E5FF]">
+                                <CheckIcon className="h-3.5 w-3.5" />
+                              </span>
+                              <span>Skills IA installables</span>
+                            </li>
+                            <li className="flex items-center gap-2.5">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00E5FF]/20 text-[#00E5FF]">
+                                <CheckIcon className="h-3.5 w-3.5" />
+                              </span>
+                              <span>Intégration MCP</span>
+                            </li>
+                            <li className="flex items-center gap-2.5">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00E5FF]/20 text-[#00E5FF]">
+                                <CheckIcon className="h-3.5 w-3.5" />
+                              </span>
+                              <span>Automatisation</span>
+                            </li>
+                            <li className="flex items-center gap-2.5">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00E5FF]/20 text-[#00E5FF]">
+                                <CheckIcon className="h-3.5 w-3.5" />
+                              </span>
+                              <span>Support dédié</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* 4. "Vos skills récents" Section with Electric Cards */}
+                    <section aria-labelledby="recent-skills-heading" className="space-y-5">
+                      <div className="flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                          <h2 id="recent-skills-heading" className="text-2xl font-bold tracking-tight text-white">
+                            Vos skills récents
+                          </h2>
+                          <p className="mt-1 text-sm text-[#8F9CAE]">
+                            Accédez rapidement à vos skills installés et gérez-les facilement.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => changeSection("skills")}
+                          className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[#8FB5FF] transition hover:text-white"
+                        >
+                          <span>Voir tout</span>
+                          <ArrowRightIcon className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+                        </button>
+                      </div>
+
+                      {/* Skills Cards Grid */}
+                      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredSkills.map((skill, index) => {
+                          const iconGradients = [
+                            "from-[#6557FF] to-[#B3A4FF]",
+                            "from-[#397BFF] to-[#00E5FF]",
+                            "from-[#6557FF] to-[#397BFF]",
+                          ];
+                          const grad = iconGradients[index % iconGradients.length];
+
+                          return (
+                            <article
+                              key={skill.entitlementId || skill.slug}
+                              className="group flex flex-col justify-between rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50 hover:shadow-[0_12px_36px_rgba(57,123,255,0.2)]"
+                            >
+                              <div>
+                                {/* Card Top: Icon + Title + Status Pill + More Menu */}
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${grad} text-white shadow-md`}
+                                    >
+                                      {index % 3 === 0 ? (
+                                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+                                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                          <circle cx="12" cy="7" r="4" />
+                                        </svg>
+                                      ) : index % 3 === 1 ? (
+                                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+                                          <circle cx="12" cy="12" r="10" />
+                                          <circle cx="12" cy="12" r="6" />
+                                          <circle cx="12" cy="12" r="2" />
+                                        </svg>
+                                      ) : (
+                                        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2">
+                                          <path d="M12 19l7-7 3 3-7 7-3-3z" />
+                                          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                                          <path d="M2 2l7.586 7.586" />
+                                          <circle cx="11" cy="11" r="2" />
+                                        </svg>
+                                      )}
+                                    </div>
+
+                                    <div>
+                                      <h3 className="text-base font-bold text-white group-hover:text-[#8FB5FF] transition">
+                                        {skill.name}
+                                      </h3>
+                                      <p className="text-xs text-[#8F9CAE]">
+                                        Version {skill.version || "1.0.0"} • MCP
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <span className="rounded-full border border-[#00F0A0]/30 bg-[#00F0A0]/15 px-2.5 py-0.5 text-xs font-semibold text-[#00F0A0]">
+                                      Actif
+                                    </span>
+                                    <button
+                                      type="button"
+                                      aria-label="Options"
+                                      className="rounded-lg p-1 text-[#8F9CAE] hover:bg-white/[0.06] hover:text-white"
+                                    >
+                                      <MoreVerticalIcon className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Description */}
+                                <p className="mt-4 min-h-[48px] text-sm leading-6 text-[#8F9CAE]">
+                                  {skill.description || "Assistant IA configuré et connecté à votre compte SkillFlow."}
+                                </p>
+                              </div>
+
+                              {/* Card Bottom: Tags + Button */}
+                              <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#202E50]/70 pt-4">
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="rounded-lg border border-[#202E50] bg-[#10192D] px-2.5 py-1 text-xs font-medium text-[#8F9CAE]">
+                                    {skill.domain || "Productivité"}
+                                  </span>
+                                  <span className="rounded-lg border border-[#202E50] bg-[#10192D] px-2.5 py-1 text-xs font-medium text-[#8F9CAE]">
+                                    MCP
+                                  </span>
+                                </div>
+
+                                <Link
+                                  href={
+                                    skill.memberSkillSlug
+                                      ? `/member/skills/${skill.memberSkillSlug}/setup`
+                                      : skill.slug
+                                      ? `/member/skills/${skill.slug}`
+                                      : "/member/skills"
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#397BFF] px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-[#2F6DF0] active:scale-95"
+                                >
+                                  <span>Ouvrir</span>
+                                  <ArrowRightIcon className="h-3 w-3" />
+                                </Link>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {/* ===================== VIEW: MES SKILLS ===================== */}
+                {section === "skills" && (
+                  <div className="space-y-6">
+                    <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Vos compétences</p>
+                      <h2 className="mt-2 text-3xl font-black text-white">Mes skills</h2>
+                      <p className="mt-2 text-sm text-[#8F9CAE]">
+                        Accédez à vos compétences débloquées, téléchargez les définitions et configurez leur intégration Claude.
+                      </p>
+                    </header>
+
+                    {account.skills.length === 0 ? (
+                      <div className="rounded-3xl border border-[#202E50] bg-[#151F38] p-8 text-center sm:p-12">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#397BFF]/20 text-[#397BFF]">
+                          <NavIconSkills active />
+                        </div>
+                        <h3 className="mt-4 text-xl font-bold text-white">Aucun skill actif pour le moment</h3>
+                        <p className="mx-auto mt-2 max-w-md text-sm text-[#8F9CAE]">
+                          Vos accès apparaîtront ici après confirmation d’un achat dans le catalogue.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => changeSection("catalog")}
+                          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-6 py-3 text-sm font-bold text-white transition hover:brightness-110"
+                        >
+                          <span>Voir le catalogue</span>
+                          <ArrowRightIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                        {account.skills.map((skill) => (
+                          <article
+                            key={skill.entitlementId}
+                            className="flex flex-col justify-between rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#397BFF]/50"
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-3">
+                                <h3 className="text-lg font-bold text-white">{skill.name}</h3>
+                                <span className="rounded-full border border-[#00F0A0]/30 bg-[#00F0A0]/15 px-2.5 py-0.5 text-xs font-semibold text-[#00F0A0]">
+                                  Actif
+                                </span>
+                              </div>
+                              <p className="mt-1 text-xs text-[#8F9CAE]">
+                                Version {skill.version || "1.0.0"} • {skill.domain}
+                              </p>
+                              <p className="mt-4 text-sm leading-6 text-[#8F9CAE]">
+                                {skill.description || "Skill prêt à l'emploi avec votre agent."}
+                              </p>
+                            </div>
+
+                            <div className="mt-6 flex flex-wrap gap-2 border-t border-[#202E50] pt-4">
+                              <Link
+                                href={`/member/skills/${skill.memberSkillSlug || skill.slug || skill.productId}/setup`}
+                                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#397BFF] px-4 text-xs font-bold text-white transition hover:bg-[#2F6DF0]"
+                              >
+                                Configurer
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => changeSection("mcp")}
+                                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#202E50] bg-white/[0.04] px-4 text-xs font-semibold text-[#8FB5FF] transition hover:bg-white/[0.08]"
+                              >
+                                Tutoriel Claude
+                              </button>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ===================== VIEW: CATALOGUE ===================== */}
+                {section === "catalog" && <AccountCatalog />}
+
+                {/* ===================== VIEW: MCP (TUTORIEL CLAUDE) ===================== */}
+                {section === "mcp" && (
+                  <div className="space-y-6">
+                    <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Intégration MCP</p>
+                      <h2 className="mt-2 text-3xl font-black text-white">Tutoriel de connexion à Claude</h2>
+                      <p className="mt-2 text-sm text-[#8F9CAE]">
+                        Connectez vos skills SkillFlow à Claude Desktop ou Claude Web via le protocole MCP en quelques étapes.
+                      </p>
+                    </header>
+
+                    {/* API Key Box */}
+                    <section className="rounded-2xl border border-[#202E50] bg-[#151F38] p-6">
+                      <h3 className="text-lg font-bold text-white">Clé de connexion MCP</h3>
+                      <p className="mt-1 text-sm text-[#8F9CAE]">
+                        Une clé est nécessaire pour accéder à vos skills depuis Claude. Elle est affichée une seule fois à sa création.
+                      </p>
+
+                      {newMcpKey && (
+                        <div className="mt-4 rounded-xl border border-[#00F0A0]/30 bg-[#00F0A0]/10 p-4">
+                          <label htmlFor="new-mcp-key" className="block text-xs font-bold uppercase tracking-wider text-[#00F0A0]">
+                            Copiez cette clé dans Claude (elle ne sera plus visible après) :
+                          </label>
+                          <input
+                            id="new-mcp-key"
+                            readOnly
+                            value={newMcpKey}
+                            onFocus={(event) => event.currentTarget.select()}
+                            className="mt-2 w-full rounded-lg border border-[#202E50] bg-[#0B1020] px-3.5 py-2 font-mono text-sm text-white outline-none"
+                            autoComplete="off"
+                          />
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              type="button"
+                              className="rounded-lg bg-[#397BFF] px-4 py-2 text-xs font-bold text-white hover:bg-[#2F6DF0]"
+                              onClick={() =>
+                                void navigator.clipboard.writeText(newMcpKey).then(
+                                  () => setNotice("Clé copiée dans le presse-papier."),
+                                  () => setError("Copie impossible. Sélectionnez la clé et copiez-la manuellement.")
+                                )
+                              }
+                            >
+                              Copier la clé
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewMcpKey("")}
+                              className="rounded-lg px-3 py-2 text-xs font-semibold text-[#8F9CAE] hover:text-white"
+                            >
+                              Masquer
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => void createMcpKey()}
+                          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60"
+                        >
+                          {account.mcpKeys.some((k) => k.status === "active") ? "Remplacer ma clé MCP" : "Créer ma clé MCP"}
+                        </button>
+
+                        {account.mcpKeys.some((k) => k.status === "active") && (
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => void revokeMcpKey()}
+                            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-rose-500/40 bg-rose-500/10 px-5 py-2.5 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-60"
+                          >
+                            Révoquer ma clé
+                          </button>
+                        )}
+                      </div>
+                    </section>
+
+                    {/* Step by step */}
+                    <div className="rounded-2xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <h3 className="text-xl font-bold text-white">Étapes de configuration</h3>
+                      <ol className="mt-6 space-y-6">
+                        <li className="flex gap-4">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#397BFF] text-sm font-bold text-white shadow-md">
+                            1
+                          </span>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-white">Ouvrez les connecteurs Claude</h4>
+                            <p className="mt-1 text-sm text-[#8F9CAE]">
+                              Rendez-vous dans les paramètres de votre compte Claude pour ajouter une extension MCP.
+                            </p>
+                            <a
+                              href="https://claude.ai/settings/connectors"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#8FB5FF] underline underline-offset-4 hover:text-white"
+                            >
+                              <span>Ouvrir les paramètres Claude</span>
+                              <span>↗</span>
+                            </a>
+                          </div>
+                        </li>
+
+                        <li className="flex gap-4">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#397BFF] text-sm font-bold text-white shadow-md">
+                            2
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-white">Ajoutez le serveur SkillFlow</h4>
+                            <p className="mt-1 text-sm text-[#8F9CAE]">
+                              Choisissez « Ajouter un connecteur personnalisé », puis renseignez le nom et l’URL ci-dessous :
+                            </p>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-[10rem_1fr]">
+                              <input
+                                aria-label="Nom du connecteur"
+                                readOnly
+                                value="SkillFlow"
+                                className="rounded-xl border border-[#202E50] bg-[#0B1020] px-3.5 py-2.5 text-sm text-white"
+                              />
+                              <div className="flex flex-col gap-2 sm:flex-row">
+                                <input
+                                  aria-label="Adresse du connecteur"
+                                  readOnly
+                                  value={mcpUrl}
+                                  placeholder="Chargement…"
+                                  className="w-full rounded-xl border border-[#202E50] bg-[#0B1020] px-3.5 py-2.5 font-mono text-xs text-white"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => void copyMcpUrl()}
+                                  disabled={!mcpUrl}
+                                  className="shrink-0 rounded-xl bg-[#397BFF] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#2F6DF0] disabled:opacity-50"
+                                >
+                                  {mcpUrlCopied ? "Copiée !" : "Copier l’adresse"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+
+                        <li className="flex gap-4">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#397BFF] text-sm font-bold text-white shadow-md">
+                            3
+                          </span>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-white">Activez SkillFlow dans vos échanges</h4>
+                            <p className="mt-1 text-sm text-[#8F9CAE]">
+                              Dans toute conversation Claude, ouvrez « Recherche et outils », activez SkillFlow et demandez-lui d’utiliser vos compétences actives.
+                            </p>
+                          </div>
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
+                {/* ===================== VIEW: BILLING (FACTURATION) ===================== */}
+                {section === "billing" && (
+                  <div className="space-y-6">
+                    <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Historique</p>
+                      <h2 className="mt-2 text-3xl font-black text-white">Facturation</h2>
+                      <p className="mt-2 text-sm text-[#8F9CAE]">
+                        Consultez le statut et le montant de chaque commande passée sur SkillFlow.
+                      </p>
+                    </header>
+
+                    {account.orders.length === 0 ? (
+                      <div className="rounded-3xl border border-[#202E50] bg-[#151F38] p-8 text-center sm:p-12">
+                        <h3 className="text-xl font-bold text-white">Aucune commande pour le moment</h3>
+                        <p className="mt-2 text-sm text-[#8F9CAE]">Vos achats confirmés apparaîtront ici.</p>
+                        <button
+                          type="button"
+                          onClick={() => changeSection("catalog")}
+                          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-6 py-3 text-sm font-bold text-white"
+                        >
+                          <span>Voir le catalogue</span>
+                          <ArrowRightIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {account.orders.map((order) => (
+                          <div
+                            key={order.id}
+                            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-md"
+                          >
+                            <div>
+                              <h3 className="text-lg font-bold text-white">{order.products?.name ?? "SkillFlow Pack"}</h3>
+                              <p className="mt-1 text-xs text-[#8F9CAE]">
+                                Commande du {new Date(order.created_at).toLocaleDateString("fr-FR")} • Référence {order.id.slice(0, 8)}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-4 text-right">
+                              <div>
+                                <p className="text-base font-black text-white">€{Number(order.total).toFixed(2)}</p>
+                                <p className="text-xs text-[#8F9CAE]">
+                                  {new Intl.NumberFormat("fr-FR").format(order.total_xof ?? 0)} XOF
+                                </p>
+                              </div>
+
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                  order.payment_status === "paid"
+                                    ? "border border-[#00F0A0]/30 bg-[#00F0A0]/15 text-[#00F0A0]"
+                                    : order.payment_status === "failed"
+                                    ? "border border-rose-500/30 bg-rose-500/15 text-rose-300"
+                                    : "border border-amber-500/30 bg-amber-500/15 text-amber-300"
+                                }`}
+                              >
+                                {statusLabel(order.payment_status)}
+                              </span>
+
+                              {order.payment_status === "paid" && (
+                                <button
+                                  type="button"
+                                  disabled={pending}
+                                  onClick={() => void downloadOrderReceipt(order.id)}
+                                  className="rounded-xl border border-[#202E50] bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
+                                >
+                                  {pending ? "Préparation…" : "Reçu PDF"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ===================== VIEW: SUBSCRIPTION (ABONNEMENT) ===================== */}
+                {section === "subscription" && <SubscriptionOffers />}
+
+                {/* ===================== VIEW: PRIVACY (DONNÉES ET CONFIDENTIALITÉ) ===================== */}
+                {section === "privacy" && (
+                  <div className="space-y-6">
+                    <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Confidentialité</p>
+                      <h2 className="mt-2 text-3xl font-black text-white">Données et confidentialité</h2>
+                      <p className="mt-2 text-sm text-[#8F9CAE]">
+                        Contrôlez et exportez vos données personnelles conformément aux réglementations de protection des données.
+                      </p>
+                    </header>
+
+                    {/* Export Card */}
+                    <section className="rounded-2xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <h3 className="text-lg font-bold text-white">Export de vos données</h3>
+                      <p className="mt-1 text-sm text-[#8F9CAE]">
+                        Téléchargez une archive JSON complète contenant vos informations de compte, commandes, accès et clés.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => void exportData()}
+                        className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-6 py-2.5 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60"
+                      >
+                        {pending ? "Préparation…" : "Exporter mes données"}
+                      </button>
+                    </section>
+
+                    {/* Delete Account */}
+                    <section className="rounded-2xl border border-rose-500/30 bg-[#1A1422] p-6 sm:p-8">
+                      <h3 className="text-lg font-bold text-rose-300">Supprimer mon compte</h3>
+                      <p className="mt-1 text-sm text-[#A5B4CB]">
+                        Cette action est définitive. Elle supprimera vos commandes, accès aux skills, configurations et demandes d’aide.
+                      </p>
+
+                      {!showDeleteForm ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowDeleteForm(true)}
+                          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl border border-rose-500/40 bg-rose-500/10 px-5 py-2.5 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/20"
+                        >
+                          Commencer la suppression
+                        </button>
+                      ) : (
+                        <form onSubmit={(e) => void deleteAccount(e)} className="mt-6 max-w-lg space-y-4">
+                          <p className="text-xs font-bold uppercase tracking-wider text-rose-300">
+                            Pour confirmer, saisissez SUPPRIMER et votre adresse e-mail :
+                          </p>
+                          <div>
+                            <label htmlFor="delete-word" className="mb-1 block text-xs font-semibold text-slate-300">
+                              Confirmation
+                            </label>
+                            <input
+                              id="delete-word"
+                              value={deleteWord}
+                              onChange={(e) => setDeleteWord(e.target.value)}
+                              autoComplete="off"
+                              placeholder="SUPPRIMER"
+                              className="w-full rounded-xl border border-rose-500/30 bg-[#0B1020] px-3.5 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="delete-email" className="mb-1 block text-xs font-semibold text-slate-300">
+                              Adresse e-mail du compte
+                            </label>
+                            <input
+                              id="delete-email"
+                              type="email"
+                              value={deleteEmail}
+                              onChange={(e) => setDeleteEmail(e.target.value)}
+                              autoComplete="email"
+                              className="w-full rounded-xl border border-rose-500/30 bg-[#0B1020] px-3.5 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500"
+                            />
+                          </div>
+
+                          <div className="flex gap-3 pt-2">
+                            <button
+                              type="submit"
+                              disabled={
+                                pending ||
+                                deleteWord !== "SUPPRIMER" ||
+                                deleteEmail.trim().toLowerCase() !== account.user.email.toLowerCase()
+                              }
+                              className="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-rose-500 disabled:opacity-40"
+                            >
+                              {pending ? "Suppression…" : "Confirmer la suppression"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowDeleteForm(false);
+                                setDeleteWord("");
+                                setDeleteEmail("");
+                              }}
+                              className="rounded-xl border border-[#202E50] bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:text-white"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </section>
+                  </div>
+                )}
+
+                {/* ===================== VIEW: HELP (AIDE) ===================== */}
+                {section === "help" && (
+                  <div className="space-y-6">
+                    <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Assistance</p>
+                      <h2 className="mt-2 text-3xl font-black text-white">Aide et support</h2>
+                      <p className="mt-2 text-sm text-[#8F9CAE]">
+                        Envoyez une question ou une demande à l’équipe SkillFlow. Nous répondons sous 24 à 48 heures.
+                      </p>
+                    </header>
+
+                    {/* Ticket Form */}
+                    <section className="rounded-2xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <h3 className="text-xl font-bold text-white">Nouvelle demande</h3>
+                      <form onSubmit={(e) => void createTicket(e)} className="mt-6 max-w-2xl space-y-4">
+                        <div>
+                          <label htmlFor="ticket-category" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#8F9CAE]">
+                            Type de demande
+                          </label>
+                          <select
+                            id="ticket-category"
+                            name="category"
+                            className="w-full rounded-xl border border-[#202E50] bg-[#0B1020] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#397BFF]"
+                          >
+                            <option value="question">Question sur un skill ou MCP</option>
+                            <option value="refund">Demande de remboursement</option>
+                            <option value="suggestion">Suggestion d&apos;amélioration</option>
+                            <option value="other">Autre demande</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label htmlFor="ticket-order" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#8F9CAE]">
+                            Commande concernée (optionnel)
+                          </label>
+                          <select
+                            id="ticket-order"
+                            name="orderId"
+                            defaultValue=""
+                            className="w-full rounded-xl border border-[#202E50] bg-[#0B1020] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#397BFF]"
+                          >
+                            <option value="">Aucune commande</option>
+                            {account.orders.map((order) => (
+                              <option key={order.id} value={order.id}>
+                                {order.products?.name ?? "SkillFlow"} · {new Date(order.created_at).toLocaleDateString("fr-FR")}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label htmlFor="ticket-subject" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#8F9CAE]">
+                            Objet
+                          </label>
+                          <input
+                            id="ticket-subject"
+                            name="subject"
+                            required
+                            minLength={3}
+                            maxLength={160}
+                            placeholder="En quelques mots..."
+                            className="w-full rounded-xl border border-[#202E50] bg-[#0B1020] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#397BFF]"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="ticket-message" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#8F9CAE]">
+                            Votre message
+                          </label>
+                          <textarea
+                            id="ticket-message"
+                            name="message"
+                            required
+                            minLength={10}
+                            maxLength={5000}
+                            rows={5}
+                            placeholder="Détaillez votre demande pour nous aider à vous répondre au mieux..."
+                            className="w-full resize-y rounded-xl border border-[#202E50] bg-[#0B1020] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#397BFF]"
+                          />
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={pending}
+                          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-50"
+                        >
+                          {pending ? "Envoi…" : "Envoyer la demande"}
+                        </button>
+                      </form>
+                    </section>
+
+                    {/* Existing Tickets List */}
+                    <section className="rounded-2xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+                      <h3 className="text-xl font-bold text-white">Mes demandes envoyées</h3>
+                      {account.tickets.length === 0 ? (
+                        <p className="mt-3 text-sm text-[#8F9CAE]">Vous n’avez pas encore envoyé de demande.</p>
+                      ) : (
+                        <div className="mt-5 space-y-3">
+                          {account.tickets.map((ticket) => (
+                            <div
+                              key={ticket.id}
+                              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#202E50] bg-[#0B1020] p-4"
+                            >
+                              <div>
+                                <p className="font-bold text-white">{ticket.subject}</p>
+                                <p className="mt-0.5 text-xs text-[#8F9CAE]">
+                                  {new Date(ticket.created_at).toLocaleDateString("fr-FR")}
+                                </p>
+                              </div>
+                              <span className="rounded-full border border-[#202E50] bg-[#151F38] px-3 py-1 text-xs font-semibold text-[#8FB5FF]">
+                                {ticketStatusLabel(ticket.status)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  </div>
                 )}
               </div>
             )}
-
-            {section === "privacy" && (
-              <div className="space-y-5">
-                <section className={cardClass}>
-                  <SectionHeading title="Vos données" description="Téléchargez une copie des informations rattachées à votre compte." />
-                  <button type="button" disabled={pending} onClick={() => void exportData()} className={`${buttonClass} mt-5`}>
-                    {pending ? "Préparation…" : "Exporter mes données"}
-                  </button>
-                </section>
-                <section className={`${cardClass} border-[#E7C7C2]`}>
-                  <h2 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold text-[#762E25]">Supprimer mon compte</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6E524E]">
-                    Cette action est définitive. Elle supprimera vos commandes, vos accès, vos clés MCP et vos demandes d’aide. Vous pourrez télécharger vos données avant de continuer.
-                  </p>
-                  {!showDeleteForm ? (
-                    <button type="button" onClick={() => setShowDeleteForm(true)} className="mt-5 inline-flex min-h-11 items-center rounded-full border border-[#B9655A] px-5 py-2.5 text-sm font-semibold text-[#762E25] transition hover:bg-[#FFF3F1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#8A2F25]">
-                      Commencer la suppression
-                    </button>
-                  ) : (
-                    <form onSubmit={(event) => void deleteAccount(event)} className="mt-5 max-w-xl space-y-4">
-                      <p className="text-sm font-semibold text-[#762E25]">Pour confirmer, saisissez SUPPRIMER et votre adresse e-mail.</p>
-                      <div>
-                        <label htmlFor="delete-word" className="mb-1.5 block text-sm font-semibold">Confirmation</label>
-                        <input id="delete-word" value={deleteWord} onChange={(event) => setDeleteWord(event.target.value)} autoComplete="off" className={inputClass} />
-                      </div>
-                      <div>
-                        <label htmlFor="delete-email" className="mb-1.5 block text-sm font-semibold">Adresse e-mail du compte</label>
-                        <input id="delete-email" type="email" value={deleteEmail} onChange={(event) => setDeleteEmail(event.target.value)} autoComplete="email" className={inputClass} />
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        <button type="submit" disabled={pending || deleteWord !== "SUPPRIMER" || deleteEmail.trim().toLowerCase() !== account.user.email.toLowerCase()} className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#8A2F25] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#76251D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#8A2F25] disabled:cursor-not-allowed disabled:opacity-50">
-                          {pending ? "Suppression…" : "Supprimer définitivement"}
-                        </button>
-                        <button type="button" onClick={() => { setShowDeleteForm(false); setDeleteWord(""); setDeleteEmail(""); }} className={secondaryButtonClass}>Annuler</button>
-                      </div>
-                    </form>
-                  )}
-                </section>
-              </div>
-            )}
-
-            {section === "help" && (
-              <div>
-                <SectionHeading title="Aide" description="Envoyez une question ou une demande de remboursement à l’équipe SkillFlow." />
-                <section className={`${cardClass} mt-5`}>
-                  <form onSubmit={(event) => void createTicket(event)} className="max-w-2xl space-y-4">
-                    <div>
-                      <label htmlFor="ticket-category" className="mb-1.5 block text-sm font-semibold">Type de demande</label>
-                      <select id="ticket-category" name="category" className={inputClass}>
-                        <option value="question">Question</option>
-                        <option value="refund">Demande de remboursement</option>
-                        <option value="other">Autre demande</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="ticket-order" className="mb-1.5 block text-sm font-semibold">Commande concernée, si besoin</label>
-                      <select id="ticket-order" name="orderId" className={inputClass} defaultValue="">
-                        <option value="">Aucune commande</option>
-                        {account.orders.map((order) => (
-                          <option key={order.id} value={order.id}>{order.products?.name ?? "SkillFlow"} · {new Date(order.created_at).toLocaleDateString("fr-FR")}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="ticket-subject" className="mb-1.5 block text-sm font-semibold">Objet</label>
-                      <input id="ticket-subject" name="subject" required minLength={3} maxLength={160} className={inputClass} />
-                    </div>
-                    <div>
-                      <label htmlFor="ticket-message" className="mb-1.5 block text-sm font-semibold">Votre message</label>
-                      <textarea id="ticket-message" name="message" required minLength={10} maxLength={5000} rows={5} className={`${inputClass} min-h-32 resize-y`} />
-                    </div>
-                    <button type="submit" disabled={pending} className={buttonClass}>{pending ? "Envoi…" : "Envoyer la demande"}</button>
-                  </form>
-                </section>
-                <section className={`${cardClass} mt-5`}>
-                  <h2 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold">Mes demandes</h2>
-                  {account.tickets.length === 0 ? (
-                    <p className="mt-3 text-sm text-[#66766F]">Vous n’avez pas encore envoyé de demande.</p>
-                  ) : (
-                    <ul className="mt-4 divide-y divide-[#E4ECE8]">
-                      {account.tickets.map((ticket) => (
-                        <li key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                          <div>
-                            <p className="font-semibold">{ticket.subject}</p>
-                            <p className="mt-1 text-xs text-[#66766F]">{new Date(ticket.created_at).toLocaleDateString("fr-FR")}</p>
-                          </div>
-                          <span className="rounded-full bg-[#F1F6F4] px-3 py-1 text-xs font-semibold text-[#16473D]">{ticketStatusLabel(ticket.status)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              </div>
-            )}
-            </section>
           </div>
-        )}
-      </div>
         </div>
       </div>
     </main>
   );
 }
 
-function SummaryCard({ label, value, detail }: { label: string; value: string | number; detail: string }) {
-  const accent = label === "Tutoriel Claude"
-    ? "border-violet-400/35 bg-gradient-to-br from-[#352084] via-[#27205f] to-[#171d50]"
-    : label === "Commandes"
-      ? "border-teal-400/35 bg-gradient-to-br from-[#0b4a56] via-[#0a354c] to-[#0b2744]"
-      : "border-blue-400/70 bg-gradient-to-br from-[#0d4bc1] via-[#103d99] to-[#0b2458]";
-  const glyph = label === "Tutoriel Claude" ? "⌘" : label === "Commandes" ? "⚡" : "♟";
-  return (
-    <article className={`group rounded-2xl border p-5 shadow-[0_12px_36px_rgba(16,81,200,.16)] transition hover:-translate-y-1 hover:border-cyan-300 ${accent}`}>
-      <div className="flex items-start justify-between gap-4"><DashboardGlyph className="bg-white/10">{glyph}</DashboardGlyph><span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-2xl transition group-hover:translate-x-1">→</span></div>
-      <p className="mt-5 text-sm font-semibold text-[#b4c8eb]">{label}</p>
-      <p className="mt-1 text-4xl font-black text-white">{value}</p>
-      <p className="mt-1 text-sm text-[#a7c2ea]">{detail}</p>
-    </article>
-  );
-}
-
 function SubscriptionOffers() {
   const offers = pricingOffers.filter((offer) => ["plus", "pro", "aios"].includes(offer.id));
+
   return (
     <div className="space-y-7">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">Votre abonnement</p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight text-white">Choisissez l’offre qui vous correspond</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">Passez d’un usage ponctuel à un espace de travail IA accompagné, puis construisez votre assistant personnel avec AIOS.</p>
+      <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Votre abonnement</p>
+        <h2 className="mt-2 text-3xl font-black text-white">Choisissez l’offre qui vous correspond</h2>
+        <p className="mt-2 text-sm text-[#8F9CAE]">
+          Passez d’un usage ponctuel à un espace de travail IA accompagné, puis construisez votre assistant personnel avec AIOS.
+        </p>
       </header>
-      <div className="grid gap-5 xl:grid-cols-3">
-        {offers.map((offer) => (
-          <article key={offer.id} className={`flex h-full flex-col rounded-3xl border p-6 ${offer.id === "pro" ? "border-cyan-300/55 bg-gradient-to-br from-cyan-300/[.14] to-blue-500/[.08]" : "border-white/10 bg-white/[.035]"}`}>
-            {offer.highlight && <span className="w-fit rounded-full bg-cyan-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950">{offer.highlight}</span>}
-            <h3 className="mt-4 text-xl font-bold text-white">{offer.name}</h3>
-            <p className="mt-4 text-2xl font-black text-white">{offer.price}</p>
-            <p className="mt-1 text-xs text-slate-400">{offer.priceXof}</p>
-            <p className="mt-4 min-h-12 text-sm leading-6 text-slate-300">{offer.description}</p>
-            <ul className="mt-5 space-y-2 border-t border-white/10 pt-5 text-sm text-slate-200">
-              {offer.features.map((feature) => <li key={feature} className="flex gap-2"><span className="text-cyan-300">✓</span><span>{feature}</span></li>)}
-            </ul>
-            {offer.checkoutHref ? <Link href={offer.checkoutHref} className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">{offer.cta}</Link> : <span className="mt-auto pt-7 text-center text-xs font-semibold uppercase tracking-wider text-amber-200">Disponible prochainement</span>}
-          </article>
-        ))}
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        {offers.map((offer) => {
+          const isFeatured = offer.id === "pro";
+          return (
+            <article
+              key={offer.id}
+              className={`relative flex h-full flex-col rounded-3xl border p-7 shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                isFeatured
+                  ? "border-[#397BFF] bg-gradient-to-br from-[#18264A] via-[#151F38] to-[#121B32] shadow-[0_12px_40px_rgba(57,123,255,0.25)]"
+                  : "border-[#202E50] bg-[#151F38]"
+              }`}
+            >
+              {offer.highlight && (
+                <span className="w-fit rounded-full bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                  {offer.highlight}
+                </span>
+              )}
+
+              <h3 className="mt-4 text-2xl font-bold text-white">{offer.name}</h3>
+              <div className="mt-3">
+                <p className="text-3xl font-black text-white">{offer.price}</p>
+                <p className="text-xs text-[#8F9CAE]">{offer.priceXof}</p>
+              </div>
+
+              <p className="mt-4 min-h-[48px] text-sm leading-relaxed text-[#8F9CAE]">{offer.description}</p>
+
+              <ul className="mt-6 space-y-3 border-t border-[#202E50] pt-6 text-sm text-slate-200">
+                {offer.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5">
+                    <span className="text-[#00E5FF]">✓</span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-8 pt-4">
+                {offer.checkoutHref ? (
+                  <Link
+                    href={offer.checkoutHref}
+                    className={`inline-flex min-h-12 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition ${
+                      isFeatured
+                        ? "bg-gradient-to-r from-[#397BFF] to-[#6557FF] text-white shadow-[0_4px_16px_rgba(57,123,255,0.4)] hover:brightness-110"
+                        : "border border-[#202E50] bg-white/[0.04] text-white hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    {offer.cta}
+                  </Link>
+                ) : (
+                  <span className="block text-center text-xs font-semibold uppercase tracking-wider text-amber-200/80">
+                    Disponible prochainement
+                  </span>
+                )}
+              </div>
+            </article>
+          );
+        })}
       </div>
-      <p className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[.05] p-4 text-sm leading-6 text-cyan-100">Les abonnements récurrents seront activés après la mise en place du paiement par abonnement. Les achats de skills et de packs restent disponibles depuis le catalogue.</p>
+
+      <div className="rounded-2xl border border-[#202E50] bg-[#11182B] p-4 text-sm leading-relaxed text-[#8F9CAE]">
+        Les abonnements récurrents seront activés après la mise en place du paiement par abonnement. Les achats de skills et de packs restent disponibles depuis le catalogue.
+      </div>
     </div>
-  );
-}
-
-function AccountSideNav({ title, ids, showCommunityLinks = false, selected, onSelect }: {
-  title: string;
-  ids: Section[];
-  showCommunityLinks?: boolean;
-  selected: Section;
-  onSelect: (id: Section) => void;
-}) {
-  return <nav aria-label={title} className="account-side-nav account-card rounded-2xl p-3">
-    <p className="px-3 pb-2 pt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{title}</p>
-    <ul className="space-y-1">{ids.map((id) => {
-      const item = sections.find((entry) => entry.id === id);
-      if (!item) return null;
-      return <li key={id}><button type="button" aria-current={selected === id ? "page" : undefined} onClick={() => onSelect(id)} className={`account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 ${selected === id ? "is-active bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"}`}><span aria-hidden="true" className="text-xs">{id === "overview" ? "◈" : id === "skills" ? "✳" : id === "catalog" ? "▦" : id === "mcp" ? "⌘" : id === "billing" ? "＄" : id === "subscription" ? "✦" : id === "privacy" ? "◉" : "?"}</span>{item.label}</button></li>;
-    })}{showCommunityLinks && <><li><Link href="/community" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">✦</span>Communauté</Link></li><li><Link href="/community/my" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">◈</span>Ma communauté</Link></li><li><Link href="/member/prospection" className="account-nav-link flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"><span aria-hidden="true" className="text-xs">↗</span>SkillFlow Prospection</Link></li></>}</ul>
-  </nav>;
-}
-
-function SectionHeading({ title, description }: { title: string; description: string }) {
-  return (
-    <>
-      <h2 className="font-[family-name:var(--font-bricolage)] text-2xl font-semibold tracking-tight">{title}</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-[#52645E]">{description}</p>
-    </>
-  );
-}
-
-function EmptyState({ title, description, href, linkLabel }: { title: string; description: string; href: string; linkLabel: string }) {
-  return (
-    <section className={`${cardClass} mt-5`}>
-      <h3 className="font-[family-name:var(--font-bricolage)] text-xl font-semibold">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-[#52645E]">{description}</p>
-      <Link href={href} className="mt-4 inline-flex min-h-10 items-center font-semibold text-[#0B6A5A] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B6A5A]">
-        {linkLabel}
-      </Link>
-    </section>
   );
 }

@@ -8,25 +8,66 @@ export function AccountCatalog() {
   const [items, setItems] = useState<Product[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     let active = true;
-    void fetch("/api/products", { cache: "no-store" }).then(async (response) => {
-      const payload: unknown = await response.json();
-      if (!response.ok || typeof payload !== "object" || payload === null || !Array.isArray((payload as { items?: unknown }).items)) {
-        throw new Error("Le catalogue est temporairement indisponible.");
-      }
-      if (active) setItems((payload as { items: Product[] }).items);
-    }).catch((caught: unknown) => {
-      if (active) setError(caught instanceof Error ? caught.message : "Impossible de charger le catalogue.");
-    }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    void fetch("/api/products", { cache: "no-store" })
+      .then(async (response) => {
+        const payload: unknown = await response.json();
+        if (
+          !response.ok ||
+          typeof payload !== "object" ||
+          payload === null ||
+          !Array.isArray((payload as { items?: unknown }).items)
+        ) {
+          throw new Error("Le catalogue est temporairement indisponible.");
+        }
+        if (active) setItems((payload as { items: Product[] }).items);
+      })
+      .catch((caught: unknown) => {
+        if (active) setError(caught instanceof Error ? caught.message : "Impossible de charger le catalogue.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
-  return <div className="space-y-7">
-    <header className="rounded-3xl border border-cyan-300/10 bg-gradient-to-br from-[#0b2044] to-[#0b1729] p-6 sm:p-8">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Skills disponibles</p>
-      <h2 className="mt-2 font-[family-name:var(--font-bricolage)] text-2xl font-semibold text-white">Le catalogue SkillFlow</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-300">Retrouvez ici les skills publiés et ouvrez leur fiche pour les acheter et les ajouter à votre espace.</p>
-    </header>
-    {loading ? <p role="status" className="text-sm text-slate-400">Chargement du catalogue…</p> : error ? <p role="alert" className="rounded-2xl border border-rose-300/25 bg-rose-300/10 p-4 text-sm text-rose-100">{error}</p> : items.length ? <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-3">{items.map((item) => <ProductCard key={item.id} product={item} />)}</div> : <p className="account-card rounded-2xl p-5 text-sm text-slate-300">Aucun skill publié pour le moment. Revenez bientôt.</p>}
-  </div>;
+
+  return (
+    <div className="space-y-6">
+      <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Skills disponibles</p>
+        <h2 className="mt-2 text-3xl font-black text-white">Le catalogue SkillFlow</h2>
+        <p className="mt-2 text-sm text-[#8F9CAE]">
+          Retrouvez ici les skills certifiés et prêts à être connectés à votre compte via MCP.
+        </p>
+      </header>
+
+      {loading ? (
+        <div className="flex min-h-[200px] items-center justify-center text-sm text-[#8F9CAE]">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#397BFF] border-t-transparent" />
+            <span>Chargement du catalogue…</span>
+          </div>
+        </div>
+      ) : error ? (
+        <p role="alert" className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+          {error}
+        </p>
+      ) : items.length ? (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {items.map((item) => (
+            <ProductCard key={item.id} product={item} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-[#202E50] bg-[#151F38] p-8 text-center text-sm text-[#8F9CAE]">
+          Aucun skill publié pour le moment. Revenez bientôt.
+        </div>
+      )}
+    </div>
+  );
 }
