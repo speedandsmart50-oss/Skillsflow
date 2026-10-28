@@ -20,6 +20,10 @@ test("the shell shares one live auth session with the site navigation", async ()
   assert.match(navigation, /href="\/account"/);
   assert.match(navigation, /Connexion/);
   assert.match(navigation, /Inscription/);
+
+  const proxy = await readFile(new URL("../src/proxy.ts", import.meta.url), "utf8");
+  assert.match(proxy, /"\/community\/:path\*"/);
+  assert.match(proxy, /"\/member\/:path\*"/);
 });
 
 test("an idle timeout explains the reauthentication while preserving the return path", async () => {
