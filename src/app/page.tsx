@@ -3,7 +3,7 @@ import { AnimatedShowcase } from "@/components/landing/animated-showcase";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { products as bundledProducts } from "@/features/products/products";
 import { canCheckout } from "@/lib/commerce";
-import { pricingOffers } from "@/features/pricing/offers";
+import { PricingGrid } from "@/components/pricing-grid";
 import { getCatalogProductBySlug } from "@/features/products/catalog";
 
 export const instant = false;
@@ -85,7 +85,8 @@ export default async function HomePage() {
         </section>
       </ScrollReveal>
 
-      <section id="tarifs" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10">
+      <PricingGrid />
+      {/*
         <div className="mx-auto max-w-3xl text-center">
           <p className="landing-eyebrow">Des offres pour chaque étape</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">Commencez gratuitement, évoluez à votre rythme.</h2>
@@ -111,7 +112,7 @@ export default async function HomePage() {
           ))}
         </div>
         <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-slate-500">Les abonnements Claude et ChatGPT sont facturés séparément par leurs éditeurs. Skillsflow fournit les skills, les méthodes, les guides et l’accompagnement.</p>
-      </section>
+      */}
     </main>
   );
 }

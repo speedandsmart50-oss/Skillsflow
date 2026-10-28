@@ -498,15 +498,15 @@ export function AdminDashboard() {
                       <article key={offer.id} className={cardClass}>
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div><p className="text-xs font-bold uppercase tracking-wider text-[#087F8C]">{offer.availability === "available" ? "Paiement actif" : offer.availability === "free" ? "Gratuit" : "À préparer"}</p><h2 className="mt-2 text-xl font-bold">{offer.name}</h2></div>
-                          <div className="text-right"><p className="text-xl font-black">{offer.price}</p><p className="text-xs text-[#52645E]">{offer.priceXof}</p></div>
+                          <div className="text-right"><p className="text-xl font-black">{offer.monthly.eur}</p><p className="text-xs text-[#52645E]">{offer.monthly.xof} / mois</p></div>
                         </div>
                         <p className="mt-4 text-sm leading-6 text-[#52645E]">{offer.description}</p>
-                        <ul className="mt-4 space-y-2 text-sm text-[#29413A]">{offer.features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul>
+                        <ul className="mt-4 space-y-2 text-sm text-[#29413A]">{offer.features.map((feature) => <li key={feature.text}>✓ {feature.text}</li>)}</ul>
                         {offer.checkoutHref && <Link href={offer.checkoutHref} className={`${secondaryButtonClass} mt-5`}>Voir le parcours de paiement</Link>}
                       </article>
                     ))}
                   </div>
-                  <p className="text-sm leading-6 text-[#52645E]">Les abonnements Plus, Pro et le projet AIOS sont présentés comme offres avancées. Leur paiement récurrent devra être activé avec une intégration d’abonnement avant leur mise en vente.</p>
+                  <p className="text-sm leading-6 text-[#52645E]">L’offre Max et son parcours de paiement doivent encore être confirmés avant leur mise en vente.</p>
                 </>
               )}
 

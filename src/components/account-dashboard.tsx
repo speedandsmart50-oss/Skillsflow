@@ -1780,7 +1780,7 @@ export function AccountDashboard() {
 }
 
 function SubscriptionOffers() {
-  const offers = pricingOffers.filter((offer) => ["plus", "pro", "aios"].includes(offer.id));
+  const offers = pricingOffers.filter((offer) => ["plus", "pro", "max"].includes(offer.id));
 
   return (
     <div className="space-y-7">
@@ -1788,7 +1788,7 @@ function SubscriptionOffers() {
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Votre abonnement</p>
         <h2 className="mt-2 text-3xl font-black text-white">Choisissez l’offre qui vous correspond</h2>
         <p className="mt-2 text-sm text-[#8F9CAE]">
-          Passez d’un usage ponctuel à un espace de travail IA accompagné, puis construisez votre assistant personnel avec AIOS.
+          Passez d’un usage ponctuel à un espace de travail IA accompagné, puis construisez votre assistant personnel avec Jarvis.
         </p>
       </header>
 
@@ -1804,25 +1804,25 @@ function SubscriptionOffers() {
                   : "border-[#202E50] bg-[#151F38]"
               }`}
             >
-              {offer.highlight && (
+              {offer.badge && (
                 <span className="w-fit rounded-full bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
-                  {offer.highlight}
+                  {offer.badge}
                 </span>
               )}
 
               <h3 className="mt-4 text-2xl font-bold text-white">{offer.name}</h3>
               <div className="mt-3">
-                <p className="text-3xl font-black text-white">{offer.price}</p>
-                <p className="text-xs text-[#8F9CAE]">{offer.priceXof}</p>
+                <p className="text-3xl font-black text-white">{offer.monthly.eur}</p>
+                <p className="text-xs text-[#8F9CAE]">{offer.monthly.xof} / mois</p>
               </div>
 
               <p className="mt-4 min-h-[48px] text-sm leading-relaxed text-[#8F9CAE]">{offer.description}</p>
 
               <ul className="mt-6 space-y-3 border-t border-[#202E50] pt-6 text-sm text-slate-200">
                 {offer.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5">
+                  <li key={feature.text} className="flex items-start gap-2.5">
                     <span className="text-[#00E5FF]">✓</span>
-                    <span>{feature}</span>
+                    <span>{feature.text}</span>
                   </li>
                 ))}
               </ul>
