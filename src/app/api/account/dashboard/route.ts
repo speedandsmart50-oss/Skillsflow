@@ -11,7 +11,9 @@ export async function GET(request: Request) {
   if (!supabase) {
     return NextResponse.json({ error: "Session expirée. Reconnectez-vous." }, { status: 401 });
   }
-  const [ordersResult, entitlementsResult, keysResult, ticketsResult] = await Promise.all([
+  const [profileResult, subscriptionResult, ordersResult, entitlementsResult, keysResult, ticketsResult] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+    supabase.from("member_subscriptions").select("id").eq("user_id", user.id).eq("status", "active").gt("ends_at", new Date().toISOString()).limit(1),
     supabase
       .from("orders")
       .select("id, total, total_xof, currency, coupon_code, payment_status, created_at, paid_at, products(name, slug)")
@@ -45,7 +47,9 @@ export async function GET(request: Request) {
     : entitlementsResult.data ?? [];
   const mcpKeys = isMissingAccountTable(keysResult.error) ? [] : keysResult.data ?? [];
   const tickets = isMissingAccountTable(ticketsResult.error) ? [] : ticketsResult.data ?? [];
-  const queryError = ordersResult.error
+  const queryError = profileResult.error
+    ?? subscriptionResult.error
+    ?? ordersResult.error
     ?? (isMissingAccountTable(entitlementsResult.error) ? null : entitlementsResult.error)
     ?? (isMissingAccountTable(keysResult.error) ? null : keysResult.error)
     ?? (isMissingAccountTable(ticketsResult.error) ? null : ticketsResult.error);
@@ -112,7 +116,12 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    user: { id: user.id, email: user.email ?? "" },
+    user: {
+      id: user.id,
+      email: user.email ?? "",
+      role: profileResult.data?.role === "admin" ? "admin" : "client",
+      hasActiveSubscription: (subscriptionResult.data ?? []).length > 0,
+    },
     orders: ordersResult.data ?? [],
     skills,
     mcpKeys,

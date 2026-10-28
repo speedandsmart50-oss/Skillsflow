@@ -82,7 +82,7 @@ type SupportTicket = {
 };
 
 type AccountData = {
-  user: { id: string; email: string };
+  user: { id: string; email: string; role: "client" | "admin"; hasActiveSubscription: boolean };
   orders: AccountOrder[];
   skills: AccountSkill[];
   mcpKeys: McpKey[];
@@ -118,6 +118,8 @@ function parseAccountData(payload: unknown): AccountData {
     !isRecord(payload.user) ||
     typeof payload.user.id !== "string" ||
     typeof payload.user.email !== "string" ||
+    (payload.user.role !== "client" && payload.user.role !== "admin") ||
+    typeof payload.user.hasActiveSubscription !== "boolean" ||
     !Array.isArray(payload.orders) ||
     !Array.isArray(payload.skills) ||
     !Array.isArray(payload.mcpKeys) ||
@@ -127,7 +129,7 @@ function parseAccountData(payload: unknown): AccountData {
   }
 
   return {
-    user: { id: payload.user.id, email: payload.user.email },
+    user: { id: payload.user.id, email: payload.user.email, role: payload.user.role, hasActiveSubscription: payload.user.hasActiveSubscription },
     orders: payload.orders as AccountOrder[],
     skills: payload.skills as AccountSkill[],
     mcpKeys: payload.mcpKeys as McpKey[],
@@ -423,6 +425,8 @@ export function AccountDashboard() {
 
   // Derived user details
   const userDisplayName = profile?.displayName || account?.user.email?.split("@")[0] || "Membre";
+  const isPremiumMember = account?.user.role === "admin" || account?.user.hasActiveSubscription === true;
+  const membershipLabel = isPremiumMember ? "Membre Premium" : "Membre";
   const userInitials = profile?.displayName
     ? profile.displayName
         .split(" ")
@@ -722,7 +726,7 @@ export function AccountDashboard() {
                     </p>
                     <p className="flex items-center gap-1 text-[11px] font-semibold text-[#6C63FF]">
                       <span>👑</span>
-                      <span>Membre Premium</span>
+                      <span>{membershipLabel}</span>
                     </p>
                   </div>
 
@@ -762,7 +766,7 @@ export function AccountDashboard() {
                           <p className="truncate text-xs text-[#8F9CAE]">{account?.user.email || ""}</p>
                           <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-[#B3A4FF]/30 bg-[#B3A4FF]/10 px-2 py-0.5 text-[10px] font-bold text-[#B3A4FF]">
                             <span>👑</span>
-                            <span>Premium</span>
+                            <span>{membershipLabel}</span>
                           </div>
                         </div>
                       </div>
