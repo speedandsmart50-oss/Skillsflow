@@ -14,7 +14,7 @@ export default function LegalIndexPage() {
   const hasPlaceholders = hasUncompletedLegalInformation();
   return (
     <LegalDocument title="Informations légales">
-      <p>Consultez les documents applicables à l’utilisation et à l’achat des skills SkillFlow.</p>
+      <p>Consultez les documents applicables à l’utilisation et à l’achat des skills Skillsflow.</p>
       {hasPlaceholders && (
         <p role="status" className="rounded-xl border border-amber-300/30 bg-amber-50 p-4 text-amber-950">
           Certains renseignements portent la mention [À COMPLÉTER]. Ils doivent être renseignés avant l’ouverture des ventes.

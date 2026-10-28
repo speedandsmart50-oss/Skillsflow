@@ -10,6 +10,9 @@ test("the shell shares one live auth session with the site navigation", async ()
 
   assert.match(provider, /onAuthStateChange/);
   assert.match(provider, /status: AuthStatus/);
+  assert.match(provider, /IDLE_TIMEOUT_MS = 30 \* 60 \* 1000/);
+  assert.match(provider, /signOut\(\{ scope: "local" \}\)/);
+  assert.match(provider, /reason=idle/);
   assert.match(shell, /<AuthSessionProvider>/);
   assert.match(header, /useAuthSession/);
   assert.match(navigation, /authStatus === "authenticated"/);
@@ -17,6 +20,15 @@ test("the shell shares one live auth session with the site navigation", async ()
   assert.match(navigation, /href="\/account"/);
   assert.match(navigation, /Connexion/);
   assert.match(navigation, /Inscription/);
+});
+
+test("an idle timeout explains the reauthentication while preserving the return path", async () => {
+  const loginForm = await readFile(new URL("../src/components/login-form.tsx", import.meta.url), "utf8");
+
+  assert.match(loginForm, /searchParams\.get\("reason"\) === "idle"/);
+  assert.match(loginForm, /30 minutes sans activité/);
+  assert.match(loginForm, /Se reconnecter/);
+  assert.match(loginForm, /Continuer avec Google/);
 });
 
 test("private pages keep server-side authentication guards", async () => {

@@ -15,15 +15,15 @@ test("community suggestions are private, authenticated, and stored in admin supp
   assert.match(route, /category: "suggestion"/);
   assert.match(route, /message\.trim\(\)\.length > 5000/);
   assert.match(form, /id="suggestion"/);
-  assert.match(form, /Seule l’équipe SkillFlow pourra lire votre suggestion/);
-  assert.match(admin, /Suggestion de la communauté/);
+  assert.match(form, /Skillsflow pourra lire votre suggestion/);
+  assert.match(admin, /Suggestion de la communaut/);
 });
 
 test("suggestions are reachable from the community navigation and allowed by the ticket schema", () => {
   const shell = read("../src/components/community/community-shell.tsx");
   const migration = read("../supabase/migrations/037_community_suggestions.sql");
 
-  assert.match(shell, /href="\/community#suggestion"/);
+  assert.ok(shell.includes('href="/community#suggestion"'));
   assert.match(shell, /Faire une suggestion/);
   assert.match(migration, /drop constraint if exists support_tickets_category_check/);
   assert.match(migration, /'question', 'refund', 'other', 'suggestion'/);

@@ -80,7 +80,7 @@ export function AnimatedShowcase() {
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-200 to-blue-400 text-lg font-black text-slate-950">S</span>
             <div>
               <p className="text-sm font-semibold text-white">Votre espace de travail IA</p>
-              <p className="mt-0.5 text-xs text-slate-500">SkillFlow · aperçu interactif</p>
+              <p className="mt-0.5 text-xs text-slate-500">Skillsflow · aperçu interactif</p>
             </div>
           </div>
           <span className="flex items-center gap-1.5 rounded-full border border-cyan-300/15 bg-cyan-300/[0.08] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-100">

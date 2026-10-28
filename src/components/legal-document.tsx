@@ -14,7 +14,7 @@ export function LegalDocument({ title, children }: { title: string; children: Re
   return (
     <main className="min-h-[70vh] bg-white px-4 py-12 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-800">SkillFlow · Informations légales</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-800">Skillsflow · Informations légales</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight">{title}</h1>
         <nav aria-label="Documents légaux" className="mt-7 border-y border-slate-200 py-4">
           <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">

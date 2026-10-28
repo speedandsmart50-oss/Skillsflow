@@ -7,7 +7,7 @@ export default function Forbidden() {
         Accès refusé
       </p>
       <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white">
-        Cette page est réservée à l’équipe SkillFlow.
+        Cette page est réservée à l’équipe Skillsflow.
       </h1>
       <p className="mt-4 max-w-lg text-base leading-7 text-slate-300">
         Votre compte ne dispose pas des droits nécessaires pour consulter cette page.

@@ -27,6 +27,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = safeNextPath(searchParams.get("next"));
+  const idleSessionExpired = searchParams.get("reason") === "idle";
   const [mode, setMode] = useState<"signin" | "signup">(() => searchParams.get("mode") === "signup" ? "signup" : "signin");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -121,7 +122,9 @@ export function LoginForm() {
         </h2>
         <p className="mt-3 max-w-md text-sm leading-6 text-slate-300 sm:text-base">
           {mode === "signin"
-            ? "Accédez à votre espace pour gérer vos skills et retrouver vos téléchargements."
+            ? idleSessionExpired
+              ? "Votre session a été fermée après 30 minutes sans activité. Reconnectez-vous pour reprendre en toute sécurité."
+              : "Accédez à votre espace pour gérer vos skills et retrouver vos téléchargements."
             : "Inscrivez-vous avec votre e-mail et un mot de passe, ou continuez avec Google."}
         </p>
       </div>
@@ -189,7 +192,7 @@ export function LoginForm() {
           type="submit"
           className="group mt-2 inline-flex min-h-[3.35rem] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-cyan-400 px-5 py-3 text-sm font-bold text-[#07111e] shadow-[0_8px_30px_rgba(34,211,238,0.18)] transition duration-300 hover:-translate-y-0.5 hover:from-cyan-200 hover:to-cyan-300 hover:shadow-[0_12px_38px_rgba(34,211,238,0.28)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-100 disabled:cursor-wait disabled:opacity-60"
         >
-          {pending ? "Patientez…" : mode === "signin" ? "Se connecter" : "Créer mon compte"}
+          {pending ? "Patientez…" : mode === "signin" ? idleSessionExpired ? "Se reconnecter" : "Se connecter" : "Créer mon compte"}
           {!pending && <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>}
         </button>}
       </form>
@@ -204,7 +207,7 @@ export function LoginForm() {
 
       <div className="my-6 flex items-center gap-3 text-[11px] text-slate-500">
         <span className="h-px flex-1 bg-white/10" />
-        Votre espace SkillFlow
+        Votre espace Skillsflow
         <span className="h-px flex-1 bg-white/10" />
       </div>
 

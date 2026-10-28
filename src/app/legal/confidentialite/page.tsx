@@ -6,11 +6,11 @@ export default function PrivacyPolicyPage() {
     <LegalDocument title="Politique de confidentialité">
       <section>
         <h2 className="text-xl font-semibold text-slate-900">Données utilisées</h2>
-        <p>SkillFlow traite l’adresse e-mail du compte, les informations de commande ainsi que les journaux de paiement et de webhook. Ces données servent à gérer le compte et les commandes, vérifier les paiements, fournir l’accès acheté et répondre aux demandes de support.</p>
+        <p>Skillsflow traite l’adresse e-mail du compte, les informations de commande ainsi que les journaux de paiement et de webhook. Ces données servent à gérer le compte et les commandes, vérifier les paiements, fournir l’accès acheté et répondre aux demandes de support.</p>
       </section>
       <section>
         <h2 className="text-xl font-semibold text-slate-900">Prestataires</h2>
-        <p>Les prestataires utilisés pour le service sont Supabase, Vercel et SasPay. SasPay traite le paiement. Supabase héberge les données de compte et de commande ; Vercel héberge l’application SkillFlow.</p>
+        <p>Les prestataires utilisés pour le service sont Supabase, Vercel et SasPay. SasPay traite le paiement. Supabase héberge les données de compte et de commande ; Vercel héberge l’application Skillsflow.</p>
       </section>
       <section>
         <h2 className="text-xl font-semibold text-slate-900">Durées de conservation</h2>

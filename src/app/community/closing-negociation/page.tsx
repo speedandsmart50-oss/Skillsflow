@@ -2,7 +2,7 @@ import { BackLink } from "@/components/back-link";
 import { connection } from "next/server";
 
 export const metadata = {
-  title: "Closing & Négociation | Communauté SkillFlow",
+  title: "Closing & Négociation | Communauté Skillsflow",
   description: "Un parcours progressif pour mieux écouter, conseiller et accompagner une décision éclairée.",
 };
 export const instant = false;
@@ -92,7 +92,7 @@ export default async function ClosingNegociationPage() {
       <section className="animate-rise relative mt-4 overflow-hidden rounded-3xl border border-cyan-300/25 bg-[radial-gradient(ellipse_at_82%_15%,rgba(34,211,238,.18),transparent_38%),linear-gradient(130deg,#10283a,#101a2b_58%,#15162f)] p-6 shadow-[0_20px_65px_rgba(0,0,0,.22)] sm:p-9">
         <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full border border-cyan-200/10 bg-cyan-300/[.04] blur-2xl" />
         <div className="relative max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[.22em] text-cyan-300">Parcours SkillFlow</p>
+          <p className="text-xs font-bold uppercase tracking-[.22em] text-cyan-300">Parcours Skillsflow</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">Closing &amp; Négociation</h1>
           <p className="mt-4 text-base leading-7 text-slate-200 sm:text-lg">Apprenez à mieux comprendre, conseiller et accompagner vos prospects jusqu’à une décision éclairée.</p>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Un parcours de pratique commerciale responsable. Il ne promet ni revenus ni taux de conversion et rappelle qu’un refus doit être respecté.</p>

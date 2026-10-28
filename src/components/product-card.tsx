@@ -40,8 +40,16 @@ export function ProductCard({ product }: { product: Product }) {
         {product.name}
       </h3>
 
+      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#70E9F5]">
+        {product.domain}
+      </p>
+
+      <p className="mt-3 min-h-12 text-sm leading-6 text-[#C5D3E2]">
+        {product.tagline}
+      </p>
+
       {Boolean(product.includedSkills?.length) && (
-        <p className="mt-2 min-h-12 text-sm leading-6 text-[#8F9CAE]">
+        <p className="mt-3 border-t border-[#202E50] pt-3 text-xs leading-5 text-[#8F9CAE]">
           {product.includedSkills?.join(" • ")}
         </p>
       )}

@@ -49,7 +49,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <BackLink href="/" className="mt-10">Retour à SkillFlow</BackLink>
+          <BackLink href="/" className="mt-10">Retour à Skillsflow</BackLink>
         </section>
 
         <div className="animate-rise animate-delay-2 mx-auto w-full max-w-[34rem] lg:mx-0 lg:justify-self-end">

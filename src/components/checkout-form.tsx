@@ -70,7 +70,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
   return (
     <main className="bg-[#0d1321] px-4 py-12 text-white sm:px-6 lg:px-8 lg:py-16">
       <div className="mx-auto max-w-[900px]">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Catalogue SkillFlow</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Catalogue Skillsflow</p>
         <h1 className="mt-3 text-4xl font-black tracking-[-0.04em]">Vérifier la commande</h1>
         <p className="mt-4 max-w-2xl leading-7 text-slate-300">
           {price.couponCode === "SMART"
@@ -80,7 +80,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
             : "Le paiement est traité par SasPay. Votre commande et l’accès au pack seront confirmés après vérification du paiement."}
         </p>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-          Le montant en XOF correspond au prix SkillFlow. SasPay peut afficher des frais opérateur supplémentaires avant votre autorisation ; vérifiez le montant débité sur la page SasPay avant de confirmer.
+          Le montant en XOF correspond au prix Skillsflow. SasPay peut afficher des frais opérateur supplémentaires avant votre autorisation ; vérifiez le montant débité sur la page SasPay avant de confirmer.
         </p>
 
         <form onSubmit={startCheckout} className="mt-8 grid gap-8 lg:grid-cols-[1fr_0.8fr]">
@@ -88,7 +88,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
             <h2 className="text-xl font-semibold">{product.name}</h2>
             {product.isSubscription ? (
               <div className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/5 p-4 text-sm text-slate-200">
-                <p className="font-semibold">Abonnement SkillFlow · {product.subscriptionDays ?? 30} jours</p>
+                <p className="font-semibold">Abonnement Skillsflow · {product.subscriptionDays ?? 30} jours</p>
                 <p className="mt-2 text-slate-300">L’accès aux skills inclus est activé après confirmation du paiement. Le renouvellement se fait manuellement pour le moment.</p>
               </div>
             ) : Boolean(product.includedSkills?.length) && (
@@ -99,7 +99,7 @@ export function CheckoutForm({ product, salesEnabled }: { product: Product; sale
                 </ul>
               </div>
             )}
-            <p className="mt-2 text-sm text-slate-400">Compte SkillFlow obligatoire pour suivre l’achat.</p>
+            <p className="mt-2 text-sm text-slate-400">Compte Skillsflow obligatoire pour suivre l’achat.</p>
             <label htmlFor="coupon" className="mt-8 block text-sm font-medium text-slate-200">Code promo (optionnel)</label>
             <div className="mt-2 flex gap-2">
               <input id="coupon" value={coupon} onChange={(event) => setCoupon(event.target.value)} autoCapitalize="characters" autoComplete="off" className="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-950 px-3 py-2.5 text-white outline-none focus:border-cyan-300" />

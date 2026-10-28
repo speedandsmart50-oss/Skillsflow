@@ -4,6 +4,9 @@ import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { products as bundledProducts } from "@/features/products/products";
 import { canCheckout } from "@/lib/commerce";
 import { pricingOffers } from "@/features/pricing/offers";
+import { getCatalogProductBySlug } from "@/features/products/catalog";
+
+export const instant = false;
 
 const benefits = [
   {
@@ -29,8 +32,10 @@ const steps = [
   { number: "03", title: "Adaptez-le à votre contexte", description: "Précisez votre objectif et votre façon de travailler pour obtenir une aide plus pertinente." },
 ];
 
-export default function HomePage() {
-  const featuredProduct = bundledProducts.find((product) => product.catalogStatus === "disponible") ?? bundledProducts[0];
+export default async function HomePage() {
+  const featuredProduct = await getCatalogProductBySlug("pack-marketing-reseau")
+    ?? bundledProducts.find((product) => product.catalogStatus === "disponible")
+    ?? bundledProducts[0];
   const salesEnabled = canCheckout(process.env.SKILLFLOW_COMMERCE_ENABLED);
 
   return (
@@ -57,7 +62,7 @@ export default function HomePage() {
       <ScrollReveal>
         <section className="landing-value-section">
           <div className="landing-section-heading">
-            <div><p className="landing-eyebrow">Pourquoi SkillFlow ?</p><h2>Vos méthodes. Votre IA.<br className="sm:hidden" /> <span>Un cadre pour avancer.</span></h2></div>
+            <div><p className="landing-eyebrow">Pourquoi Skillsflow ?</p><h2>Vos méthodes. Votre IA.<br className="sm:hidden" /> <span>Un cadre pour avancer.</span></h2></div>
             <p>Des ressources pratiques pour mieux utiliser vos assistants IA dans votre travail quotidien.</p>
           </div>
           <div className="landing-benefits">
@@ -75,7 +80,7 @@ export default function HomePage() {
 
       <ScrollReveal>
         <section className="landing-catalog-section">
-          <div className="landing-catalog-copy"><p className="landing-eyebrow">Le catalogue SkillFlow</p><h2>Une méthode adaptée à votre prochain défi.</h2><p>Comparez les skills disponibles, leurs usages et leurs formats, puis choisissez celui qui correspond à votre besoin.</p><Link href="/shop" className="landing-text-link">Parcourir le catalogue <span aria-hidden="true">→</span></Link></div>
+          <div className="landing-catalog-copy"><p className="landing-eyebrow">Le catalogue Skillsflow</p><h2>Une méthode adaptée à votre prochain défi.</h2><p>Comparez les skills disponibles, leurs usages et leurs formats, puis choisissez celui qui correspond à votre besoin.</p><Link href="/shop" className="landing-text-link">Parcourir le catalogue <span aria-hidden="true">→</span></Link></div>
           {featuredProduct ? <article className="landing-featured-product"><div className="landing-product-meta"><span className="landing-status"><i />{salesEnabled ? "Disponible" : "À découvrir dans le catalogue"}</span><span>{featuredProduct.domain} · v{featuredProduct.version}</span></div><div className="landing-product-title"><span aria-hidden="true">✳</span><div><h3>{featuredProduct.name}</h3><p>{featuredProduct.tagline}</p></div></div><div className="landing-product-footer"><p><small>Prix du skill</small><strong>€{featuredProduct.price.toFixed(2)} <span>· {new Intl.NumberFormat("fr-FR").format(featuredProduct.priceXof)} XOF</span></strong></p><Link href={`/products/${featuredProduct.slug}`} className="landing-button landing-button-primary">Voir le skill <span aria-hidden="true">→</span></Link></div></article> : <p className="landing-empty">Le catalogue se prépare. Revenez bientôt découvrir les premiers skills.</p>}
         </section>
       </ScrollReveal>
@@ -105,7 +110,7 @@ export default function HomePage() {
             </article>
           ))}
         </div>
-        <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-slate-500">Les abonnements Claude et ChatGPT sont facturés séparément par leurs éditeurs. SkillFlow fournit les skills, les méthodes, les guides et l’accompagnement.</p>
+        <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-slate-500">Les abonnements Claude et ChatGPT sont facturés séparément par leurs éditeurs. Skillsflow fournit les skills, les méthodes, les guides et l’accompagnement.</p>
       </section>
     </main>
   );

@@ -22,7 +22,7 @@ export function CommunitySuggestionForm() {
       if (!response.ok) throw new Error(payload.error ?? "Impossible d’envoyer votre suggestion.");
       setSubject("");
       setMessage("");
-      setNotice({ type: "success", text: "Merci, votre suggestion a bien été transmise à l’équipe SkillFlow." });
+      setNotice({ type: "success", text: "Merci, votre suggestion a bien été transmise à l’équipe Skillsflow." });
     } catch (error) {
       setNotice({ type: "error", text: error instanceof Error ? error.message : "Une erreur est survenue." });
     } finally {
@@ -35,9 +35,9 @@ export function CommunitySuggestionForm() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] lg:items-center">
         <div>
           <p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Votre voix compte</p>
-          <h2 id="community-suggestion-title" className="mt-2 text-xl font-bold text-white sm:text-2xl">Une idée pour SkillFlow ?</h2>
+          <h2 id="community-suggestion-title" className="mt-2 text-xl font-bold text-white sm:text-2xl">Une idée pour Skillsflow ?</h2>
           <p className="mt-2 max-w-lg text-sm leading-6 text-slate-300">Partagez une amélioration, un besoin ou un sujet à développer. Votre message est transmis en privé à l’équipe.</p>
-          <p className="mt-3 text-xs text-slate-400">Seule l’équipe SkillFlow pourra lire votre suggestion.</p>
+          <p className="mt-3 text-xs text-slate-400">Seule l’équipe Skillsflow pourra lire votre suggestion.</p>
         </div>
         <form className="grid gap-3" onSubmit={(event) => void submit(event)}>
           <label className="grid gap-1.5 text-sm font-semibold text-slate-200" htmlFor="community-suggestion-subject">

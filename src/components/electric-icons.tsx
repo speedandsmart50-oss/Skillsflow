@@ -1,14 +1,13 @@
 import React from "react";
+import Image from "next/image";
 
 export function ElectricLogo({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#397BFF] to-[#6557FF] p-2 shadow-[0_4px_16px_rgba(57,123,255,0.45)]">
-        <span className="font-[family-name:var(--font-geist-sans),sans-serif] text-xl font-black leading-none text-white">S</span>
-      </div>
+    <div className={`electric-logo inline-flex items-center gap-2 rounded-full border border-[#D9D6FF] bg-white px-1.5 py-1.5 pr-3 shadow-[0_4px_14px_rgba(67,97,238,0.14)] ${className}`}>
+      <Image src="/icon.svg" alt="" aria-hidden="true" width={28} height={28} className="h-7 w-7 shrink-0" />
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="font-[family-name:var(--font-geist-sans),sans-serif] text-lg font-black tracking-[-0.03em] text-white">Skillsflow</span>
+          <span className="font-[family-name:var(--font-geist-sans),sans-serif] text-[15px] font-semibold tracking-[-0.02em] text-[#172033]">Skillsflow</span>
         </div>
         <p className="text-[10px] font-medium tracking-wide text-[#8F9CAE]">Skills IA • MCP • Automatisation</p>
       </div>

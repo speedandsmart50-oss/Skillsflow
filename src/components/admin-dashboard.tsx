@@ -476,7 +476,7 @@ export function AdminDashboard() {
         </nav>
 
         <div className="mt-7">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">SkillFlow / {section}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Skillsflow / {section}</p>
           <h1 className="mt-2 font-[family-name:var(--font-bricolage)] text-3xl font-bold tracking-tight sm:text-4xl">
             {sections.find((item) => item.id === section)?.label}
           </h1>
@@ -589,7 +589,7 @@ export function AdminDashboard() {
                     <article key={order.id} className={cardClass}>
                       <div className="flex flex-wrap justify-between gap-4">
                         <div className="min-w-0">
-                          <h2 className="font-bold">{order.products?.name ?? "Skill SkillFlow"}</h2>
+                          <h2 className="font-bold">{order.products?.name ?? "Skill Skillsflow"}</h2>
                           <p className="mt-1 break-all text-sm text-[#52645E]">{order.profiles?.email ?? "Compte non associé"}</p>
                           <p className="mt-1 text-sm text-[#52645E]">Commande créée le {formatDate(order.created_at)}</p>
                           <p className="mt-1 text-xs text-[#52645E]">Référence {order.id}</p>
@@ -662,7 +662,7 @@ export function AdminDashboard() {
               {section === "support" && (
                 <>
                   <section className={cardClass}>
-                    <p className="text-sm leading-6 text-[#52645E]">Les demandes de remboursement sont consultées ici. SkillFlow ne modifie pas le statut des paiements et n’envoie aucune demande de remboursement à SasPay.</p>
+                    <p className="text-sm leading-6 text-[#52645E]">Les demandes de remboursement sont consultées ici. Skillsflow ne modifie pas le statut des paiements et n’envoie aucune demande de remboursement à SasPay.</p>
                     <div className="mt-4 max-w-sm"><Field label="Filtrer par statut"><select className={inputClass} value={ticketFilter} onChange={(event) => setTicketFilter(event.target.value)}><option value="">Toutes les demandes</option><option value="open">Reçues</option><option value="in_progress">En cours</option><option value="resolved">Résolues</option><option value="closed">Fermées</option></select></Field></div>
                   </section>
                   {(data.tickets ?? []).length === 0 ? <EmptyState>Aucune demande d’assistance pour le moment.</EmptyState> : (data.tickets ?? []).map((ticket) => (

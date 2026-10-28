@@ -9,9 +9,9 @@ test("pricing offers expose the public pricing and real checkout paths", () => {
   const pro = pricingOffers.find((offer) => offer.id === "pro");
 
   assert.equal(premium?.price, "39 €");
+  assert.equal(premium?.name, "Prospection éthique avec l’IA");
   assert.equal(premium?.checkoutHref, "/checkout?product=prospection-ethique");
-  assert.equal(pack?.price, "69 €");
-  assert.equal(pack?.checkoutHref, "/checkout?product=pack-marketing-reseau");
+  assert.equal(pack, undefined);
   assert.equal(plus?.availability, "available");
   assert.equal(plus?.checkoutHref, "/checkout?product=skillflow-plus");
   assert.equal(pro?.availability, "available");

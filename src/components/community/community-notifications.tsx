@@ -23,7 +23,7 @@ function notificationLabel(kind: CommunityNotification["kind"]) {
   return "a répondu dans";
 }
 
-export function CommunityNotifications({ userId }: { userId: string }) {
+export function CommunityNotifications({ userId, variant = "dark" }: { userId: string; variant?: "dark" | "light" }) {
   const [notifications, setNotifications] = useState<CommunityNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -69,11 +69,11 @@ export function CommunityNotifications({ userId }: { userId: string }) {
 
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={`Notifications${unreadCount ? `, ${unreadCount} non lue(s)` : ""}`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 text-cyan-100 transition hover:border-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
+      <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={`Notifications${unreadCount ? `, ${unreadCount} non lue(s)` : ""}`} className={`relative inline-flex h-11 w-11 items-center justify-center rounded-full border transition focus-visible:outline-none focus-visible:ring-2 ${variant === "light" ? "border-[#E5EAF2] bg-white text-[#78849A] hover:border-[#4361EE]/40 hover:bg-[#F7F9FC] hover:text-[#4361EE] focus-visible:ring-[#4361EE]/30" : "border-slate-700 text-cyan-100 hover:border-cyan-300 focus-visible:ring-cyan-300"}`}>
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
-        {unreadCount > 0 && <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-cyan-300 px-1 text-[10px] font-bold text-slate-950">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+        {unreadCount > 0 && <span className={`absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold ${variant === "light" ? "bg-[#4361EE] text-white ring-2 ring-white" : "bg-cyan-300 text-slate-950"}`}>{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </button>
-      {open && <section aria-label="Vos notifications" className="absolute right-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-slate-700 bg-[#0b1220] p-3 shadow-2xl">
+      {open && <section aria-label="Vos notifications" className={`account-notifications-panel absolute right-0 z-30 mt-3 w-[min(22rem,calc(100vw-2rem))] rounded-2xl p-3 shadow-[0_20px_50px_rgba(23,32,51,0.14)] ${variant === "light" ? "account-notifications-light border border-[#E5EAF2] bg-white" : "border border-slate-700 bg-[#0b1220] shadow-2xl"}`}>
         <div className="flex items-center justify-between gap-2 px-2 py-1"><h2 className="font-semibold text-white">Notifications</h2>{unreadCount > 0 && <button type="button" onClick={() => void markRead()} className="text-xs font-semibold text-cyan-200 hover:text-white">Tout marquer comme lu</button>}</div>
         {error && <p role="alert" className="mt-2 rounded-xl bg-rose-300/10 p-2 text-xs text-rose-100">{error}</p>}
         <ul className="mt-2 max-h-80 space-y-1 overflow-y-auto">{notifications.length ? notifications.map((notification) => <li key={notification.id}><Link href={notification.kind === "dm" ? "/community/messages" : `/community/channels/${notification.channel_id}`} onClick={() => { if (!notification.read_at) void markRead(notification.id); setOpen(false); }} className={`block rounded-xl p-3 transition hover:bg-white/[.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 ${notification.read_at ? "text-slate-300" : "bg-cyan-300/[.06] text-white"}`}><span className="block text-xs text-cyan-200">{notification.actor_name} {notificationLabel(notification.kind)} {notification.kind === "dm" ? "" : notification.channel_name}</span><span className="mt-1 block break-words text-sm">{notification.excerpt || "Ouvrir la conversation"}</span><time className="mt-1 block text-[11px] text-slate-500" dateTime={notification.created_at}>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(notification.created_at))}</time></Link></li>) : <li className="px-3 py-8 text-center text-sm text-slate-400">Aucune notification pour le moment.</li>}</ul>

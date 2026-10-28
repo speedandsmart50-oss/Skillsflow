@@ -1039,7 +1039,7 @@ export function AccountDashboard() {
                           </h2>
 
                           <p className="mt-3 max-w-xl text-base leading-relaxed text-[#8F9CAE]">
-                            Accédez à vos skills, configurez Claude et explorez tout ce que SkillFlow peut vous offrir pour booster votre productivité.
+                            Accédez à vos skills, configurez Claude et explorez tout ce que Skillsflow peut vous offrir pour booster votre productivité.
                           </p>
 
                           {/* 3 Action Buttons */}
@@ -1068,7 +1068,7 @@ export function AccountDashboard() {
                               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#25365E] bg-transparent px-5 py-3 text-sm font-semibold text-[#8F9CAE] transition hover:border-white/20 hover:text-white"
                             >
                               <PlayIcon className="h-4 w-4 text-[#8F9CAE]" />
-                              <span>Découvrir SkillFlow</span>
+                              <span>Découvrir Skillsflow</span>
                             </button>
                           </div>
                         </div>
@@ -1199,7 +1199,7 @@ export function AccountDashboard() {
 
                                 {/* Description */}
                                 <p className="mt-4 min-h-[48px] text-sm leading-6 text-[#8F9CAE]">
-                                  {skill.description || "Assistant IA configuré et connecté à votre compte SkillFlow."}
+                                  {skill.description || "Assistant IA configuré et connecté à votre compte Skillsflow."}
                                 </p>
                               </div>
 
@@ -1319,7 +1319,7 @@ export function AccountDashboard() {
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Intégration MCP</p>
                       <h2 className="mt-2 text-3xl font-black text-white">Tutoriel de connexion à Claude</h2>
                       <p className="mt-2 text-sm text-[#8F9CAE]">
-                        Connectez vos skills SkillFlow à Claude Desktop ou Claude Web via le protocole MCP en quelques étapes.
+                        Connectez vos skills Skillsflow à Claude Desktop ou Claude Web via le protocole MCP en quelques étapes.
                       </p>
                     </header>
 
@@ -1420,7 +1420,7 @@ export function AccountDashboard() {
                             2
                           </span>
                           <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-white">Ajoutez le serveur SkillFlow</h4>
+                            <h4 className="font-bold text-white">Ajoutez le serveur Skillsflow</h4>
                             <p className="mt-1 text-sm text-[#8F9CAE]">
                               Choisissez « Ajouter un connecteur personnalisé », puis renseignez le nom et l’URL ci-dessous :
                             </p>
@@ -1428,7 +1428,7 @@ export function AccountDashboard() {
                               <input
                                 aria-label="Nom du connecteur"
                                 readOnly
-                                value="SkillFlow"
+                                value="Skillsflow"
                                 className="rounded-xl border border-[#202E50] bg-[#0B1020] px-3.5 py-2.5 text-sm text-white"
                               />
                               <div className="flex flex-col gap-2 sm:flex-row">
@@ -1457,9 +1457,9 @@ export function AccountDashboard() {
                             3
                           </span>
                           <div className="flex-1">
-                            <h4 className="font-bold text-white">Activez SkillFlow dans vos échanges</h4>
+                        <h4 className="font-bold text-white">Activez Skillsflow dans vos échanges</h4>
                             <p className="mt-1 text-sm text-[#8F9CAE]">
-                              Dans toute conversation Claude, ouvrez « Recherche et outils », activez SkillFlow et demandez-lui d’utiliser vos compétences actives.
+                              Dans toute conversation Claude, ouvrez « Recherche et outils », activez Skillsflow et demandez-lui d’utiliser vos compétences actives.
                             </p>
                           </div>
                         </li>
@@ -1475,7 +1475,7 @@ export function AccountDashboard() {
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Historique</p>
                       <h2 className="mt-2 text-3xl font-black text-white">Facturation</h2>
                       <p className="mt-2 text-sm text-[#8F9CAE]">
-                        Consultez le statut et le montant de chaque commande passée sur SkillFlow.
+                        Consultez le statut et le montant de chaque commande passée sur Skillsflow.
                       </p>
                     </header>
 
@@ -1500,7 +1500,7 @@ export function AccountDashboard() {
                             className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#202E50] bg-[#151F38] p-6 shadow-md"
                           >
                             <div>
-                              <h3 className="text-lg font-bold text-white">{order.products?.name ?? "SkillFlow Pack"}</h3>
+                              <h3 className="text-lg font-bold text-white">{order.products?.name ?? "Skillsflow Pack"}</h3>
                               <p className="mt-1 text-xs text-[#8F9CAE]">
                                 Commande du {new Date(order.created_at).toLocaleDateString("fr-FR")} • Référence {order.id.slice(0, 8)}
                               </p>
@@ -1658,7 +1658,7 @@ export function AccountDashboard() {
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Assistance</p>
                       <h2 className="mt-2 text-3xl font-black text-white">Aide et support</h2>
                       <p className="mt-2 text-sm text-[#8F9CAE]">
-                        Envoyez une question ou une demande à l’équipe SkillFlow. Nous répondons sous 24 à 48 heures.
+                                Envoyez une question ou une demande à l’équipe Skillsflow. Nous répondons sous 24 à 48 heures.
                       </p>
                     </header>
 
@@ -1695,7 +1695,7 @@ export function AccountDashboard() {
                             <option value="">Aucune commande</option>
                             {account.orders.map((order) => (
                               <option key={order.id} value={order.id}>
-                                {order.products?.name ?? "SkillFlow"} · {new Date(order.created_at).toLocaleDateString("fr-FR")}
+                                {order.products?.name ?? "Skillsflow"} · {new Date(order.created_at).toLocaleDateString("fr-FR")}
                               </option>
                             ))}
                           </select>

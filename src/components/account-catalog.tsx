@@ -40,7 +40,7 @@ export function AccountCatalog() {
     <div className="space-y-6">
       <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Skills disponibles</p>
-        <h2 className="mt-2 text-3xl font-black text-white">Le catalogue SkillFlow</h2>
+        <h2 className="mt-2 text-3xl font-black text-white">Le catalogue Skillsflow</h2>
         <p className="mt-2 text-sm text-[#8F9CAE]">
           Retrouvez ici les skills certifiés et prêts à être connectés à votre compte via MCP.
         </p>

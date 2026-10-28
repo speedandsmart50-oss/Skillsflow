@@ -46,20 +46,21 @@ async function ProductDetailContent({
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#0d1321] px-4 py-12 text-white sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl">
       <BackLink href="/shop" className="mb-6">Retour au catalogue</BackLink>
       <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 shadow-[0_18px_55px_rgba(0,0,0,.18)] sm:p-8">
           <div className="mb-4 flex items-center justify-between gap-4">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+            <span className="rounded-full border border-[#20DDF2]/20 bg-[#20DDF2]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#70E9F5]">
               {catalogStatusLabels[product.catalogStatus]}
             </span>
-            <span className="text-sm font-medium text-slate-500">v{product.version}</span>
+            <span className="text-sm font-medium text-[#8F9CAE]">v{product.version}</span>
           </div>
-          <h1 className="text-4xl font-semibold tracking-tight text-slate-900">{product.name}</h1>
-          <p className="mt-2 text-sm font-semibold text-slate-500">{product.domain}</p>
-          <p className="mt-4 text-lg text-slate-600">{product.tagline}</p>
-          <p className="mt-6 text-base leading-7 text-slate-600">{product.description}</p>
+          <h1 className="text-4xl font-black tracking-tight text-white">{product.name}</h1>
+          <p className="mt-2 text-sm font-semibold text-[#70E9F5]">{product.domain}</p>
+          <p className="mt-4 text-lg text-[#C5D3E2]">{product.tagline}</p>
+          <p className="mt-6 text-base leading-7 text-[#A8B7CB]">{product.description}</p>
 
           {Boolean(product.includedSkills?.length) && (
             <div className="mt-8 rounded-2xl border border-violet-200 bg-violet-50 p-5">
@@ -96,14 +97,14 @@ async function ProductDetailContent({
           </div>
         </section>
 
-        <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Prix</div>
+        <aside className="h-fit rounded-3xl border border-[#202E50] bg-[#11182B] p-6 shadow-[0_18px_55px_rgba(0,0,0,.18)]">
+          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-[#8F9CAE]">Prix</div>
           <div className="mt-4 text-4xl font-semibold text-slate-900">€{product.price.toFixed(2)}</div>
-          <div className="mt-1 text-sm font-medium text-slate-600">{new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF</div>
+          <div className="mt-1 text-sm font-medium text-[#A8B7CB]">{new Intl.NumberFormat("fr-FR").format(product.priceXof)} XOF</div>
           {canPurchase ? (
             <>
               <p className="mt-4 text-sm leading-6 text-slate-600">{product.includedSkills?.length ? "Le paiement est s\u00e9curis\u00e9 par SasPay. Les skills inclus seront activ\u00e9s dans votre espace membre apr\u00e8s confirmation." : product.isMemberSkill ? "Le paiement est s\u00e9curis\u00e9 par SasPay. Votre acc\u00e8s au skill sera activ\u00e9 dans votre espace membre apr\u00e8s confirmation du paiement." : "Le paiement est s\u00e9curis\u00e9 par SasPay. Votre t\u00e9l\u00e9chargement sera disponible dans votre compte apr\u00e8s confirmation du paiement."}</p>
-              <Link href={`/checkout?product=${encodeURIComponent(product.slug)}`} className="mt-6 block w-full rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white">
+              <Link href={`/checkout?product=${encodeURIComponent(product.slug)}`} className="mt-6 block w-full rounded-full bg-gradient-to-r from-[#397BFF] to-[#6557FF] px-4 py-3 text-center text-sm font-semibold text-white shadow-[0_8px_22px_rgba(57,123,255,.25)] transition hover:brightness-110">
                 Payer
               </Link>
             </>
@@ -127,6 +128,7 @@ async function ProductDetailContent({
             </ul>
           </div>
         </aside>
+      </div>
       </div>
     </main>
   );

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
-export type DashboardTheme = "midnight" | "ocean" | "violet" | "light";
+export type DashboardTheme = "midnight" | "original" | "ocean" | "violet" | "light";
 export type MemberProfile = { displayName: string; email: string; avatarUrl: string | null; theme: DashboardTheme };
 type PreferencesContextValue = {
   profile: MemberProfile | null;
@@ -15,7 +15,7 @@ type PreferencesContextValue = {
 };
 
 const PreferencesContext = createContext<PreferencesContextValue | null>(null);
-const themes: DashboardTheme[] = ["midnight", "ocean", "violet", "light"];
+const themes: DashboardTheme[] = ["midnight", "original", "ocean", "violet", "light"];
 
 export function useMemberPreferences() {
   const value = useContext(PreferencesContext);

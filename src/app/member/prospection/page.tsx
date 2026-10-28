@@ -31,8 +31,8 @@ export default async function MemberProspectionPage() {
 
           <div className="relative z-10 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#397BFF]">Espace SkillFlow</p>
-              <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">SkillFlow Prospection</h1>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#397BFF]">Espace Skillsflow</p>
+              <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">Skillsflow Prospection</h1>
               <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#8F9CAE] sm:text-lg">
                 Votre espace de suivi commercial : contacts, pipelines, vidéos, formations et statistiques, réunis au même endroit.
               </p>

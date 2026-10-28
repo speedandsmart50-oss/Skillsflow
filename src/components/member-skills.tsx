@@ -111,14 +111,14 @@ export function MemberSkills({ skillId }: { skillId?: string }) {
     <main className="min-h-screen bg-[#0B1020] px-4 py-8 text-slate-100 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <BackLink href="/account">Espace SkillFlow</BackLink>
+          <BackLink href="/account">Mon espace Skillsflow</BackLink>
           <Link href="/member/skills" className="text-sm text-[#8F9CAE] hover:text-white transition">
             Tous les skills
           </Link>
         </header>
 
         <div className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#397BFF]">SkillFlow • Espace membre</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#397BFF]">Skillsflow • Espace membre</p>
           <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">
             {skillId ? detail?.skill.name ?? "Votre skill" : "Bibliothèque de skills"}
           </h1>
@@ -131,7 +131,7 @@ export function MemberSkills({ skillId }: { skillId?: string }) {
               href="/member/prospection"
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#397BFF]/30 bg-[#397BFF]/10 px-5 text-sm font-semibold text-[#8FB5FF] transition hover:bg-[#397BFF]/20"
             >
-              <span>Ouvrir SkillFlow Prospection</span>
+              <span>Ouvrir Skillsflow Prospection</span>
               <span>↗</span>
             </Link>
           </div>

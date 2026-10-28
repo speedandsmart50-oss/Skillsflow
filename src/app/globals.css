@@ -405,8 +405,16 @@ body:has(.admin-shell) .app-shell-chrome {
   display: none;
 }
 
+.electric-logo > div > p {
+  display: none;
+}
+
 .site-logo > div > div > span {
   color: currentColor !important;
+}
+
+.electric-logo > div > div > span {
+  color: #172033 !important;
 }
 
 .account-premium > div > aside {
@@ -1082,6 +1090,57 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
 .landing-benefit-card h3 { padding-top: .12rem; color: #19334e; font-size: .9rem; font-weight: 750; }
 .landing-benefit-card p { max-width: 18rem; margin-top: .4rem; color: #687d94; font-size: .72rem; line-height: 1.55; }
 .landing-card-arrow { position: absolute; top: 1.25rem; right: 1.15rem; display: grid; width: 1.7rem; height: 1.7rem; place-items: center; border-radius: 50%; background: #f0f8fc; color: #168bac; font-size: .8rem; }
+
+/* The public landing page also lives inside the member theme shell. Keep this
+   section intentionally dark in dark themes instead of letting generic theme
+   surface rules turn the cards into low-contrast grey blocks. */
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-value-section {
+  color: #f7fbff;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-section-heading h2 {
+  color: #f7fbff;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-section-heading h2 span {
+  background: linear-gradient(100deg, #20ddf2, #70e9f5);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-section-heading > p {
+  color: #9fb1c6;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card {
+  min-width: 0;
+  border-color: #273958;
+  background: linear-gradient(145deg, #16243d, #111c31) !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .16);
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card:hover {
+  border-color: rgba(32, 221, 242, .52);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, .25), 0 0 24px rgba(32, 221, 242, .06);
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card > div {
+  min-width: 0;
+  padding-right: 1.25rem;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card h3 {
+  color: #f7fbff;
+  font-size: .98rem;
+  line-height: 1.35;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card p {
+  max-width: none;
+  color: #9fb1c6;
+  font-size: .78rem;
+  line-height: 1.65;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-icon {
+  background: rgba(32, 221, 242, .1);
+  color: #70e9f5;
+}
+.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-card-arrow {
+  background: rgba(32, 221, 242, .12);
+  color: #70e9f5;
+}
 .landing-how-section { padding-block: 3rem 4.5rem; border-top: 1px solid #dce8f2; }
 .landing-how-heading h2 { font-size: clamp(1.8rem, 3vw, 2.35rem); }
 .landing-steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1.2rem; margin-top: 1.8rem; }

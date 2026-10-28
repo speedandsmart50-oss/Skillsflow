@@ -71,7 +71,7 @@ export function CheckoutResult({ orderId }: { orderId: string }) {
         <span className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-2xl ${paid ? "bg-emerald-300/10 text-emerald-300" : failed ? "bg-rose-300/10 text-rose-300" : "bg-cyan-300/10 text-cyan-200"}`} aria-hidden="true">
           {paid ? "✓" : failed ? "!" : checking ? "…" : "↻"}
         </span>
-        <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Commande SkillFlow</p>
+        <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Commande Skillsflow</p>
         <h1 className="mt-3 text-3xl font-black tracking-tight">{paid ? "Paiement confirmé" : failed ? "Paiement non finalisé" : "Vérification du paiement"}</h1>
         <p className="mt-3 leading-7 text-slate-300">
           {paid
@@ -80,7 +80,7 @@ export function CheckoutResult({ orderId }: { orderId: string }) {
               ? "Aucun accès n’a été activé. Vous pouvez reprendre la commande depuis sa fiche."
               : result?.status === "pending"
                 ? "Paiement en cours de vérification, activation sous quelques minutes. Cette page vérifie automatiquement le statut ; ne relancez pas un paiement en attente."
-                : "Le statut est vérifié auprès de votre compte SkillFlow. Le retour de SasPay, à lui seul, ne valide jamais un paiement."}
+                : "Le statut est vérifié auprès de votre compte Skillsflow. Le retour de SasPay, à lui seul, ne valide jamais un paiement."}
         </p>
         {result && <p className="mt-4 text-sm text-slate-400">Commande {orderId.slice(0, 8)} · {new Intl.NumberFormat("fr-FR").format(result.amountXof)} {result.currency}</p>}
         {message && <p role="status" className="mt-4 text-sm text-amber-200">{message}</p>}

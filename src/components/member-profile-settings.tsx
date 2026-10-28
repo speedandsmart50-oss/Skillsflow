@@ -7,6 +7,7 @@ import { useMemberPreferences, type DashboardTheme, type MemberProfile } from "@
 
 const themes: { id: DashboardTheme; name: string; detail: string; swatches: string[] }[] = [
   { id: "midnight", name: "Electric Indigo", detail: "Navy profond, bleu électrique & indigo", swatches: ["#0B1020", "#151F38", "#397BFF"] },
+  { id: "original", name: "Original Skillflow", detail: "Le thème historique de la capture", swatches: ["#0B1220", "#0D2938", "#20DDF2"] },
   { id: "ocean", name: "Océan électrique", detail: "Bleu abyssal et turquoise vif", swatches: ["#041522", "#0b3048", "#31f0d1"] },
   { id: "violet", name: "Violet impérial", detail: "Indigo dense et lavande lumineuse", swatches: ["#100b22", "#291947", "#d0a7ff"] },
   { id: "light", name: "Clair signature", detail: "Ivoire net et accents pétrole", swatches: ["#edf3f8", "#ffffff", "#087f8c"] },
@@ -105,10 +106,10 @@ function MemberProfileSettingsForm({
         </BackLink>
 
         <header className="mt-7 max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#397BFF]">Espace membre • Personnalisation</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#397BFF]">Skillsflow • Personnalisation</p>
           <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">Votre profil et vos réglages</h1>
           <p className="mt-3 text-sm leading-relaxed text-[#8F9CAE]">
-            Personnalisez votre identité visuelle sur SkillFlow. Vos préférences sont conservées et vous suivent sur tous vos appareils.
+            Personnalisez votre identité visuelle sur Skillsflow. Vos préférences sont conservées et vous suivent sur tous vos appareils.
           </p>
         </header>
 

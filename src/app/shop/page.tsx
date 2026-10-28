@@ -22,7 +22,7 @@ async function ShopContent() {
       <div className="relative mx-auto max-w-[1200px]">
         <div className="flex flex-col gap-6 border-b border-slate-800 pb-8 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Catalogue SkillFlow</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Catalogue Skillsflow</p>
             <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">Des skills et des packs pour votre activit&#233;.</h1>
             <p className="mt-4 max-w-2xl text-lg text-slate-300">Choisissez un skill &#224; l&#8217;unit&#233; ou un pack qui regroupe plusieurs comp&#233;tences compl&#233;mentaires.</p>
           </div>

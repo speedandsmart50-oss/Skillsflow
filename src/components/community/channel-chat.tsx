@@ -23,7 +23,7 @@ const emojis = ["👍", "❤️", "💪", "🎯", "🙏"];
 
 function memberName(message: Message): string {
   const member = Array.isArray(message.community_members) ? message.community_members[0] : message.community_members;
-  return member?.display_name ?? "Membre SkillFlow";
+  return member?.display_name ?? "Membre Skillsflow";
 }
 
 function formatTime(value: string): string {

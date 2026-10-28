@@ -117,7 +117,7 @@ export function CommunityHome({ initialName }: { initialName: string }) {
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(ellipse_at_70%_50%,rgba(32,221,242,.08),transparent_60%)] sm:block" />
         <div className="relative grid gap-7 p-5 sm:p-7 md:grid-cols-[minmax(0,1fr)_minmax(19rem,.9fr)] md:items-center lg:gap-10 lg:p-9">
           <div className="max-w-2xl">
-            <p className="inline-flex items-center gap-2 rounded-full border border-[#20DDF2]/20 bg-[#20DDF2]/[.05] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-[#70E9F5]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#20DDF2]" />Communauté SkillFlow</p>
+            <p className="inline-flex items-center gap-2 rounded-full border border-[#20DDF2]/20 bg-[#20DDF2]/[.05] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-[#70E9F5]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#20DDF2]" />Communauté Skillsflow</p>
             <h2 id="community-hero-title" className="mt-4 text-[clamp(1.8rem,4vw,3rem)] font-bold leading-[1.08] tracking-[-.04em] text-[#F4F7FC]">Progressez ensemble,<br className="hidden sm:block" /> à votre rythme.</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[#A8B7CB] sm:text-base sm:leading-7">Choisissez un salon pour échanger, avancer sur vos objectifs et demander conseil.</p>
           </div>
@@ -166,7 +166,7 @@ export function CommunityHome({ initialName }: { initialName: string }) {
       <section id="valeurs" className="mb-8 scroll-mt-28 sm:mb-10" aria-labelledby="community-values-title">
         <div className="mb-5 flex flex-col gap-4 border-l-2 border-[#20DDF2] pl-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:pl-5">
           <div className="max-w-3xl">
-            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#70E9F5]">L’esprit SkillFlow</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#70E9F5]">L’esprit Skillsflow</p>
             <h2 id="community-values-title" className="mt-1.5 text-2xl font-bold leading-tight tracking-[-.035em] text-[#F4F7FC] sm:text-3xl">Une communauté fondée sur le partage</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#A8B7CB]">Des échanges utiles, des formations concrètes et une progression qui respecte le rythme de chacun.</p>
           </div>
