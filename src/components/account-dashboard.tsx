@@ -17,6 +17,7 @@ import {
   NavIconMcp,
   NavIconCommunity,
   NavIconMyCommunity,
+  NavIconProspection,
   NavIconBilling,
   NavIconPrivacy,
   NavIconHelp,
@@ -34,6 +35,7 @@ import {
   CreditCardIcon,
 } from "@/components/electric-icons";
 import { ElectricBannerGraphic } from "@/components/electric-banner-graphic";
+import { SubscriptionSkillSelector } from "@/components/subscription-skill-selector";
 
 type AccountOrder = {
   id: string;
@@ -565,6 +567,13 @@ export function AccountDashboard() {
                   <span>Ma communauté</span>
                 </Link>
 
+                <Link
+                  href="/member/prospection"
+                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                >
+                  <NavIconProspection active={false} />
+                  <span>SkillFlow Prospection</span>
+                </Link>
               </nav>
 
               {/* Secondary Navigation: VOTRE ESPACE */}
@@ -1791,6 +1800,8 @@ function SubscriptionOffers() {
           Passez d’un usage ponctuel à un espace de travail IA accompagné, puis construisez votre assistant personnel avec Jarvis.
         </p>
       </header>
+
+      <SubscriptionSkillSelector />
 
       <div className="grid gap-6 xl:grid-cols-3">
         {offers.map((offer) => {

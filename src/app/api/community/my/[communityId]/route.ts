@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCommunitySession, isSameOriginRequest, isValidUuid } from "@/lib/community/server";
+import { getCommunitySession, hasActiveSubscription, isSameOriginRequest, isValidUuid } from "@/lib/community/server";
 
 type Context = { params: Promise<{ communityId: string }> };
 
@@ -7,6 +7,7 @@ export async function GET(_request: Request, { params }: Context) {
   const { communityId } = await params;
   if (!isValidUuid(communityId)) return NextResponse.json({ error: "Communauté introuvable." }, { status: 404 });
   const session = await getCommunitySession();
+  if (session && !(await hasActiveSubscription(session.supabase, session.user.id))) return NextResponse.json({ error: "Un abonnement actif est requis pour Ma communauté." }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Connectez-vous pour continuer." }, { status: 401 });
   const { data: membership } = await session.supabase.from("member_community_memberships").select("member_role, display_name, share_progress, share_avatar").eq("community_id", communityId).eq("user_id", session.user.id).maybeSingle();
   if (!membership) return NextResponse.json({ error: "Vous n’avez pas accès à cette communauté." }, { status: 403 });
@@ -40,6 +41,7 @@ export async function POST(request: Request, { params }: Context) {
   const { communityId } = await params;
   if (!isValidUuid(communityId)) return NextResponse.json({ error: "Communauté introuvable." }, { status: 404 });
   const session = await getCommunitySession();
+  if (session && !(await hasActiveSubscription(session.supabase, session.user.id))) return NextResponse.json({ error: "Un abonnement actif est requis pour Ma communauté." }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Connectez-vous pour continuer." }, { status: 401 });
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Données invalides." }, { status: 400 }); }

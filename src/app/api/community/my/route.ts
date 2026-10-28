@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { getCommunitySession, isSameOriginRequest } from "@/lib/community/server";
+import { getCommunitySession, hasActiveSubscription, isSameOriginRequest } from "@/lib/community/server";
 
 export async function GET() {
   const context = await getCommunitySession();
+  if (context && !(await hasActiveSubscription(context.supabase, context.user.id))) return NextResponse.json({ error: "Un abonnement actif est requis pour Ma communauté." }, { status: 403 });
   if (!context) return NextResponse.json({ error: "Connectez-vous pour gérer vos communautés." }, { status: 401 });
   const { data: memberships, error: membershipError } = await context.supabase.from("member_community_memberships")
     .select("community_id, display_name, member_role, joined_at").eq("user_id", context.user.id).order("joined_at", { ascending: false });
@@ -24,6 +25,7 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Requête non autorisée." }, { status: 403 });
   const context = await getCommunitySession();
+  if (context && !(await hasActiveSubscription(context.supabase, context.user.id))) return NextResponse.json({ error: "Un abonnement actif est requis pour Ma communauté." }, { status: 403 });
   if (!context) return NextResponse.json({ error: "Connectez-vous pour continuer." }, { status: 401 });
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Données invalides." }, { status: 400 }); }

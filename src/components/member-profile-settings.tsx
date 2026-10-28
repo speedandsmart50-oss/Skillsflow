@@ -6,11 +6,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useMemberPreferences, type DashboardTheme, type MemberProfile } from "@/components/member-preferences-provider";
 
 const themes: { id: DashboardTheme; name: string; detail: string; swatches: string[] }[] = [
-  { id: "midnight", name: "Electric Indigo", detail: "Navy profond, bleu électrique & indigo", swatches: ["#0B1020", "#151F38", "#397BFF"] },
-  { id: "original", name: "Original Skillflow", detail: "Le thème historique de la capture", swatches: ["#0B1220", "#0D2938", "#20DDF2"] },
-  { id: "ocean", name: "Océan électrique", detail: "Bleu abyssal et turquoise vif", swatches: ["#041522", "#0b3048", "#31f0d1"] },
-  { id: "violet", name: "Violet impérial", detail: "Indigo dense et lavande lumineuse", swatches: ["#100b22", "#291947", "#d0a7ff"] },
-  { id: "light", name: "Clair signature", detail: "Ivoire net et accents pétrole", swatches: ["#edf3f8", "#ffffff", "#087f8c"] },
+  { id: "midnight", name: "Electric Indigo", detail: "Le thème officiel Skillflow, identique pour tous les membres", swatches: ["#0B1020", "#151F38", "#397BFF"] },
 ];
 
 export function MemberProfileSettings() {

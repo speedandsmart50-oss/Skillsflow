@@ -2,6 +2,8 @@ import { BackLink } from "@/components/back-link";
 import { connection } from "next/server";
 import { requirePageUser } from "@/lib/security/page-auth";
 import { ProspectionPipeline } from "@/components/prospection-pipeline";
+import Link from "next/link";
+import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
 
 export const instant = false;
 
@@ -15,7 +17,17 @@ const modules = [
 
 export default async function MemberProspectionPage() {
   await connection();
-  await requirePageUser("/member/prospection");
+  const user = await requirePageUser("/member/prospection");
+  const supabase = await getSupabaseSessionClient();
+  const { data: subscription } = await supabase
+    .from("member_subscriptions")
+    .select("plan_slug, ends_at")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .gt("ends_at", new Date().toISOString())
+    .order("ends_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   return (
     <main className="min-h-screen bg-[#0B1020] px-4 py-8 text-slate-100 sm:px-6 sm:py-12">
@@ -49,7 +61,14 @@ export default async function MemberProspectionPage() {
           </p>
         </section>
 
-        <ProspectionPipeline />
+        {subscription ? <ProspectionPipeline /> : (
+          <section className="mt-8 rounded-3xl border border-cyan-300/25 bg-[#11182B] p-7 text-center shadow-2xl sm:p-10">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Fonctionnalité réservée aux abonnés</p>
+            <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">Activez un abonnement pour utiliser Prospection.</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[#A8B7CB]">Le bouton reste visible pour tous les membres, mais le pipeline et ses outils sont disponibles uniquement avec un abonnement actif.</p>
+            <Link href="/account" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950">Voir les abonnements</Link>
+          </section>
+        )}
 
         {/* Modules Grid */}
         <section className="mt-12 sm:mt-16" aria-labelledby="prospection-modules">

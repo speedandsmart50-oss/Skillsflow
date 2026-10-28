@@ -46,7 +46,7 @@ function OfferCard({ offer, frequency }: { offer: PricingOffer; frequency: Prici
       </ul>
       {isPlanned ? (
         // TODO: brancher le checkout Max lorsque l'offre Jarvis sera disponible à la vente.
-        <Link href="/login?mode=signup&plan=max" className="pricing-card-button pricing-card-button-secondary">{offer.cta}</Link>
+        <Link href="/contact/max" className="pricing-card-button pricing-card-button-secondary">{offer.cta}</Link>
       ) : (
         <Link href={offer.checkoutHref ?? "/login?mode=signup"} className="pricing-card-button">{offer.cta}</Link>
       )}

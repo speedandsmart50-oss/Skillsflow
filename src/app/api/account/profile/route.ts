@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
 
-const allowedThemes = new Set(["midnight", "original", "ocean", "violet", "light"]);
+const allowedThemes = new Set(["midnight"]);
 
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser(request);
