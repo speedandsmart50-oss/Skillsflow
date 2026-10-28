@@ -17,6 +17,7 @@ test("the shell shares one live auth session with the site navigation", async ()
   assert.match(header, /useAuthSession/);
   assert.match(navigation, /authStatus === "authenticated"/);
   assert.match(navigation, /authStatus === "loading"/);
+  assert.match(navigation, /hydrated/);
   assert.match(navigation, /href="\/account"/);
   assert.match(navigation, /Connexion/);
   assert.match(navigation, /Inscription/);
