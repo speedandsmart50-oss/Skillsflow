@@ -54,6 +54,7 @@ export function MaxContactForm() {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Skillsflow Max · Jarvis</p>
           <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">Préparons votre assistant IA personnel.</h1>
           <p className="mt-3 text-sm leading-6 text-[#C5D3E2]">Décrivez votre quotidien et vos objectifs. Nous validerons ensemble les sources, les autorisations et le périmètre avant toute étape de paiement.</p>
+          <p className="mt-4 text-sm text-[#A5B4FC]">Vous devez être connecté pour envoyer la demande. <Link href="/login?next=%2Fcontact%2Fmax" className="font-bold text-cyan-200 underline underline-offset-4">Se connecter</Link></p>
           {(error || message) && <p role={error ? "alert" : "status"} className={`mt-5 rounded-xl border p-4 text-sm ${error ? "border-rose-300/30 bg-rose-300/10 text-rose-100" : "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"}`}>{error || message}</p>}
           <form onSubmit={(event) => void submit(event)} className="mt-7 space-y-5">
             <label className="block text-sm font-semibold text-white">Vos objectifs avec Jarvis<textarea required minLength={10} maxLength={2000} value={form.goals} onChange={(event) => setForm({ ...form, goals: event.target.value })} placeholder="Ex. organiser mes suivis, préparer mes priorités..." className={field} rows={4} /></label>

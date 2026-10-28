@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 type PipelineStage = "new" | "contacted" | "presentation" | "follow-up" | "won" | "lost";
 
@@ -15,8 +16,6 @@ type Prospect = {
   createdAt: string;
 };
 
-const STORAGE_KEY = "skillsflow-prospection-pipeline";
-
 const stages: { id: PipelineStage; label: string; description: string; tone: string }[] = [
   { id: "new", label: "Nouveaux leads", description: "À qualifier", tone: "blue" },
   { id: "contacted", label: "Premier contact", description: "Conversation ouverte", tone: "violet" },
@@ -29,10 +28,6 @@ const stages: { id: PipelineStage; label: string; description: string; tone: str
 const channels = ["WhatsApp", "Instagram", "Facebook", "LinkedIn", "TikTok", "Google Maps", "Email", "Téléphone", "Rencontre"];
 
 const fieldClass = "mt-1.5 w-full rounded-xl border border-[#27375B] bg-[#0D1527] px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#71809B] focus:border-[#55DDF0] focus:ring-2 focus:ring-[#55DDF0]/15";
-
-function createId() {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-}
 
 function safeChannelUrl(value: string) {
   try {
@@ -55,32 +50,29 @@ function stageTone(tone: string) {
 
 export function ProspectionPipeline() {
   const [prospects, setProspects] = useState<Prospect[]>([]);
-  const loadedRef = useRef(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<PipelineStage | "all">("all");
   const [form, setForm] = useState({ name: "", company: "", channel: "WhatsApp", channelUrl: "", note: "" });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    void (async () => {
       try {
-        const stored = window.localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed: unknown = JSON.parse(stored);
-          if (Array.isArray(parsed)) setProspects(parsed as Prospect[]);
-        }
-      } catch {
-        // The pipeline remains usable if local storage is unavailable or corrupted.
+        const { data } = await getSupabaseClient().auth.getSession();
+        if (!data.session) throw new Error("Reconnectez-vous pour continuer.");
+        const response = await fetch("/api/member/prospection", { headers: { Authorization: `Bearer ${data.session.access_token}` }, cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error ?? "Impossible de charger votre pipeline.");
+        setProspects(payload.prospects ?? []);
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "Impossible de charger votre pipeline.");
       } finally {
-        loadedRef.current = true;
+        setLoading(false);
       }
-    }, 0);
-    return () => window.clearTimeout(timer);
+    })();
   }, []);
-
-  useEffect(() => {
-    if (loadedRef.current) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prospects));
-  }, [prospects]);
 
   const visibleProspects = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -95,20 +87,41 @@ export function ProspectionPipeline() {
   const wonCount = prospects.filter((prospect) => prospect.stage === "won").length;
   const followUpCount = prospects.filter((prospect) => prospect.stage === "follow-up").length;
 
-  function addProspect(event: FormEvent<HTMLFormElement>) {
+  async function addProspect(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.name.trim()) return;
-    setProspects((current) => [{ id: createId(), name: form.name.trim(), company: form.company.trim(), channel: form.channel, channelUrl: safeChannelUrl(form.channelUrl.trim()), note: form.note.trim(), stage: "new", createdAt: new Date().toISOString() }, ...current]);
-    setForm({ name: "", company: "", channel: "WhatsApp", channelUrl: "", note: "" });
-    setShowForm(false);
+    try {
+      const { data } = await getSupabaseClient().auth.getSession();
+      if (!data.session) throw new Error("Reconnectez-vous pour continuer.");
+      const response = await fetch("/api/member/prospection", { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ ...form, channelUrl: safeChannelUrl(form.channelUrl.trim()) }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Impossible d’ajouter ce contact.");
+      setProspects((current) => [payload.prospect, ...current]);
+      setForm({ name: "", company: "", channel: "WhatsApp", channelUrl: "", note: "" });
+      setShowForm(false);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Impossible d’ajouter ce contact."); }
   }
 
-  function updateStage(id: string, stage: PipelineStage) {
-    setProspects((current) => current.map((prospect) => prospect.id === id ? { ...prospect, stage } : prospect));
+  async function updateStage(id: string, stage: PipelineStage) {
+    try {
+      const { data } = await getSupabaseClient().auth.getSession();
+      if (!data.session) throw new Error("Reconnectez-vous pour continuer.");
+      const response = await fetch("/api/member/prospection", { method: "PATCH", headers: { Authorization: `Bearer ${data.session.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ id, stage }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Impossible de mettre à jour ce contact.");
+      setProspects((current) => current.map((prospect) => prospect.id === id ? { ...prospect, stage } : prospect));
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Impossible de mettre à jour ce contact."); }
   }
 
-  function removeProspect(id: string) {
-    setProspects((current) => current.filter((prospect) => prospect.id !== id));
+  async function removeProspect(id: string) {
+    try {
+      const { data } = await getSupabaseClient().auth.getSession();
+      if (!data.session) throw new Error("Reconnectez-vous pour continuer.");
+      const response = await fetch(`/api/member/prospection?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${data.session.access_token}` } });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Impossible de supprimer ce contact.");
+      setProspects((current) => current.filter((prospect) => prospect.id !== id));
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Impossible de supprimer ce contact."); }
   }
 
   return (
@@ -116,7 +129,7 @@ export function ProspectionPipeline() {
       <div className="flex flex-col gap-4 rounded-3xl border border-[#202E50] bg-[#11182B] p-5 shadow-[0_24px_80px_rgba(0,0,0,.22)] sm:p-7">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#20DDF2]"><span className="h-2 w-2 rounded-full bg-[#20DDF2] shadow-[0_0_12px_#20DDF2]" /> Pipeline local</div>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#20DDF2]"><span className="h-2 w-2 rounded-full bg-[#20DDF2] shadow-[0_0_12px_#20DDF2]" /> Pipeline synchronisé</div>
             <h2 id="pipeline-heading" className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">Suivez chaque conversation au même endroit.</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8F9CAE]">Ajoutez vos contacts, déplacez-les dans les étapes du pipeline et gardez une prochaine action claire.</p>
           </div>
@@ -125,7 +138,9 @@ export function ProspectionPipeline() {
           </button>
         </div>
 
-        {showForm && <form onSubmit={addProspect} className="grid gap-4 rounded-2xl border border-[#27375B] bg-[#0D1527] p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-[1fr_1fr_0.8fr_1.4fr_1.4fr_auto] lg:items-end">
+        {error && <p role="alert" className="rounded-xl border border-rose-300/25 bg-rose-300/10 p-3 text-sm text-rose-100">{error}</p>}
+        {loading && <p role="status" className="rounded-xl border border-[#27375B] bg-[#0D1527] p-3 text-sm text-[#A8B7CB]">Chargement de votre pipeline…</p>}
+        {showForm && <form onSubmit={(event) => void addProspect(event)} className="grid gap-4 rounded-2xl border border-[#27375B] bg-[#0D1527] p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-[1fr_1fr_0.8fr_1.4fr_1.4fr_auto] lg:items-end">
           <label className="text-xs font-semibold text-[#A8B7CB]">Nom du contact<input required maxLength={100} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Ex. Marie Dupont" className={fieldClass} /></label>
           <label className="text-xs font-semibold text-[#A8B7CB]">Entreprise ou activité<input maxLength={100} value={form.company} onChange={(event) => setForm({ ...form, company: event.target.value })} placeholder="Ex. Atelier Studio" className={fieldClass} /></label>
           <label className="text-xs font-semibold text-[#A8B7CB]">Canal<select value={form.channel} onChange={(event) => setForm({ ...form, channel: event.target.value })} className={fieldClass}>{channels.map((channel) => <option key={channel}>{channel}</option>)}</select></label>
@@ -170,7 +185,7 @@ export function ProspectionPipeline() {
         </div>
         {!prospects.length && <div className="rounded-2xl border border-dashed border-[#397BFF]/40 bg-[#397BFF]/[.04] p-8 text-center"><p className="text-sm font-semibold text-white">Votre pipeline est prêt.</p><p className="mt-1 text-sm text-[#8F9CAE]">Ajoutez votre premier contact pour commencer à suivre vos conversations.</p><button type="button" onClick={() => setShowForm(true)} className="mt-4 text-sm font-bold text-[#70E9F5] underline underline-offset-4 hover:text-white">Ajouter un premier contact</button></div>}
       </div>
-      <p className="mt-3 text-xs leading-5 text-[#71809B]">Vos contacts sont conservés dans ce navigateur pour le moment. Aucune donnée n’est envoyée à un service externe.</p>
+      <p className="mt-3 text-xs leading-5 text-[#71809B]">Vos contacts sont associés à votre compte Skillflow et restent accessibles après reconnexion.</p>
     </section>
   );
 }
