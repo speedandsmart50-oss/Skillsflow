@@ -36,18 +36,51 @@ async function validateAuthorization(request: Request) {
 
 function consentHtml(input: { clientName: string; clientId: string; redirectUri: string; challenge: string; resource: string; scope: string; state: string }) {
   const scopes = input.scope.split(" ").map((scope) => scope === "mcp:write" ? "Utiliser les actions autorisées de vos skills" : "Lire vos skills, configurations et ressources autorisés");
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Autoriser SkillFlow</title><style>body{margin:0;background:#07111e;color:#eef6ff;font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px}.card{max-width:560px;width:100%;background:#0d1b30;border:1px solid #24486a;border-radius:24px;padding:32px;box-sizing:border-box;box-shadow:0 20px 80px #0008}h1{font-size:28px;margin:0 0 12px}p{color:#b5c7dc;line-height:1.6}ul{padding:0;list-style:none}li{padding:12px 0;border-bottom:1px solid #24405c;color:#d9e7f5}li:before{content:'✓';color:#56e0ed;font-weight:700;margin-right:10px}button{border:0;border-radius:999px;padding:14px 20px;font-weight:700;font-size:15px;cursor:pointer}.approve{background:#56e0ed;color:#06111f}.deny{background:transparent;color:#ffb7c7;border:1px solid #6a3047;margin-left:10px}</style></head><body><main class="card"><p style="color:#56e0ed;font-weight:700">SKILLFLOW · AUTORISATION</p><h1>${escapeHtml(input.clientName)} demande l'accès à vos skills SkillFlow</h1><p><strong>${escapeHtml(input.clientName)}</strong> souhaite accéder à votre espace SkillFlow.</p><ul>${scopes.map((scope) => `<li>${escapeHtml(scope)}</li>`).join("")}</ul><p style="font-size:13px">Vous pouvez retirer cet accès depuis votre espace SkillFlow. La connexion est limitée à votre compte.</p><form method="post" action="/authorize"><input type="hidden" name="client_id" value="${escapeHtml(input.clientId)}"><input type="hidden" name="redirect_uri" value="${escapeHtml(input.redirectUri)}"><input type="hidden" name="code_challenge" value="${escapeHtml(input.challenge)}"><input type="hidden" name="resource" value="${escapeHtml(input.resource)}"><input type="hidden" name="scope" value="${escapeHtml(input.scope)}"><input type="hidden" name="state" value="${escapeHtml(input.state)}"><button type="submit" class="approve" name="decision" value="approve">Autoriser</button><button type="submit" class="deny" name="decision" value="deny">Refuser</button></form></main></body></html>`;
+  const approveUrl = `/authorize?response_type=code&client_id=${encodeURIComponent(input.clientId)}&redirect_uri=${encodeURIComponent(input.redirectUri)}&code_challenge=${encodeURIComponent(input.challenge)}&code_challenge_method=S256&resource=${encodeURIComponent(input.resource)}&scope=${encodeURIComponent(input.scope)}&state=${encodeURIComponent(input.state)}&decision=approve`;
+  const denyUrl = `/authorize?response_type=code&client_id=${encodeURIComponent(input.clientId)}&redirect_uri=${encodeURIComponent(input.redirectUri)}&code_challenge=${encodeURIComponent(input.challenge)}&code_challenge_method=S256&resource=${encodeURIComponent(input.resource)}&scope=${encodeURIComponent(input.scope)}&state=${encodeURIComponent(input.state)}&decision=deny`;
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Autoriser SkillFlow</title><style>body{margin:0;background:#07111e;color:#eef6ff;font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px}.card{max-width:560px;width:100%;background:#0d1b30;border:1px solid #24486a;border-radius:24px;padding:32px;box-sizing:border-box;box-shadow:0 20px 80px #0008}h1{font-size:28px;margin:0 0 12px}p{color:#b5c7dc;line-height:1.6}ul{padding:0;list-style:none}li{padding:12px 0;border-bottom:1px solid #24405c;color:#d9e7f5}li:before{content:'✓';color:#56e0ed;font-weight:700;margin-right:10px}a.button{display:inline-block;border:0;border-radius:999px;padding:14px 20px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none}.approve{background:#56e0ed;color:#06111f}.deny{background:transparent;color:#ffb7c7;border:1px solid #6a3047;margin-left:10px}</style></head><body><main class="card"><p style="color:#56e0ed;font-weight:700">SKILLFLOW · AUTORISATION</p><h1>${escapeHtml(input.clientName)} demande l'accès à vos skills SkillFlow</h1><p><strong>${escapeHtml(input.clientName)}</strong> souhaite accéder à votre espace SkillFlow.</p><ul>${scopes.map((scope) => `<li>${escapeHtml(scope)}</li>`).join("")}</ul><p style="font-size:13px">Vous pouvez retirer cet accès depuis votre espace SkillFlow. La connexion est limitée à votre compte.</p><div><a class="button approve" href="${escapeHtml(approveUrl)}">Autoriser</a><a class="button deny" href="${escapeHtml(denyUrl)}">Refuser</a></div></main></body></html>`;
 }
 
 export async function GET(request: Request) {
   const validated = await validateAuthorization(request);
   if ("error" in validated) return validated.error;
+  const params = new URL(request.url).searchParams;
+  const decision = params.get("decision");
   const user = await getOauthUser();
+  if (decision === "approve" || decision === "deny") {
+    if (!user) {
+      const next = `${new URL(request.url).pathname}${new URL(request.url).search}`;
+      return Response.redirect(new URL(`/login?next=${encodeURIComponent(next)}`, request.url), 302);
+    }
+    const state = params.get("state") ?? "";
+    if (decision === "deny") {
+      const denied = new URL(validated.redirectUri);
+      denied.searchParams.set("error", "access_denied");
+      if (state) denied.searchParams.set("state", state);
+      denied.searchParams.set("iss", appOrigin(request));
+      const target = denied.toString();
+      return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Redirection</title></head><body><p>Redirection en cours… <a href="${escapeHtml(target)}">Cliquez ici si rien ne se passe.</a></p><script>window.location.replace(${JSON.stringify(target)});</script></body></html>`, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+    }
+    const code = createOpaque("sf_code");
+    try {
+      const { error } = await getSupabaseAdminClient().from("oauth_authorization_codes").insert({ code_hash: hashOpaque(code), client_id: validated.clientId, user_id: user.id, redirect_uri: validated.redirectUri, code_challenge: validated.challenge, resource: validated.resource, scope: validated.scope, expires_at: new Date(Date.now() + 60_000).toISOString() });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Could not store OAuth authorization code:", error instanceof Error ? error.message : "Unknown error");
+      return oauthError("server_error", "Impossible de créer le code d'autorisation.", 503);
+    }
+    const redirect = new URL(validated.redirectUri);
+    redirect.searchParams.set("code", code);
+    if (state) redirect.searchParams.set("state", state);
+    redirect.searchParams.set("iss", appOrigin(request));
+    const target = redirect.toString();
+    return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Redirection</title></head><body><p>Redirection en cours… <a href="${escapeHtml(target)}">Cliquez ici si rien ne se passe.</a></p><script>window.location.replace(${JSON.stringify(target)});</script></body></html>`, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+  }
   if (!user) {
     const next = `${new URL(request.url).pathname}${new URL(request.url).search}`;
     return Response.redirect(new URL(`/login?next=${encodeURIComponent(next)}`, request.url), 302);
   }
-  return new Response(consentHtml({ clientName: validated.client.client_name, clientId: validated.clientId, redirectUri: validated.redirectUri, challenge: validated.challenge, resource: validated.resource, scope: validated.scope, state: validated.params.get("state") ?? "" }), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+  return new Response(consentHtml({ clientName: validated.client.client_name, clientId: validated.clientId, redirectUri: validated.redirectUri, challenge: validated.challenge, resource: validated.resource, scope: validated.scope, state: params.get("state") ?? "" }), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
 export async function POST(request: Request) {
