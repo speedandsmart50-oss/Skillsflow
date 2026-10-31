@@ -1464,7 +1464,7 @@ export function AccountDashboard() {
                             <h4 className="font-bold text-white">Ajoutez le serveur Skillsflow</h4>
                             <p className="mt-1 text-sm text-[#8F9CAE]">
                               Choisissez « Ajouter un connecteur personnalisé », puis renseignez le nom et l’URL ci-dessous.
-                                 Claude g�re l�authentification automatiquement via OAuth (pas besoin de cl�) :
+                                 Claude gère l’authentification automatiquement via OAuth (pas besoin de clé) :
                             </p>
                             <div className="mt-3 grid gap-3 sm:grid-cols-[10rem_1fr]">
                               <input
