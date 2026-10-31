@@ -66,7 +66,7 @@ export default async function MemberProspectionPage() {
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Fonctionnalité réservée aux abonnés</p>
             <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">Activez un abonnement pour utiliser Prospection.</h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[#A8B7CB]">Le bouton reste visible pour tous les membres, mais le pipeline et ses outils sont disponibles uniquement avec un abonnement actif.</p>
-            <Link href="/account" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950">Voir les abonnements</Link>
+            <Link href="/account?section=subscription" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950">Voir les abonnements</Link>
           </section>
         )}
 

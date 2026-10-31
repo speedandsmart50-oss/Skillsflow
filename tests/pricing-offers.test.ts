@@ -14,10 +14,12 @@ test("pricing offers expose the four subscription tiers and checkout paths", () 
   assert.equal(plus?.annual?.eur, "149 €");
   assert.equal(plus?.availability, "available");
   assert.equal(plus?.checkoutHref, "/checkout?product=skillflow-plus");
+  assert.equal(plus?.annualCheckoutHref, "/checkout?product=skillflow-plus-annual");
   assert.equal(pro?.badge, "Recommandé");
   assert.equal(pro?.annual?.xof, "196 100 XOF");
   assert.equal(pro?.availability, "available");
   assert.equal(pro?.checkoutHref, "/checkout?product=skillflow-pro");
+  assert.equal(pro?.annualCheckoutHref, "/checkout?product=skillflow-pro-annual");
   assert.equal(max?.badge, "Accès Jarvis");
   assert.equal(max?.monthly.xof, "45 300 XOF");
 });

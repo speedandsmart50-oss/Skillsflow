@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, getSupabaseAdminClient, getSupabaseUserClient } from "@/lib/supabase/server";
+import { isConfiguredAdmin } from "@/lib/security/admin-access";
 
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser(request);
@@ -119,7 +120,7 @@ export async function GET(request: Request) {
     user: {
       id: user.id,
       email: user.email ?? "",
-      role: profileResult.data?.role === "admin" ? "admin" : "client",
+      role: profileResult.data?.role === "admin" || isConfiguredAdmin(user) ? "admin" : "client",
       hasActiveSubscription: (subscriptionResult.data ?? []).length > 0,
     },
     orders: ordersResult.data ?? [],

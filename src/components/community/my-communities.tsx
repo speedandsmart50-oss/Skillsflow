@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { BackLink } from "@/components/back-link";
 
 type Community = { id: string; name: string; description: string; myRole: string; memberCount: number };
 const fieldClass = "min-h-12 w-full rounded-xl border border-[#29425D] bg-[#07111F] px-4 py-3 text-sm text-[#F4F7FC] outline-none transition placeholder:text-[#71849A] focus:border-[#20DDF2] focus:ring-2 focus:ring-[#20DDF2]/15";
@@ -39,6 +40,7 @@ export function MyCommunities() {
   }
 
   return <main className="animate-rise space-y-7 pb-10">
+    <BackLink href="/account">Retour à la vue d’ensemble</BackLink>
     <section className="relative overflow-hidden rounded-2xl border border-[#203650] bg-[radial-gradient(ellipse_at_90%_0%,rgba(32,221,242,.10),transparent_40%),linear-gradient(135deg,#0B1729,#0E1D32)] p-6 sm:p-8 lg:p-10">
       <p className="text-[11px] font-bold uppercase tracking-[.2em] text-[#70E9F5]">Votre espace d’équipe</p>
       <h1 className="mt-3 text-3xl font-bold tracking-[-.035em] text-[#F4F7FC] sm:text-4xl">Mes communautés</h1>

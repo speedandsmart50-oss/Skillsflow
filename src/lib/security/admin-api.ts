@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
+import { isConfiguredAdmin } from "@/lib/security/admin-access";
 
 export async function requireAdminApiUser(request: Request) {
   const user = await getAuthenticatedUser(request);
@@ -26,7 +27,7 @@ export async function requireAdminApiUser(request: Request) {
       response: NextResponse.json({ error: "Impossible de vérifier vos droits." }, { status: 500 }),
     };
   }
-  if (profile?.role !== "admin") {
+  if (profile?.role !== "admin" && !isConfiguredAdmin(user)) {
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Accès réservé aux administrateurs." }, { status: 403 }),

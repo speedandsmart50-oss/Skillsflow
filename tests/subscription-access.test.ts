@@ -16,7 +16,8 @@ test("subscription limits and paid areas are enforced in the server layer", asyn
   assert.match(migration, /has_active_member_subscription/);
   assert.match(prospection, /member_subscriptions/);
   assert.match(communityRoute, /hasActiveSubscription/);
-  assert.match(navigation, /href="\/member\/prospection"/);
+  assert.match(navigation, /href="\/account\?section=subscription"/);
+  assert.match(navigation, /label: "Abonnements"/);
 });
 
 test("Max uses a contact form before any payment flow", async () => {

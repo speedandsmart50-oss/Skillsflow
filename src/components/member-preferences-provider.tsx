@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 export type DashboardTheme = "midnight";
@@ -16,6 +17,14 @@ type PreferencesContextValue = {
 
 const PreferencesContext = createContext<PreferencesContextValue | null>(null);
 const themes: DashboardTheme[] = ["midnight"];
+/* The saved theme only decorates the authenticated workspace. Public pages keep
+   their own colours so no text is repainted by the member palette. */
+const workspacePrefixes = ["/member", "/account", "/admin", "/community"];
+
+function isWorkspacePath(pathname: string | null) {
+  if (!pathname) return false;
+  return workspacePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 export function useMemberPreferences() {
   const value = useContext(PreferencesContext);
@@ -24,6 +33,7 @@ export function useMemberPreferences() {
 }
 
 export function MemberPreferencesProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -94,6 +104,9 @@ export function MemberPreferencesProvider({ children }: { children: React.ReactN
 
   const contextValue = useMemo(() => ({ profile, loading, saveProfile, uploadAvatar, removeAvatar, refreshProfile }), [profile, loading, saveProfile, uploadAvatar, removeAvatar, refreshProfile]);
   return <PreferencesContext.Provider value={contextValue}>
-    <div className="member-preferences-scope" data-member-theme={profile?.theme ?? "midnight"}>{children}</div>
+    <div
+      className={isWorkspacePath(pathname) ? "member-preferences-scope" : "app-shell-scope"}
+      data-member-theme={profile?.theme ?? "midnight"}
+    >{children}</div>
   </PreferencesContext.Provider>;
 }

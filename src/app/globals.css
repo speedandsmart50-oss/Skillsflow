@@ -176,8 +176,9 @@ body:has(.admin-shell) .app-shell-chrome {
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28);
 }
 
-/* A saved theme decorates the entire SkillFlow shell, including navigation and pages. */
-.member-preferences-scope {
+/* Shared application palette. The public shell and the member shell both read
+   these tokens, so a page never has to guess which theme it is rendered in. */
+:root {
   --theme-page: #0d1321;
   --theme-surface: #111a2b;
   --theme-inset: #0b1524;
@@ -188,6 +189,12 @@ body:has(.admin-shell) .app-shell-chrome {
   --theme-on-accent: #07111e;
   --theme-border: rgba(148, 163, 184, .2);
   --theme-glow: rgba(34, 211, 238, .08);
+}
+
+/* Public pages keep their own explicit colours: the member theme must never
+   repaint them, which is what made several texts unreadable. */
+.app-shell-scope,
+.member-preferences-scope {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -248,6 +255,12 @@ body:has(.admin-shell) .app-shell-chrome {
   color: var(--theme-foreground);
   background-color: var(--theme-page) !important;
   border-color: var(--theme-border) !important;
+}
+/* The brand badge keeps its light plate in every theme, otherwise the dark
+   wordmark ends up on a dark plate and disappears. */
+.member-preferences-scope .electric-logo {
+  background-color: rgba(255, 255, 255, .06) !important;
+  border-color: rgba(255, 255, 255, .12) !important;
 }
 .member-preferences-scope main,
 .member-preferences-scope [class~="bg-[#0d1321]"],
@@ -414,7 +427,7 @@ body:has(.admin-shell) .app-shell-chrome {
 }
 
 .electric-logo > div > div > span {
-  color: #172033 !important;
+  color: #ffffff !important;
 }
 
 .account-premium > div > aside {
@@ -907,27 +920,8 @@ a {
   animation: skillflow-panel-in 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
 
-/* Homepage landing page: light editorial canvas with the existing dark product preview. */
-body:has(.landing-home) {
-  background: #f4f9fd;
-  color: #14243b;
-}
-
-body:has(.landing-home) .app-shell-chrome {
-  border-color: #dce8f2;
-  background: rgba(248, 252, 255, .94);
-  color: #14243b;
-}
-
-body:has(.landing-home) .app-shell-chrome a[aria-label="SkillFlow, accueil"] { color: #10213a; }
-body:has(.landing-home) .app-shell-chrome nav a:not([aria-current="page"]) { color: #50647e; }
-body:has(.landing-home) .app-shell-chrome nav a:not([aria-current="page"]):hover { color: #087f9a; }
-body:has(.landing-home) .app-shell-chrome nav a[aria-current="page"] { color: #087f9a; }
-body:has(.landing-home) .app-shell-chrome a[href="/login?mode=signup"] { border-color: #a5dce8; background: #eafaff; color: #087f9a; }
-body:has(.landing-home) .app-shell-chrome a[href="/login?mode=signup"]:hover { border-color: #55bfd2; background: #def7fc; }
-body:has(.landing-home) .app-shell-chrome button { color: #18324d; border-color: #cbdbe9; }
-body:has(.landing-home) .app-shell-chrome nav[id="mobile-site-menu"] { background: #f8fcff; }
-body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; color: #61738a; }
+/* The homepage uses the same dark shell as the rest of the application: no
+   page-specific repaint of the header or the footer. */
 
 /* Keep the dark demo readable when the member's global light theme is active. */
 .landing-home .landing-demo-wrap [class~="bg-[#0b1221]"] { background-color: #0b1221 !important; color: #f4f7fc !important; }
@@ -942,12 +936,12 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
 .landing-home .landing-demo-wrap [class*="text-cyan-200"] { color: #a5f3fc !important; }
 
 .landing-home {
-  --landing-ink: #10203a;
-  --landing-muted: #526984;
-  --landing-cyan: #06b9d5;
-  --landing-line: #d9e8f4;
+  --landing-ink: #f4f7fc;
+  --landing-muted: #a8b7cb;
+  --landing-cyan: #20ddf2;
+  --landing-line: #273958;
   overflow: hidden;
-  background: #f4f9fd;
+  background: #0d1321;
   color: var(--landing-ink);
 }
 
@@ -956,8 +950,8 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
   isolation: isolate;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 69% 48%, rgba(114, 204, 255, .2), transparent 29rem),
-    linear-gradient(115deg, #f8fcff 0%, #eff8ff 55%, #f7fbff 100%);
+    radial-gradient(ellipse at 69% 48%, rgba(34, 211, 238, .12), transparent 29rem),
+    linear-gradient(115deg, #0f1a2c 0%, #0b1220 55%, #0d1321 100%);
 }
 
 .landing-hero::before,
@@ -1010,18 +1004,18 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
   display: inline-flex;
   align-items: center;
   gap: .55rem;
-  border: 1px solid #b9eaf4;
+  border: 1px solid rgba(32, 221, 242, .25);
   border-radius: 999px;
-  background: rgba(255,255,255,.68);
+  background: rgba(32, 221, 242, .08);
   padding: .48rem .85rem;
-  color: #087f9a;
+  color: #a5f3fc;
   font-size: .76rem;
   font-weight: 700;
 }
-.landing-kicker span { color: #08bdd8; font-size: 1rem; }
+.landing-kicker span { color: #70e9f5; font-size: 1rem; }
 .landing-copy h1 {
   margin-top: 1.25rem;
-  color: #10203a;
+  color: #f8fafc;
   font-family: var(--font-bricolage), sans-serif;
   font-size: clamp(3rem, 5.7vw, 4.8rem);
   font-weight: 700;
@@ -1030,7 +1024,7 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
 }
 .landing-copy h1 span,
 .landing-section-heading h2 span {
-  background: linear-gradient(100deg, #08bdce, #1686ed);
+  background: linear-gradient(100deg, #20ddf2, #70e9f5);
   background-clip: text;
   color: transparent;
   -webkit-background-clip: text;
@@ -1050,14 +1044,14 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
   transition: transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
 }
 .landing-button:hover { transform: translateY(-2px); }
-.landing-button:focus-visible, .landing-text-link:focus-visible { outline: 3px solid rgba(6,185,213,.42); outline-offset: 3px; }
-.landing-button-primary { background: linear-gradient(110deg, #078ba8, #07b9cf); color: white; box-shadow: 0 8px 20px rgba(8, 151, 184, .2); }
-.landing-button-primary:hover { box-shadow: 0 12px 25px rgba(8, 151, 184, .27); }
-.landing-button-secondary { border: 1px solid #bed2e5; background: rgba(255,255,255,.58); color: #254866; }
-.landing-button-secondary:hover { border-color: #78cfe0; background: white; }
-.landing-proof { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; margin-top: 1.35rem; color: #627891; font-size: .74rem; }
-.landing-proof span { color: #079eb4; font-weight: 800; }
-.landing-proof i { width: 3px; height: 3px; margin-inline: .2rem; border-radius: 50%; background: #91a7bd; }
+.landing-button:focus-visible, .landing-text-link:focus-visible { outline: 3px solid rgba(112,233,245,.55); outline-offset: 3px; }
+.landing-button-primary { background: linear-gradient(110deg, #397bff, #6557ff); color: white; box-shadow: 0 8px 22px rgba(57, 123, 255, .28); }
+.landing-button-primary:hover { box-shadow: 0 12px 28px rgba(57, 123, 255, .38); }
+.landing-button-secondary { border: 1px solid #2c4266; background: rgba(255,255,255,.04); color: #d6e1ef; }
+.landing-button-secondary:hover { border-color: rgba(112,233,245,.55); background: rgba(32,221,242,.08); color: #ffffff; }
+.landing-proof { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; margin-top: 1.35rem; color: #8fa2b8; font-size: .74rem; }
+.landing-proof span { color: #70e9f5; font-weight: 800; }
+.landing-proof i { width: 3px; height: 3px; margin-inline: .2rem; border-radius: 50%; background: #3a4d6b; }
 .landing-demo-wrap { position: relative; min-width: 0; padding: .4rem 0 1rem; }
 .landing-demo-wrap > div:first-child { max-width: 36rem; }
 .landing-demo-note {
@@ -1067,104 +1061,57 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
   display: flex;
   align-items: center;
   gap: .65rem;
-  border: 1px solid rgba(213,232,245,.2);
+  border: 1px solid #273958;
   border-radius: 1rem;
-  background: #fff;
+  background: #111a2b;
   padding: .7rem .9rem;
-  box-shadow: 0 14px 34px rgba(21,75,113,.14);
-  color: #087f9a;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .35);
+  color: #70e9f5;
 }
-.landing-demo-note > span { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .65rem; background: #e3f8fb; font-size: 1.2rem; }
+.landing-demo-note > span { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .65rem; background: rgba(32,221,242,.1); font-size: 1.2rem; }
 .landing-demo-note strong, .landing-demo-note small { display: block; }
-.landing-demo-note strong { color: #19334e; font-size: .72rem; }
-.landing-demo-note small { margin-top: .15rem; color: #72849a; font-size: .61rem; }
+.landing-demo-note strong { color: #f4f7fc; font-size: .72rem; }
+.landing-demo-note small { margin-top: .15rem; color: #8fa2b8; font-size: .61rem; }
 .landing-value-section { padding-block: 3.8rem 4.2rem; }
 .landing-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
-.landing-eyebrow { color: #078aa7; font-size: .68rem; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
-.landing-section-heading h2, .landing-catalog-copy h2 { margin-top: .65rem; color: #10203a; font-family: var(--font-bricolage), sans-serif; font-size: clamp(1.9rem, 3.5vw, 2.75rem); font-weight: 700; letter-spacing: -.05em; line-height: 1.08; }
+.landing-eyebrow { color: #20ddf2; font-size: .68rem; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+.landing-section-heading h2, .landing-catalog-copy h2 { margin-top: .65rem; color: #f8fafc; font-family: var(--font-bricolage), sans-serif; font-size: clamp(1.9rem, 3.5vw, 2.75rem); font-weight: 700; letter-spacing: -.05em; line-height: 1.08; }
 .landing-section-heading > p { max-width: 27rem; padding-bottom: .25rem; color: var(--landing-muted); font-size: .85rem; line-height: 1.65; }
 .landing-benefits { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .9rem; margin-top: 1.55rem; }
-.landing-benefit-card { position: relative; display: flex; min-height: 8rem; align-items: flex-start; gap: .85rem; border: 1px solid var(--landing-line); border-radius: 1rem; background: rgba(255,255,255,.76); padding: 1.2rem; box-shadow: 0 5px 20px rgba(20,62,98,.035); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
-.landing-benefit-card:hover { transform: translateY(-3px); border-color: #a9dce9; box-shadow: 0 12px 28px rgba(20,62,98,.09); }
-.landing-benefit-icon { display: grid; width: 2.65rem; height: 2.65rem; flex: 0 0 auto; place-items: center; border-radius: .85rem; background: #e4f7fb; color: #078fae; font-size: 1.25rem; }
-.landing-benefit-card h3 { padding-top: .12rem; color: #19334e; font-size: .9rem; font-weight: 750; }
-.landing-benefit-card p { max-width: 18rem; margin-top: .4rem; color: #687d94; font-size: .72rem; line-height: 1.55; }
-.landing-card-arrow { position: absolute; top: 1.25rem; right: 1.15rem; display: grid; width: 1.7rem; height: 1.7rem; place-items: center; border-radius: 50%; background: #f0f8fc; color: #168bac; font-size: .8rem; }
+.landing-benefit-card { position: relative; display: flex; min-height: 8rem; align-items: flex-start; gap: .85rem; border: 1px solid var(--landing-line); border-radius: 1rem; background: linear-gradient(145deg, #16243d, #111c31); padding: 1.2rem; box-shadow: 0 14px 30px rgba(0, 0, 0, .16); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.landing-benefit-card:hover { transform: translateY(-3px); border-color: rgba(32, 221, 242, .52); box-shadow: 0 18px 38px rgba(0, 0, 0, .25), 0 0 24px rgba(32, 221, 242, .06); }
+.landing-benefit-icon { display: grid; width: 2.65rem; height: 2.65rem; flex: 0 0 auto; place-items: center; border-radius: .85rem; background: rgba(32, 221, 242, .1); color: #70e9f5; font-size: 1.25rem; }
+.landing-benefit-card h3 { padding-top: .12rem; color: #f7fbff; font-size: .9rem; font-weight: 750; }
+.landing-benefit-card p { max-width: 18rem; margin-top: .4rem; color: #9fb1c6; font-size: .72rem; line-height: 1.55; }
+.landing-card-arrow { position: absolute; top: 1.25rem; right: 1.15rem; display: grid; width: 1.7rem; height: 1.7rem; place-items: center; border-radius: 50%; background: rgba(32, 221, 242, .12); color: #70e9f5; font-size: .8rem; }
 
-/* The public landing page also lives inside the member theme shell. Keep this
-   section intentionally dark in dark themes instead of letting generic theme
-   surface rules turn the cards into low-contrast grey blocks. */
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-value-section {
-  color: #f7fbff;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-section-heading h2 {
-  color: #f7fbff;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-section-heading h2 span {
-  background: linear-gradient(100deg, #20ddf2, #70e9f5);
-  background-clip: text;
-  -webkit-background-clip: text;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-section-heading > p {
-  color: #9fb1c6;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card {
-  min-width: 0;
-  border-color: #273958;
-  background: linear-gradient(145deg, #16243d, #111c31) !important;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, .16);
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card:hover {
-  border-color: rgba(32, 221, 242, .52);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, .25), 0 0 24px rgba(32, 221, 242, .06);
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card > div {
-  min-width: 0;
-  padding-right: 1.25rem;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card h3 {
-  color: #f7fbff;
-  font-size: .98rem;
-  line-height: 1.35;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-card p {
-  max-width: none;
-  color: #9fb1c6;
-  font-size: .78rem;
-  line-height: 1.65;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-benefit-icon {
-  background: rgba(32, 221, 242, .1);
-  color: #70e9f5;
-}
-.member-preferences-scope:not([data-member-theme="light"]) .landing-home .landing-card-arrow {
-  background: rgba(32, 221, 242, .12);
-  color: #70e9f5;
-}
-.landing-how-section { padding-block: 3rem 4.5rem; border-top: 1px solid #dce8f2; }
+/* Keep the copy clear of the arrow icon whatever the card width. */
+.landing-benefit-card > div { min-width: 0; padding-right: 1.25rem; }
+
+.landing-how-section { padding-block: 3rem 4.5rem; border-top: 1px solid #1e2b4c; }
 .landing-how-heading h2 { font-size: clamp(1.8rem, 3vw, 2.35rem); }
 .landing-steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1.2rem; margin-top: 1.8rem; }
-.landing-step { border-left: 2px solid #b9e9f1; padding: .25rem 1rem .45rem 1.1rem; }
-.landing-step > span { color: #079ab3; font-family: var(--font-geist-mono), monospace; font-size: .72rem; font-weight: 800; }
-.landing-step h3 { margin-top: .55rem; color: #18314d; font-size: .95rem; font-weight: 750; }
-.landing-step p { margin-top: .4rem; color: #687d94; font-size: .78rem; line-height: 1.6; }
-.landing-catalog-section { display: grid; grid-template-columns: minmax(0,.78fr) minmax(0,1.22fr); align-items: center; gap: 3rem; border-top: 1px solid #dce8f2; padding-block: 3.6rem 5rem; }
-.landing-catalog-copy > p:not(.landing-eyebrow) { max-width: 28rem; margin-top: .8rem; color: #627891; font-size: .85rem; line-height: 1.7; }
-.landing-text-link { display: inline-flex; align-items: center; gap: .55rem; margin-top: 1rem; color: #078aa7; font-size: .82rem; font-weight: 750; }
-.landing-featured-product, .landing-empty { border: 1px solid #d5e5f0; border-radius: 1.25rem; background: white; padding: 1.5rem; box-shadow: 0 15px 40px rgba(31,74,112,.08); }
-.landing-product-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; color: #8192a5; font-size: .65rem; }
-.landing-status { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; background: #e8f8f4; padding: .38rem .65rem; color: #13765f; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+.landing-step { border-left: 2px solid rgba(32, 221, 242, .35); padding: .25rem 1rem .45rem 1.1rem; }
+.landing-step > span { color: #70e9f5; font-family: var(--font-geist-mono), monospace; font-size: .72rem; font-weight: 800; }
+.landing-step h3 { margin-top: .55rem; color: #f1f6fc; font-size: .95rem; font-weight: 750; }
+.landing-step p { margin-top: .4rem; color: #9fb1c6; font-size: .78rem; line-height: 1.6; }
+.landing-catalog-section { display: grid; grid-template-columns: minmax(0,.78fr) minmax(0,1.22fr); align-items: center; gap: 3rem; border-top: 1px solid #1e2b4c; padding-block: 3.6rem 5rem; }
+.landing-catalog-copy > p:not(.landing-eyebrow) { max-width: 28rem; margin-top: .8rem; color: #a8b7cb; font-size: .85rem; line-height: 1.7; }
+.landing-text-link { display: inline-flex; align-items: center; gap: .55rem; margin-top: 1rem; color: #70e9f5; font-size: .82rem; font-weight: 750; }
+.landing-featured-product, .landing-empty { border: 1px solid #273958; border-radius: 1.25rem; background: linear-gradient(160deg, #151f38, #111a2b); padding: 1.5rem; box-shadow: 0 15px 40px rgba(0, 0, 0, .3); }
+.landing-product-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; color: #8fa2b8; font-size: .65rem; }
+.landing-status { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; background: rgba(39, 181, 141, .14); padding: .38rem .65rem; color: #5eead4; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
 .landing-status i { width: .4rem; height: .4rem; border-radius: 50%; background: #27b58d; }
 .landing-product-title { display: flex; gap: .85rem; margin-top: 1.45rem; }
-.landing-product-title > span { display: grid; width: 2.8rem; height: 2.8rem; flex: 0 0 auto; place-items: center; border-radius: .9rem; background: #eaf8fc; color: #078fae; font-size: 1.4rem; }
-.landing-product-title h3 { color: #172e48; font-size: 1.2rem; font-weight: 750; letter-spacing: -.02em; }
-.landing-product-title p { margin-top: .35rem; color: #687d94; font-size: .8rem; line-height: 1.55; }
-.landing-product-footer { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-top: 1.3rem; border-top: 1px solid #e7eef4; padding-top: 1rem; }
+.landing-product-title > span { display: grid; width: 2.8rem; height: 2.8rem; flex: 0 0 auto; place-items: center; border-radius: .9rem; background: rgba(32, 221, 242, .1); color: #70e9f5; font-size: 1.4rem; }
+.landing-product-title h3 { color: #f7fbff; font-size: 1.2rem; font-weight: 750; letter-spacing: -.02em; }
+.landing-product-title p { margin-top: .35rem; color: #9fb1c6; font-size: .8rem; line-height: 1.55; }
+.landing-product-footer { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-top: 1.3rem; border-top: 1px solid #24344f; padding-top: 1rem; }
 .landing-product-footer small, .landing-product-footer strong { display: block; }
-.landing-product-footer small { color: #8192a5; font-size: .66rem; }
-.landing-product-footer strong { margin-top: .2rem; color: #16304b; font-size: .95rem; }
-.landing-product-footer strong span { color: #74869a; font-size: .72rem; font-weight: 500; }
-.landing-empty { color: #687d94; }
+.landing-product-footer small { color: #8fa2b8; font-size: .66rem; }
+.landing-product-footer strong { margin-top: .2rem; color: #f4f7fc; font-size: .95rem; }
+.landing-product-footer strong span { color: #a8b7cb; font-size: .72rem; font-weight: 500; }
+.landing-empty { color: #a8b7cb; }
 
 @media (max-width: 850px) {
   .landing-hero-inner { grid-template-columns: 1fr; gap: 2.5rem; padding-block: 3rem 3.5rem; }
@@ -1389,4 +1336,73 @@ body:has(.landing-home) footer { border-color: #dce8f2; background: #f4f9fd; col
 .account-profile-menu p.text-white { color: #fff !important; }
 .account-profile-menu [class*="text-[#C5D3E8]"], .account-profile-menu [class*="text-[#8F9CAE]"] { color: #D8E2FF !important; }
 .account-profile-menu [class*="hover:bg-white"]:hover { background-color: #1A2B5E !important; }
+
+/* Account subscription cards keep a readable contrast in the light account workspace. */
+.account-premium-content .subscription-frequency {
+  display: flex;
+  width: fit-content;
+  gap: .35rem;
+  padding: .3rem;
+  border: 1px solid var(--account-border);
+  border-radius: 999px;
+  background: #fff;
+}
+.account-premium-content .subscription-frequency button {
+  min-height: 2.6rem;
+  border-radius: 999px;
+  padding: .55rem 1rem;
+  color: var(--account-muted);
+  font-size: .875rem;
+  font-weight: 800;
+}
+.account-premium-content .subscription-frequency button[aria-pressed="true"] {
+  background: #2563eb;
+  color: #fff;
+}
+.account-premium-content .subscription-frequency button span {
+  margin-left: .3rem;
+  font-size: .72rem;
+}
+.account-premium-content .subscription-offer-card:not(.subscription-offer-card-featured) {
+  background: #fff !important;
+  border-color: var(--account-border) !important;
+  color: var(--account-ink) !important;
+}
+.account-premium-content .subscription-offer-card:not(.subscription-offer-card-featured) .subscription-offer-title,
+.account-premium-content .subscription-offer-card:not(.subscription-offer-card-featured) .subscription-offer-price,
+.account-premium-content .subscription-offer-card:not(.subscription-offer-card-featured) .subscription-offer-features {
+  color: var(--account-ink) !important;
+}
+.account-premium-content .subscription-offer-card:not(.subscription-offer-card-featured) .subscription-offer-muted {
+  color: var(--account-muted) !important;
+}
+.account-premium-content .subscription-offer-card-featured {
+  background: linear-gradient(135deg, #172554, #1e3a8a 56%, #312e81) !important;
+  border-color: #3b82f6 !important;
+  color: #fff !important;
+}
+.account-premium-content .subscription-offer-card-featured .subscription-offer-title,
+.account-premium-content .subscription-offer-card-featured .subscription-offer-price,
+.account-premium-content .subscription-offer-card-featured .subscription-offer-features {
+  color: #fff !important;
+}
+.account-premium-content .subscription-offer-card-featured .subscription-offer-muted {
+  color: #dbeafe !important;
+}
+.account-premium-content .subscription-offer-card .subscription-offer-note {
+  color: #0284c7 !important;
+}
+.account-premium-content .subscription-offer-card-featured .subscription-offer-note {
+  color: #a5f3fc !important;
+}
+.account-premium-content .subscription-offer-button:not([class*="from-[#397BFF]"]) {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+@media (max-width: 640px) {
+  .account-premium-content .subscription-frequency { width: 100%; }
+  .account-premium-content .subscription-frequency button { flex: 1; padding-inline: .6rem; }
+  .account-premium-content .subscription-frequency button span { display: block; margin-left: 0; }
+}
 

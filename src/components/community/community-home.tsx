@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { CommunitySuggestionForm } from "@/components/community/community-suggestion-form";
+import { BackLink } from "@/components/back-link";
 
 type Channel = {
   id: string;
@@ -113,6 +114,7 @@ export function CommunityHome({ initialName }: { initialName: string }) {
 
   return (
     <main>
+      <BackLink href="/account" className="mb-5">Retour à la vue d’ensemble</BackLink>
       <section className="relative mb-8 overflow-hidden rounded-2xl border border-[#203650] bg-[#0B1729] shadow-[0_14px_42px_rgba(0,0,0,.18)] sm:mb-10" aria-labelledby="community-hero-title">
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(ellipse_at_70%_50%,rgba(32,221,242,.08),transparent_60%)] sm:block" />
         <div className="relative grid gap-7 p-5 sm:p-7 md:grid-cols-[minmax(0,1fr)_minmax(19rem,.9fr)] md:items-center lg:gap-10 lg:p-9">

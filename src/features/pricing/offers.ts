@@ -17,6 +17,7 @@ export type PricingOffer = {
   features: PricingFeature[];
   cta: string;
   checkoutHref?: string;
+  annualCheckoutHref?: string;
   availability: PricingAvailability;
 };
 
@@ -54,6 +55,7 @@ export const pricingOffers: PricingOffer[] = [
     ],
     cta: "Choisir Plus",
     checkoutHref: "/checkout?product=skillflow-plus",
+    annualCheckoutHref: "/checkout?product=skillflow-plus-annual",
     availability: "available",
   },
   {
@@ -75,6 +77,7 @@ export const pricingOffers: PricingOffer[] = [
     ],
     cta: "Choisir Pro",
     checkoutHref: "/checkout?product=skillflow-pro",
+    annualCheckoutHref: "/checkout?product=skillflow-pro-annual",
     availability: "available",
   },
   {
@@ -125,5 +128,9 @@ export const pricingPageContent = {
 
 export function getOfferById(id: string) {
   return pricingOffers.find((offer) => offer.id === id);
+}
+
+export function getOfferCheckoutHref(offer: PricingOffer, frequency: PricingFrequency) {
+  return frequency === "annual" ? offer.annualCheckoutHref ?? offer.checkoutHref : offer.checkoutHref;
 }
 

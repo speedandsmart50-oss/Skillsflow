@@ -16,14 +16,14 @@ export default function LegalIndexPage() {
     <LegalDocument title="Informations légales">
       <p>Consultez les documents applicables à l’utilisation et à l’achat des skills Skillsflow.</p>
       {hasPlaceholders && (
-        <p role="status" className="rounded-xl border border-amber-300/30 bg-amber-50 p-4 text-amber-950">
+        <p role="status" className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-amber-100">
           Certains renseignements portent la mention [À COMPLÉTER]. Ils doivent être renseignés avant l’ouverture des ventes.
         </p>
       )}
       <ul className="grid gap-3 sm:grid-cols-2">
         {documents.map(([label, href]) => (
           <li key={href}>
-            <Link href={href} className="block rounded-xl border border-slate-200 p-4 font-semibold text-cyan-800 underline underline-offset-4 hover:bg-slate-50">
+            <Link href={href} className="block rounded-xl border border-[#24344F] bg-[#111A2B] p-4 font-semibold text-[#70E9F5] underline underline-offset-4 transition hover:border-[#20DDF2]/50 hover:text-white">
               {label}
             </Link>
           </li>

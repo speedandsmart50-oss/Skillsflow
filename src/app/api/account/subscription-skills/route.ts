@@ -36,7 +36,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Impossible de charger la sélection des skills." }, { status: 503 });
   }
 
-  const limit = subscription.plan_slug === "skillflow-plus" ? 1 : subscription.plan_slug === "skillflow-pro" ? 2 : 3;
+  const basePlanSlug = subscription.plan_slug.replace(/-annual$/, "");
+  const limit = basePlanSlug === "skillflow-plus" ? 1 : basePlanSlug === "skillflow-pro" ? 2 : 3;
   return NextResponse.json({
     subscription: { ...subscription, limit },
     selectedSkillIds: (selection ?? []).map((item) => item.skill_id),

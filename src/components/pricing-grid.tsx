@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { pricingOffers, pricingPageContent, type PricingFrequency, type PricingOffer } from "@/features/pricing/offers";
+import { getOfferCheckoutHref, pricingOffers, pricingPageContent, type PricingFrequency, type PricingOffer } from "@/features/pricing/offers";
 
 function Price({ offer, frequency }: { offer: PricingOffer; frequency: PricingFrequency }) {
   const price = frequency === "annual" && offer.annual ? offer.annual : offer.monthly;
@@ -18,6 +18,7 @@ function Price({ offer, frequency }: { offer: PricingOffer; frequency: PricingFr
 function OfferCard({ offer, frequency }: { offer: PricingOffer; frequency: PricingFrequency }) {
   const isFeatured = offer.id === "pro";
   const isPlanned = offer.availability === "planned";
+  const checkoutHref = getOfferCheckoutHref(offer, frequency);
   return (
     <article className={`pricing-offer-card ${isFeatured ? "pricing-offer-card-featured" : ""}`}>
       <div className="pricing-card-top">
@@ -48,7 +49,7 @@ function OfferCard({ offer, frequency }: { offer: PricingOffer; frequency: Prici
         // TODO: brancher le checkout Max lorsque l'offre Jarvis sera disponible à la vente.
         <Link href="/contact/max" className="pricing-card-button pricing-card-button-secondary">{offer.cta}</Link>
       ) : (
-        <Link href={offer.checkoutHref ?? "/login?mode=signup"} className="pricing-card-button">{offer.cta}</Link>
+        <Link href={checkoutHref ?? "/login?mode=signup"} className="pricing-card-button">{offer.cta}</Link>
       )}
     </article>
   );

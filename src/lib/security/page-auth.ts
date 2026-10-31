@@ -2,6 +2,7 @@ import "server-only";
 
 import { forbidden, redirect } from "next/navigation";
 import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
+import { isConfiguredAdmin } from "@/lib/security/admin-access";
 export async function requirePageUser(nextPath: string) {
   const supabase = await getSupabaseSessionClient();
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -29,7 +30,7 @@ export async function requireAdminPage(nextPath: string) {
     console.error("Could not verify page role:", error.message);
     throw new Error("Impossible de vérifier vos droits.");
   }
-  if (profile?.role !== "admin") forbidden();
+  if (profile?.role !== "admin" && !isConfiguredAdmin(user)) forbidden();
 
   return user;
 }
