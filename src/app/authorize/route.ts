@@ -57,8 +57,7 @@ export async function GET(request: Request) {
       const denied = new URL(validated.redirectUri);
       denied.searchParams.set("error", "access_denied");
       if (state) denied.searchParams.set("state", state);
-      denied.searchParams.set("iss", appOrigin(request));
-      const target = denied.toString();
+        const target = denied.toString();
       return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Redirection</title></head><body><p>Redirection en cours… <a href="${escapeHtml(target)}">Cliquez ici si rien ne se passe.</a></p><script>window.location.replace(${JSON.stringify(target)});</script></body></html>`, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
     }
     const code = createOpaque("sf_code");
@@ -72,7 +71,6 @@ export async function GET(request: Request) {
     const redirect = new URL(validated.redirectUri);
     redirect.searchParams.set("code", code);
     if (state) redirect.searchParams.set("state", state);
-    redirect.searchParams.set("iss", appOrigin(request));
     const target = redirect.toString();
     return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Redirection</title></head><body><p>Redirection en cours… <a href="${escapeHtml(target)}">Cliquez ici si rien ne se passe.</a></p><script>window.location.replace(${JSON.stringify(target)});</script></body></html>`, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   }
@@ -96,7 +94,6 @@ export async function POST(request: Request) {
     const denied = new URL(validated.redirectUri);
     denied.searchParams.set("error", "access_denied");
     if (state) denied.searchParams.set("state", state);
-    denied.searchParams.set("iss", appOrigin(request));
     const target = denied.toString();
     return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Redirection</title></head><body><p>Redirection en cours… <a href="${escapeHtml(target)}">Cliquez ici si rien ne se passe.</a></p><script>window.location.replace(${JSON.stringify(target)});</script></body></html>`, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   }
@@ -111,7 +108,6 @@ export async function POST(request: Request) {
   const redirect = new URL(validated.redirectUri);
   redirect.searchParams.set("code", code);
   if (state) redirect.searchParams.set("state", state);
-  redirect.searchParams.set("iss", appOrigin(request));
   const target = redirect.toString();
   return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Redirection</title></head><body><p>Redirection en cours… <a href="${escapeHtml(target)}">Cliquez ici si rien ne se passe.</a></p><script>window.location.replace(${JSON.stringify(target)});</script></body></html>`, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
