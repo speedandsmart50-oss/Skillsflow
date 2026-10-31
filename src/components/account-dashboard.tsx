@@ -197,7 +197,7 @@ export function AccountDashboard() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const browserOrigin = useSyncExternalStore(subscribeToLocation, getBrowserOrigin, getServerOrigin);
-  const mcpUrl = browserOrigin ? `${browserOrigin}/api/mcp` : "";
+  const mcpUrl = browserOrigin ? `${browserOrigin}/mcp` : "";
 
   // Adjust the visible section while rendering (React's documented alternative
   // to a setState effect) so /account?section=subscription opens on demand.
@@ -1463,7 +1463,8 @@ export function AccountDashboard() {
                           <div className="min-w-0 flex-1">
                             <h4 className="font-bold text-white">Ajoutez le serveur Skillsflow</h4>
                             <p className="mt-1 text-sm text-[#8F9CAE]">
-                              Choisissez « Ajouter un connecteur personnalisé », puis renseignez le nom et l’URL ci-dessous :
+                              Choisissez « Ajouter un connecteur personnalisé », puis renseignez le nom et l’URL ci-dessous.
+                                 Claude g�re l�authentification automatiquement via OAuth (pas besoin de cl�) :
                             </p>
                             <div className="mt-3 grid gap-3 sm:grid-cols-[10rem_1fr]">
                               <input
