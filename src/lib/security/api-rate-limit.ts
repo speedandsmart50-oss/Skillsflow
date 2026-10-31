@@ -1,6 +1,8 @@
+import { createHmac } from "node:crypto";
+import { isIP } from "node:net";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ApiRateLimitScope = "mcp_user" | "mcp_ip" | "checkout_user" | "conversation_user";
+export type ApiRateLimitScope = "mcp_user" | "mcp_ip" | "checkout_user" | "conversation_user" | "auth_ip";
 
 export type ApiRateLimitDecision = {
   allowed: boolean;
@@ -9,6 +11,17 @@ export type ApiRateLimitDecision = {
 };
 
 type RateLimitRpcClient = Pick<SupabaseClient, "rpc">;
+
+/**
+ * Build a server-side, non-guessable subject key for an anonymous client IP,
+ * using the service-role key as HMAC key so the fingerprint cannot be reversed.
+ */
+export function getRateLimitIpSubjectKey(request: Request): string | null {
+  const forwardedIp = (request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!forwardedIp || !serviceRoleKey || !isIP(forwardedIp)) return null;
+  return `ip:${createHmac("sha256", serviceRoleKey).update(forwardedIp).digest("hex")}`;
+}
 
 export async function consumeApiRateLimit(
   supabase: RateLimitRpcClient,

@@ -1,5 +1,4 @@
-import { createHmac, randomUUID } from "node:crypto";
-import { isIP } from "node:net";
+import { randomUUID } from "node:crypto";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
@@ -7,7 +6,7 @@ import { z } from "zod";
 import { getCatalogProductBySlug, getCatalogProducts } from "@/features/products/catalog";
 import mcpSkills from "@/features/mcp/skills.json";
 import { hashMcpKey, parseMcpBearerToken } from "@/lib/security/mcp-keys";
-import { consumeApiRateLimit } from "@/lib/security/api-rate-limit";
+import { consumeApiRateLimit, getRateLimitIpSubjectKey } from "@/lib/security/api-rate-limit";
 import { matchesFileContentType } from "@/lib/security/file-content";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { oauthJson, parseBearer, validateAccessToken } from "@/lib/oauth/server";
@@ -81,10 +80,7 @@ function isResponse(value: McpCaller | Response): value is Response {
 }
 
 function getMcpIpSubject(request: Request): string | null {
-  const forwardedIp = request.headers.get("x-vercel-forwarded-for")?.split(",", 1)[0]?.trim();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!forwardedIp || !serviceRoleKey || !isIP(forwardedIp)) return null;
-  return `ip:${createHmac("sha256", serviceRoleKey).update(forwardedIp).digest("hex")}`;
+  return getRateLimitIpSubjectKey(request);
 }
 
 function rateLimitedMcpResponse(retryAfterSeconds: number) {

@@ -8,21 +8,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <AuthSessionProvider>
-        <Suspense fallback={
-          <>
-            <div aria-hidden="true" className="h-[72px] border-b border-[#203650]/75 bg-[#07111F]/95" />
-            <div className="app-shell-scope flex-1">{children}</div>
-            <SiteFooter />
-          </>
-        }>
-          <MemberPreferencesProvider>
-            <Suspense fallback={<div aria-hidden="true" className="h-[72px] border-b border-[#203650]/75 bg-[#07111F]/95" />}>
-              <SiteHeader />
-            </Suspense>
-            <div className="flex-1">{children}</div>
-            <SiteFooter />
-          </MemberPreferencesProvider>
-        </Suspense>
+        <MemberPreferencesProvider>
+          <Suspense fallback={<div aria-hidden="true" className="h-[72px] border-b border-[#203650]/75 bg-[#07111F]/95" />}>
+            <SiteHeader />
+          </Suspense>
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
+        </MemberPreferencesProvider>
       </AuthSessionProvider>
     </div>
   );
