@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useEffect, useState, useSyncExternalStore, useMemo, useRef } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { AccountCatalog } from "@/components/account-catalog";
 import { CommunityNotifications } from "@/components/community/community-notifications";
-import { pricingOffers } from "@/features/pricing/offers";
+import { getOfferCheckoutHref, pricingOffers, type PricingFrequency } from "@/features/pricing/offers";
 import { useMemberPreferences } from "@/components/member-preferences-provider";
 import {
   ElectricLogo,
@@ -99,6 +99,7 @@ const navSections: { id: Section; label: string; icon: typeof NavIconOverview }[
 ];
 
 const yourSpaceSections: { id: Section; label: string; icon: typeof NavIconBilling }[] = [
+  { id: "subscription", label: "Abonnements", icon: NavIconBilling },
   { id: "billing", label: "Facturation", icon: NavIconBilling },
   { id: "privacy", label: "Données et confidentialité", icon: NavIconPrivacy },
   { id: "help", label: "Aide", icon: NavIconHelp },
@@ -178,6 +179,7 @@ function ticketStatusLabel(status: SupportTicket["status"]) {
 
 export function AccountDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { profile } = useMemberPreferences();
   const [section, setSection] = useState<Section>("overview");
   const [account, setAccount] = useState<AccountData | null>(null);
@@ -196,6 +198,15 @@ export function AccountDashboard() {
 
   const browserOrigin = useSyncExternalStore(subscribeToLocation, getBrowserOrigin, getServerOrigin);
   const mcpUrl = browserOrigin ? `${browserOrigin}/api/mcp` : "";
+
+  // Adjust the visible section while rendering (React's documented alternative
+  // to a setState effect) so /account?section=subscription opens on demand.
+  const sectionParam = searchParams.get("section");
+  const [handledSectionParam, setHandledSectionParam] = useState<string | null>(null);
+  if (sectionParam !== handledSectionParam) {
+    setHandledSectionParam(sectionParam);
+    if (sectionParam === "subscription") setSection("subscription");
+  }
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -564,21 +575,30 @@ export function AccountDashboard() {
                 </Link>
 
                 <Link
-                  href="/community/my"
-                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                  href="/account?section=subscription"
+                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1 after:ml-auto after:rounded-full after:border after:border-[#B3A4FF]/35 after:bg-[#B3A4FF]/10 after:px-2 after:py-0.5 after:text-[9px] after:font-bold after:uppercase after:tracking-wide after:text-[#B3A4FF] after:content-['Abonnement']"
                 >
                   <NavIconMyCommunity active={false} />
+                  <span aria-label="Abonnement requis" className="sr-only">Abonnement requis</span>
                   <span>Ma communauté</span>
                 </Link>
 
                 <Link
-                  href="/member/prospection"
-                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1"
+                  href="/account?section=subscription"
+                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1 after:ml-auto after:rounded-full after:border after:border-[#397BFF]/35 after:bg-[#397BFF]/10 after:px-2 after:py-0.5 after:text-[9px] after:font-bold after:uppercase after:tracking-wide after:text-[#82A8FF] after:content-['Abonnement']"
                 >
                   <NavIconProspection active={false} />
+                  <span aria-label="Abonnement requis" className="sr-only">Abonnement requis</span>
                   <span>SkillFlow Prospection</span>
                 </Link>
               </nav>
+
+              {account?.user.role === "admin" && (
+                <Link href="/admin" className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl border border-[#B3A4FF]/25 bg-[#B3A4FF]/[.08] px-4 text-left text-sm font-semibold text-[#D7CEFF] transition-all hover:bg-[#B3A4FF]/[.16] hover:text-white">
+                  <span aria-hidden="true" className="text-base">◆</span>
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span>Administration</span><span className="text-[10px] text-[#B3A4FF]">Vue globale →</span></span>
+                </Link>
+              )}
 
               {/* Secondary Navigation: VOTRE ESPACE */}
               <div className="pt-2">
@@ -774,6 +794,14 @@ export function AccountDashboard() {
 
                     {/* Nav Actions */}
                     <div className="space-y-0.5">
+                      {account?.user.role === "admin" && <Link
+                        href="/admin"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#C5D3E8] transition-all hover:bg-white/[0.08] hover:text-white"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#B3A4FF]/15 text-[#B3A4FF]">◆</div>
+                        <div className="min-w-0 flex-1"><p className="text-sm font-semibold leading-tight text-white">Espace admin</p><p className="text-[11px] text-[#8F9CAE]">Vue globale de la plateforme</p></div>
+                      </Link>}
                       <button
                         type="button"
                         onClick={() => {
@@ -1794,9 +1822,10 @@ export function AccountDashboard() {
 
 function SubscriptionOffers() {
   const offers = pricingOffers.filter((offer) => ["plus", "pro", "max"].includes(offer.id));
+  const [frequency, setFrequency] = useState<PricingFrequency>("monthly");
 
   return (
-    <div className="space-y-7">
+    <div className="subscription-offers space-y-7">
       <header className="rounded-3xl border border-[#202E50] bg-[#151F38] p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#397BFF]">Votre abonnement</p>
         <h2 className="mt-2 text-3xl font-black text-white">Choisissez l’offre qui vous correspond</h2>
@@ -1807,15 +1836,34 @@ function SubscriptionOffers() {
 
       <SubscriptionSkillSelector />
 
+      <div className="subscription-frequency" role="group" aria-label="Fréquence de paiement">
+        <button
+          type="button"
+          aria-pressed={frequency === "monthly"}
+          onClick={() => setFrequency("monthly")}
+        >
+          Mensuel
+        </button>
+        <button
+          type="button"
+          aria-pressed={frequency === "annual"}
+          onClick={() => setFrequency("annual")}
+        >
+          Annuel <span>2 mois offerts</span>
+        </button>
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-3">
         {offers.map((offer) => {
           const isFeatured = offer.id === "pro";
+          const price = frequency === "annual" && offer.annual ? offer.annual : offer.monthly;
+          const checkoutHref = getOfferCheckoutHref(offer, frequency);
           return (
             <article
               key={offer.id}
-              className={`relative flex h-full flex-col rounded-3xl border p-7 shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+              className={`subscription-offer-card relative flex h-full flex-col rounded-3xl border p-7 shadow-xl transition-all duration-300 hover:-translate-y-1 ${
                 isFeatured
-                  ? "border-[#397BFF] bg-gradient-to-br from-[#18264A] via-[#151F38] to-[#121B32] shadow-[0_12px_40px_rgba(57,123,255,0.25)]"
+                  ? "subscription-offer-card-featured border-[#397BFF] bg-gradient-to-br from-[#18264A] via-[#151F38] to-[#121B32] shadow-[0_12px_40px_rgba(57,123,255,0.25)]"
                   : "border-[#202E50] bg-[#151F38]"
               }`}
             >
@@ -1825,15 +1873,16 @@ function SubscriptionOffers() {
                 </span>
               )}
 
-              <h3 className="mt-4 text-2xl font-bold text-white">{offer.name}</h3>
+              <h3 className="subscription-offer-title mt-4 text-2xl font-bold text-white">{offer.name}</h3>
               <div className="mt-3">
-                <p className="text-3xl font-black text-white">{offer.monthly.eur}</p>
-                <p className="text-xs text-[#8F9CAE]">{offer.monthly.xof} / mois</p>
+                <p className="subscription-offer-price text-3xl font-black text-white">{price.eur}</p>
+                <p className="subscription-offer-muted text-xs text-[#8F9CAE]">{price.xof} / {frequency === "annual" ? "an" : "mois"}</p>
+                {frequency === "annual" && offer.annual?.note && <p className="subscription-offer-note mt-1 text-xs font-semibold">{offer.annual.note}</p>}
               </div>
 
-              <p className="mt-4 min-h-[48px] text-sm leading-relaxed text-[#8F9CAE]">{offer.description}</p>
+              <p className="subscription-offer-muted mt-4 min-h-[48px] text-sm leading-relaxed text-[#8F9CAE]">{offer.description}</p>
 
-              <ul className="mt-6 space-y-3 border-t border-[#202E50] pt-6 text-sm text-slate-200">
+              <ul className="subscription-offer-features mt-6 space-y-3 border-t border-[#202E50] pt-6 text-sm text-slate-200">
                 {offer.features.map((feature) => (
                   <li key={feature.text} className="flex items-start gap-2.5">
                     <span className="text-[#00E5FF]">✓</span>
@@ -1843,10 +1892,10 @@ function SubscriptionOffers() {
               </ul>
 
               <div className="mt-8 pt-4">
-                {offer.checkoutHref ? (
+                {checkoutHref ? (
                   <Link
-                    href={offer.checkoutHref}
-                    className={`inline-flex min-h-12 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition ${
+                    href={checkoutHref}
+                    className={`subscription-offer-button inline-flex min-h-12 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition ${
                       isFeatured
                         ? "bg-gradient-to-r from-[#397BFF] to-[#6557FF] text-white shadow-[0_4px_16px_rgba(57,123,255,0.4)] hover:brightness-110"
                         : "border border-[#202E50] bg-white/[0.04] text-white hover:bg-white/[0.08]"
