@@ -10,6 +10,42 @@ The Streamable HTTP MCP endpoint is available at `/api/mcp` and accepts `POST`
 requests. Configure Claude or another MCP client with the deployed URL
 `https://<your-domain>/api/mcp`.
 
+### OAuth 2.1 MCP connector
+
+Le serveur expose également OAuth 2.1 pour les clients MCP distants :
+
+- ressource MCP : `/mcp` (l’ancienne URL `/api/mcp` reste compatible avec les clés API) ;
+- métadonnées : `/.well-known/oauth-protected-resource` et `/.well-known/oauth-authorization-server` ;
+- enregistrement client : `POST /register` ;
+- autorisation PKCE S256 : `/authorize` ;
+- jetons : `POST /token` ; révocation : `POST /revoke`.
+
+Les codes et jetons sont stockés hachés dans Supabase et expirent automatiquement. Le flux de connexion OAuth réutilise la session SkillFlow et revient à la demande d’autorisation après le login. Les droits des skills restent calculés à chaque appel MCP selon les achats et abonnements actuels.
+
+Pour une vérification locale, configurez `.env.local`, appliquez la migration `046_mcp_oauth.sql`, démarrez l’application puis utilisez `BASE=http://localhost:3000 ./scripts/test-oauth-flow.sh`. Le script réalise automatiquement la découverte, l’enregistrement et l’appel MCP ; l’étape login/consentement se fait dans le navigateur.
+
+### Connecter Claude au connecteur MCP
+
+1. Dans Claude, ajoutez un connecteur personnalisé avec l’URL `https://<domaine>/mcp`.
+2. Claude découvre `/.well-known/oauth-protected-resource`, lit les métadonnées
+   du serveur d’autorisation, s’enregistre via `/register` puis ouvre `/authorize`.
+3. L’utilisateur se connecte à SkillFlow et accepte le consentement.
+4. Claude reçoit un jeton d’accès d’une heure et le renouvelle via `/token`
+   (`grant_type=refresh_token`).
+
+Vérification en ligne de commande (script sans dépendance, multiplateforme) :
+
+```bash
+npm run mcp:verify -- --base https://skillflow-sigma.vercel.app
+npm run mcp:verify -- --base https://skillflow-sigma.vercel.app --wait
+npm run mcp:verify -- --exchange "<URL de retour du navigateur>"
+```
+
+Le flux OAuth exige `SUPABASE_SERVICE_ROLE_KEY` côté serveur et la migration
+`046_mcp_oauth.sql` appliquée. `NEXT_PUBLIC_MCP_RESOURCE_URL` reste optionnel :
+par défaut la ressource est `NEXT_PUBLIC_APP_URL` + `/mcp`, et l’origine réelle de
+la requête est également acceptée.
+
 The `list_skills` tool searches the bundled free Go Pro skills and published
 catalogue products. The free bundled skills can be retrieved with `get_skill`.
 For a paid pack, create an MCP key from the customer account and configure it as

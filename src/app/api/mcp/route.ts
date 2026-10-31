@@ -10,17 +10,46 @@ import { hashMcpKey, parseMcpBearerToken } from "@/lib/security/mcp-keys";
 import { consumeApiRateLimit } from "@/lib/security/api-rate-limit";
 import { matchesFileContentType } from "@/lib/security/file-content";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { oauthJson, parseBearer, validateAccessToken } from "@/lib/oauth/server";
 import type { Product } from "@/types/skillflow";
 
 type McpCaller = { userId: string; keyId: string } | null;
 
+const MCP_CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, Mcp-Session-Id, MCP-Protocol-Version, Last-Event-ID",
+  "Access-Control-Expose-Headers": "Mcp-Session-Id",
+  "Access-Control-Max-Age": "86400",
+};
+
+function withCors(response: Response) {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(MCP_CORS_HEADERS)) headers.set(name, value);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+function mcpUnauthorized(request: Request, invalid = false) {
+  const metadata = new URL("/.well-known/oauth-protected-resource", request.url).toString();
+  const challenge = `Bearer ${invalid ? 'error="invalid_token", ' : ''}resource_metadata="${metadata}"`;
+  return oauthJson({ error: invalid ? "invalid_token" : "unauthorized", error_description: invalid ? "Le jeton est invalide, expiré ou révoqué." : "Un jeton Bearer est requis." }, 401, { "WWW-Authenticate": challenge });
+}
+
 async function authenticateMcpKey(request: Request, supabase: ReturnType<typeof getSupabaseAdminClient>): Promise<McpCaller | Response> {
   const authorization = request.headers.get("authorization");
-  if (!authorization) return null;
+  if (!authorization) return mcpUnauthorized(request);
+
+  const bearer = parseBearer(request);
+  if (bearer && !parseMcpBearerToken(authorization)) {
+    const verified = await validateAccessToken(bearer, request);
+    if (!verified) return mcpUnauthorized(request, true);
+    if ("insufficientScope" in verified) return oauthJson({ error: "insufficient_scope", error_description: "Le scope mcp:read est requis." }, 403, { "WWW-Authenticate": 'Bearer error="insufficient_scope", scope="mcp:read"' });
+    return { userId: verified.userId, keyId: "" };
+  }
 
   const key = parseMcpBearerToken(authorization);
   if (!key) {
-    return Response.json({ error: "ClÃ© MCP invalide." }, { status: 401 });
+    return mcpUnauthorized(request, true);
   }
 
   try {
@@ -33,16 +62,16 @@ async function authenticateMcpKey(request: Request, supabase: ReturnType<typeof 
 
     if (error) {
       console.error("Could not authenticate MCP key:", error.message);
-      return Response.json({ error: "Lâ€™authentification MCP est temporairement indisponible." }, { status: 503 });
+      return oauthJson({ error: "server_error", error_description: "L'authentification MCP est temporairement indisponible." }, 503);
     }
     if (!data) {
-      return Response.json({ error: "ClÃ© MCP invalide ou rÃ©voquÃ©e." }, { status: 401 });
+      return mcpUnauthorized(request, true);
     }
 
     return { userId: data.user_id, keyId: data.id };
   } catch (error) {
     console.error("MCP key authentication is unavailable:", error instanceof Error ? error.message : "Unknown error");
-    return Response.json({ error: "Lâ€™authentification MCP est temporairement indisponible." }, { status: 503 });
+    return oauthJson({ error: "server_error", error_description: "L'authentification MCP est temporairement indisponible." }, 503);
   }
 }
 
@@ -58,19 +87,21 @@ function getMcpIpSubject(request: Request): string | null {
 }
 
 function rateLimitedMcpResponse(retryAfterSeconds: number) {
-  return Response.json(
-    {
-      jsonrpc: "2.0",
-      id: null,
-      error: { code: -32000, message: "Limite MCP atteinte. Réessayez après le délai indiqué." },
-    },
-    {
-      status: 429,
-      headers: {
-        "Cache-Control": "no-store",
-        "Retry-After": String(Math.max(1, retryAfterSeconds)),
+  return withCors(
+    Response.json(
+      {
+        jsonrpc: "2.0",
+        id: null,
+        error: { code: -32000, message: "Limite MCP atteinte. Réessayez après le délai indiqué." },
       },
-    },
+      {
+        status: 429,
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": String(Math.max(1, retryAfterSeconds)),
+        },
+      },
+    ),
   );
 }
 
@@ -85,7 +116,7 @@ function createMcpServer(caller: McpCaller) {
     {
       title: "Lister les skills",
       description:
-        "Recherche les skills utilisables via MCP et les packs SkillFlow publiÃ©s dans le catalogue.",
+        "Recherche les skills utilisables via MCP et les packs SkillFlow publiés dans le catalogue.",
       inputSchema: {
         query: z.string().trim().max(100).optional(),
         limit: z.number().int().min(1).max(20).optional(),
@@ -169,7 +200,7 @@ function createMcpServer(caller: McpCaller) {
     {
       title: "Consulter un skill",
       description:
-        "Renvoie le contenu complet d'un skill gratuit, ou un lien privÃ© temporaire vers le pack achetÃ© dans SkillFlow.",
+        "Renvoie le contenu complet d'un skill gratuit, ou un lien privé temporaire vers le pack acheté dans SkillFlow.",
       inputSchema: {
         slug: z.string().trim().min(1).max(100),
       },
@@ -205,14 +236,14 @@ function createMcpServer(caller: McpCaller) {
 
       if (!product) {
         return {
-          content: [{ type: "text", text: `Aucun skill publiÃ© trouvÃ© pour Â« ${slug} Â».` }],
+          content: [{ type: "text", text: `Aucun skill publié trouvé pour « ${slug} ».` }],
           isError: true,
         };
       }
 
       if (!caller) {
         return {
-          content: [{ type: "text", text: "Ce pack est rÃ©servÃ© aux clients. CrÃ©ez une clÃ© MCP dans votre compte SkillFlow et connectez-vous avec Authorization: Bearer <clÃ©> aprÃ¨s votre achat." }],
+          content: [{ type: "text", text: "Ce pack est réservé aux clients. Créez une clé MCP dans votre compte SkillFlow et connectez-vous avec Authorization: Bearer <clé> après votre achat." }],
           isError: true,
         };
       }
@@ -229,13 +260,13 @@ function createMcpServer(caller: McpCaller) {
       if (entitlementError) {
         console.error("Could not verify MCP entitlement:", entitlementError.message);
         return {
-          content: [{ type: "text", text: "Impossible de vÃ©rifier votre achat pour le moment." }],
+          content: [{ type: "text", text: "Impossible de vérifier votre achat pour le moment." }],
           isError: true,
         };
       }
       if (!entitlement) {
         return {
-          content: [{ type: "text", text: "Aucun achat actif ne donne accÃ¨s Ã  ce pack dans ce compte SkillFlow." }],
+          content: [{ type: "text", text: "Aucun achat actif ne donne accès à ce pack dans ce compte SkillFlow." }],
           isError: true,
         };
       }
@@ -250,7 +281,7 @@ function createMcpServer(caller: McpCaller) {
       if (productFileError || !productFile?.zip_path) {
         console.error("Could not resolve MCP product archive:", productFileError?.message ?? "Archive path missing");
         return {
-          content: [{ type: "text", text: "Lâ€™archive de ce pack nâ€™est pas encore disponible." }],
+          content: [{ type: "text", text: "L'archive de ce pack n'est pas encore disponible." }],
           isError: true,
         };
       }
@@ -262,7 +293,7 @@ function createMcpServer(caller: McpCaller) {
       if (signedUrlError || !signedArchive?.signedUrl) {
         console.error("Could not create MCP archive link:", signedUrlError?.message ?? "No signed URL returned");
         return {
-          content: [{ type: "text", text: "Le lien temporaire vers le pack nâ€™a pas pu Ãªtre crÃ©Ã©." }],
+          content: [{ type: "text", text: "Le lien temporaire vers le pack n'a pas pu être créé." }],
           isError: true,
         };
       }
@@ -293,7 +324,7 @@ function createMcpServer(caller: McpCaller) {
             name: product.zipFile,
             uri: signedArchive.signedUrl,
             mimeType: "application/zip",
-            description: `TÃ©lÃ©charger le pack achetÃ©. Ce lien expire dans ${expiresInSeconds / 60} minutes.`,
+            description: `Télécharger le pack acheté. Ce lien expire dans ${expiresInSeconds / 60} minutes.`,
           },
         ],
         structuredContent: skill,
@@ -438,11 +469,13 @@ function createMcpServer(caller: McpCaller) {
 }
 
 export async function POST(request: Request) {
+  if (!request.headers.get("authorization")) return mcpUnauthorized(request);
+
   let supabase: ReturnType<typeof getSupabaseAdminClient>;
   try {
     supabase = getSupabaseAdminClient();
   } catch {
-    return Response.json({ error: "Le service MCP est temporairement indisponible." }, { status: 503 });
+    return oauthJson({ error: "Le service MCP est temporairement indisponible." }, 503);
   }
 
   const ipSubject = getMcpIpSubject(request);
@@ -452,7 +485,7 @@ export async function POST(request: Request) {
       if (!ipLimit.allowed) return rateLimitedMcpResponse(ipLimit.retryAfterSeconds);
     } catch (error) {
       console.error("MCP IP rate limit check failed:", error instanceof Error ? error.message : "Unknown error");
-      return Response.json({ error: "Le service MCP est temporairement indisponible." }, { status: 503 });
+      return oauthJson({ error: "Le service MCP est temporairement indisponible." }, 503);
     }
   }
 
@@ -465,15 +498,17 @@ export async function POST(request: Request) {
       decision = await consumeApiRateLimit(supabase, "mcp_user", `user:${caller.userId}`);
     } catch (error) {
       console.error("MCP rate limit check failed:", error instanceof Error ? error.message : "Unknown error");
-      return Response.json({ error: "Le service MCP est temporairement indisponible." }, { status: 503 });
+      return oauthJson({ error: "Le service MCP est temporairement indisponible." }, 503);
     }
     if (!decision.allowed) return rateLimitedMcpResponse(decision.retryAfterSeconds);
 
-    const { error: updateError } = await supabase
-      .from("mcp_keys")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("id", caller.keyId);
-    if (updateError) console.error("Could not update MCP key usage:", updateError.message);
+    if (caller.keyId) {
+      const { error: updateError } = await supabase
+        .from("mcp_keys")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("id", caller.keyId);
+      if (updateError) console.error("Could not update MCP key usage:", updateError.message);
+    }
   }
 
   const server = createMcpServer(caller);
@@ -484,12 +519,23 @@ export async function POST(request: Request) {
   });
 
   await server.connect(transport);
-  return transport.handleRequest(request);
+  return withCors(await transport.handleRequest(request));
 }
 
-export function GET() {
-  return Response.json(
-    { error: "Cette connexion MCP utilise Streamable HTTP et accepte les requÃªtes POST." },
-    { status: 405, headers: { Allow: "POST" } },
+export function GET(request: Request) {
+  if (!request.headers.get("authorization")) return mcpUnauthorized(request);
+  return oauthJson(
+    { error: "Cette connexion MCP utilise Streamable HTTP et accepte les requêtes POST." },
+    405,
+    { Allow: "POST" },
   );
+}
+
+export function DELETE(request: Request) {
+  if (!request.headers.get("authorization")) return mcpUnauthorized(request);
+  return oauthJson({ error: "Aucune session MCP à fermer: le serveur est sans état." }, 405, { Allow: "POST" });
+}
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: MCP_CORS_HEADERS });
 }
