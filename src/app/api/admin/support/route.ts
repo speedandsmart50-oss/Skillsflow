@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordAdminAction, requireAdminApiUser } from "@/lib/security/admin-api";
+import { sendEmail } from "@/lib/email/resend";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TICKET_STATUSES = new Set(["open", "in_progress", "resolved", "closed"]);
@@ -116,5 +117,34 @@ export async function PATCH(request: Request) {
   } catch (caught) {
     return NextResponse.json({ error: caught instanceof Error ? caught.message : "Le journal d’audit n’a pas pu confirmer l’action." }, { status: 500 });
   }
+
+  // Notification email au client (best-effort).
+  try {
+    const { data: profile } = await access.supabase.from("profiles").select("email").eq("id", ticket.user_id).maybeSingle();
+    const recipient = profile?.email;
+    if (recipient) {
+      const statusLabel =
+        body.status === "resolved" ? "résolue" :
+        body.status === "closed" ? "fermée" :
+        body.status === "in_progress" ? "en cours de traitement" : "ouverte";
+      await sendEmail({
+        to: recipient,
+        subject: `Mise à jour de votre demande d’assistance`,
+        text: [
+          `Bonjour,`,
+          "",
+          `Le statut de votre demande a été mis à jour : ${statusLabel}.`,
+          body.status === "resolved" || body.status === "closed"
+            ? "Si vous avez besoin d’aide supplémentaire, répondez à cet email."
+            : "Notre équipe continue de travailler sur votre demande.",
+          "",
+          "— L’équipe SkillFlow",
+        ].join("\\n"),
+      });
+    }
+  } catch (caught) {
+    console.error("Support ticket status email notification failed:", caught instanceof Error ? caught.message : "Unknown error");
+  }
+
   return NextResponse.json({ ticket: data }, { headers: { "Cache-Control": "private, no-store" } });
 }

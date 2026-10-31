@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email/resend";
 
 type TicketCategory = "question" | "refund" | "other" | "suggestion";
 
@@ -64,12 +65,50 @@ export async function POST(request: Request) {
       subject: body.subject.trim(),
       message: body.message.trim(),
     })
-    .select("id, category, subject, status, created_at")
+    .select("id, category, subject, status, created_at, order_id, message")
     .single();
 
   if (error) {
     console.error("Could not create support ticket:", error.message);
     return NextResponse.json({ error: "Impossible d’envoyer votre demande pour le moment." }, { status: 500 });
+  }
+
+  // Notifications email (best-effort, ne bloquent pas la réponse).
+  const adminEmail = process.env.SKILLFLOW_ADMIN_EMAIL?.trim();
+  const categoryLabel = body.category;
+  try {
+    if (adminEmail) {
+      await sendEmail({
+        to: adminEmail,
+        subject: `Nouvelle demande d’assistance — ${ticket.subject}`,
+        text: [
+          `Catégorie : ${categoryLabel}`,
+          `De : ${user.email ?? user.id}`,
+          ticket.order_id ? `Commande : ${ticket.order_id}` : null,
+          "",
+          ticket.message,
+          "",
+          `Demande créée le ${ticket.created_at}.`,
+        ].filter(Boolean).join("\\n"),
+        replyTo: user.email ?? undefined,
+      });
+    }
+    if (user.email) {
+      await sendEmail({
+        to: user.email,
+        subject: "Nous avons bien reçu votre demande d’assistance",
+        text: [
+          `Bonjour,`,
+          "",
+          `Nous avons bien reçu votre demande « ${ticket.subject} ».`,
+          "Notre équipe l’examinera et vous recontactera dans les meilleurs délais.",
+          "",
+          "— L’équipe SkillFlow",
+        ].join("\\n"),
+      });
+    }
+  } catch (caught) {
+    console.error("Support ticket email notification failed:", caught instanceof Error ? caught.message : "Unknown error");
   }
 
   return NextResponse.json({ ticket }, {

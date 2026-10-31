@@ -11,6 +11,7 @@ import { consumeApiRateLimit } from "@/lib/security/api-rate-limit";
 import { matchesFileContentType } from "@/lib/security/file-content";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { oauthJson, parseBearer, validateAccessToken } from "@/lib/oauth/server";
+import { isValidEmail, sendEmail } from "@/lib/email/resend";
 import type { Product } from "@/types/skillflow";
 
 type McpCaller = { userId: string; keyId: string } | null;
@@ -425,6 +426,58 @@ function createMcpServer(caller: McpCaller) {
     if (error) { await supabase.storage.from("skill-files").remove([storagePath]); throw error; }
     return data;
   }));
+  server.registerTool(
+    "send_email",
+    {
+      title: "Envoyer un email",
+      description:
+        "Envoie un email au nom du membre authentifié via Resend. L’expéditeur est l’adresse configurée côté serveur ; l’adresse du membre est utilisée en reply-to. Nécessite une authentification MCP.",
+      inputSchema: {
+        to: z.string().trim().min(3).max(320),
+        subject: z.string().trim().min(1).max(200),
+        text: z.string().trim().min(1).max(10000).optional(),
+        html: z.string().trim().min(1).max(20000).optional(),
+      },
+    },
+    async ({ to, subject, text, html }) => {
+      if (!caller) {
+        return { content: [{ type: "text", text: "Authentification requise. Connectez une clé MCP personnelle depuis votre espace SkillFlow." }], isError: true };
+      }
+      if (!text && !html) {
+        return { content: [{ type: "text", text: "Le contenu text ou html est obligatoire." }], isError: true };
+      }
+      if (!isValidEmail(to)) {
+        return { content: [{ type: "text", text: "Le destinataire est invalide." }], isError: true };
+      }
+
+      const supabase = getSupabaseAdminClient();
+      const { data: profile } = await supabase.from("profiles").select("email").eq("id", caller.userId).maybeSingle();
+      const replyTo = profile?.email && isValidEmail(profile.email) ? profile.email : undefined;
+
+      const result = await sendEmail({ to, subject, text, html, replyTo });
+      try {
+        await supabase.from("mcp_tool_usage").insert({
+          user_id: caller.userId,
+          skill_id: null,
+          tool_name: "send_email",
+          input_summary: { to, subject, hasHtml: Boolean(html) },
+          output_summary: result.ok ? { id: result.id } : { error: result.error },
+          status: result.ok ? "success" : "failed",
+        });
+      } catch (logError) {
+        console.error("Could not log MCP email usage:", logError instanceof Error ? logError.message : "Unknown error");
+      }
+
+      if (!result.ok) {
+        return { content: [{ type: "text", text: result.error ?? "Envoi échoué." }], isError: true };
+      }
+      return {
+        content: [{ type: "text", text: JSON.stringify({ sent: true, id: result.id }) }],
+        structuredContent: { sent: true, id: result.id },
+      };
+    },
+  );
+
   const unavailable = (name: string, title: string, description: string) => server.registerTool(name, { title, description, inputSchema: { skill_id: z.string().uuid() } }, async ({ skill_id }) => withMember(skill_id, name, { skill_id }, async () => { throw new Error("AI/OCR provider unavailable"); }));
   unavailable("analyze_communication_style", "Analyser le style", "Analyse IA indisponible tant qu’un fournisseur n’est pas configuré.");
   unavailable("generate_communication_profile", "Générer le profil", "Génération IA indisponible tant qu’un fournisseur n’est pas configuré.");
