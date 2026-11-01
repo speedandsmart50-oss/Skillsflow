@@ -13,6 +13,14 @@ import {
 } from "../src/lib/messaging/webhooks/whatsapp-parser";
 
 function createWebhookPayload() {
+  const messages: Record<string, unknown>[] = [{
+    from: "15551234567",
+    id: "wamid.inbound",
+    timestamp: "1749416383",
+    type: "text",
+    text: { body: "STOP" },
+  }];
+
   return {
     object: "whatsapp_business_account",
     entry: [{
@@ -29,13 +37,7 @@ function createWebhookPayload() {
             profile: { name: "Ada" },
             wa_id: "15551234567",
           }],
-          messages: [{
-            from: "15551234567",
-            id: "wamid.inbound",
-            timestamp: "1749416383",
-            type: "text",
-            text: { body: "STOP" },
-          }],
+          messages,
           statuses: [{
             id: "wamid.outbound",
             status: "read",

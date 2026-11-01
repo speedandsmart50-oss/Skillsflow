@@ -24,6 +24,7 @@ test("WhatsApp webhook migration adds only a service-role queue and guarded RPCs
   assert.match(migration, /to service_role/i);
   assert.match(migration, /security definer[\s\S]*set search_path = public, pg_temp/i);
   assert.match(migration, /record_inbound_whatsapp_message/i);
+  assert.match(migration, /p_content_type text/i);
   assert.match(migration, /apply_whatsapp_message_status/i);
   assert.doesNotMatch(migration, /\b(drop table|truncate|delete from)\b/i);
   assert.doesNotMatch(migration, /\balter table public\.(?!msg_)/i);
@@ -41,5 +42,6 @@ test("WhatsApp webhook rollback removes only its queue and helper functions", as
     "record_inbound_whatsapp_message",
     "msg_webhook_events",
   ]);
+  assert.match(rollback, /record_inbound_whatsapp_message\(uuid, text, text, text, text, text, timestamptz, boolean\)/i);
   assert.doesNotMatch(rollback, /\bcascade\b/i);
 });

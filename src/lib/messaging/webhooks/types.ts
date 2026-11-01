@@ -7,5 +7,6 @@ export interface NormalizedInboundMessage {
   externalContactId: string;
   displayName?: string;
   receivedAt: string;
+  contentType: "text" | "non_text";
   text: string | null;
 }

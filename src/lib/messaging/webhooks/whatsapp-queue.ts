@@ -110,6 +110,7 @@ function isNormalizedWhatsAppEvent(value: unknown): value is NormalizedWhatsAppE
       && typeof message.externalContactId === "string"
       && (message.displayName === undefined || typeof message.displayName === "string")
       && typeof message.receivedAt === "string"
+      && (message.contentType === "text" || message.contentType === "non_text")
       && (message.text === null || typeof message.text === "string");
   }
   return event.kind === "status"
@@ -133,6 +134,7 @@ async function processWhatsAppEvent(
       p_display_name: event.displayName ?? null,
       p_external_message_id: event.externalMessageId,
       p_content: event.text ?? "",
+      p_content_type: event.contentType,
       p_received_at: event.receivedAt,
       p_opt_out: isWhatsAppOptOut(event.text),
     });

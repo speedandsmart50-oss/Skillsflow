@@ -29,6 +29,7 @@ create table public.msg_messages (
   channel text not null check (channel in ('whatsapp', 'messenger', 'instagram')),
   direction text not null check (direction in ('inbound', 'outbound')),
   content text not null default '' check (char_length(content) <= 30000),
+  content_type text not null default 'text' check (content_type in ('text', 'non_text')),
   message_type text not null default 'free' check (message_type in ('free', 'template')),
   template_name text,
   source_event_type text not null default 'message'

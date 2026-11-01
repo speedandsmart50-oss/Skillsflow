@@ -17,6 +17,7 @@ test("inbound messaging migration creates isolated, owner-scoped tables only", a
   assert.match(migration, /unique \(user_id, channel, external_contact_id\)/i);
   assert.match(migration, /unique \(user_id, channel, external_message_id\)/i);
   assert.match(migration, /unique \(user_id, channel, source_event_type, source_event_id\)/i);
+  assert.match(migration, /content_type text not null default 'text'/i);
   assert.match(migration, /msg_messages_one_comment_reply_idx/i);
   assert.match(migration, /status in \('scheduled', 'processing', 'sent', 'cancelled'\)/i);
   assert.match(migration, /claim_token uuid/i);
