@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { recordAdminAction, requireAdminApiUser } from "@/lib/security/admin-api";
-import { validateSlug } from "@/lib/security/access";
+import { parseSkillDocument } from "@/lib/skills/parse-skill-document";
 
 const INTEGER_MAX = 2_147_483_647;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -31,23 +32,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Les informations du skill sont invalides." }, { status: 400 });
   }
 
-  if (
-    !isRecord(body)
-    || typeof body.slug !== "string"
-    || !validateSlug(body.slug)
-    || typeof body.name !== "string"
-    || body.name.trim().length < 2
-    || body.name.trim().length > 160
-    || typeof body.category_id !== "string"
-    || typeof body.short_description !== "string"
-    || body.short_description.trim().length < 1
-    || body.short_description.trim().length > 500
-    || typeof body.price_cents !== "number"
-    || !Number.isSafeInteger(body.price_cents)
-    || body.price_cents < 0
-    || body.price_cents > INTEGER_MAX
-  ) {
-    return NextResponse.json({ error: "Vérifiez le nom, le slug, la catégorie, la description et le prix." }, { status: 400 });
+  if (!isRecord(body) || typeof body.content !== "string" || typeof body.category_id !== "string" || !UUID_PATTERN.test(body.category_id)
+    || typeof body.price_cents !== "number" || !Number.isSafeInteger(body.price_cents)
+    || body.price_cents < 0 || body.price_cents > INTEGER_MAX) {
+    return NextResponse.json({ error: "Vérifiez le texte du skill, la catégorie et le prix." }, { status: 400 });
+  }
+
+  const parsedSkill = parseSkillDocument(body.content);
+  if (!parsedSkill) {
+    return NextResponse.json({
+      error: "Le texte doit contenir un titre « # Nom du skill » et une section « ## Description courte » de 500 caractères maximum.",
+    }, { status: 400 });
   }
 
   const { data: category, error: categoryError } = await access.supabase
@@ -64,12 +59,18 @@ export async function POST(request: Request) {
   const id = randomUUID();
   const values = {
     id,
-    slug: body.slug,
-    name: body.name.trim(),
+    slug: parsedSkill.slug,
+    name: parsedSkill.name,
     category_id: body.category_id,
-    short_description: body.short_description.trim(),
-    long_description: body.short_description.trim(),
-    promise: body.short_description.trim(),
+    short_description: parsedSkill.shortDescription,
+    long_description: parsedSkill.content,
+    promise: parsedSkill.promise,
+    use_cases: parsedSkill.useCases,
+    required_inputs: parsedSkill.requiredInputs,
+    output_types: parsedSkill.outputTypes,
+    workflow: parsedSkill.workflow,
+    mcp_tools: parsedSkill.mcpTools,
+    system_prompt: parsedSkill.content,
     price_cents: body.price_cents,
     is_active: true,
   };
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
     await recordAdminAction(access.supabase, access.user.id, "library.skill.create", "skill", id, "requested", {
       slug: values.slug,
       category_id: values.category_id,
+      content_length: values.system_prompt.length,
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Journal indisponible." }, { status: 500 });
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
     await recordAdminAction(access.supabase, access.user.id, "library.skill.create", "skill", id, "completed", {
       slug: values.slug,
       category_id: values.category_id,
+      content_length: values.system_prompt.length,
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Journal indisponible." }, { status: 500 });

@@ -18,24 +18,13 @@ type LibrarySkill = {
 
 type Category = { id: string; name: string };
 type SkillForm = {
-  name: string;
-  slug: string;
+  content: string;
   category_id: string;
-  short_description: string;
   price: string;
 };
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-white/10 bg-[#0b1524] p-2 text-sm text-white";
-
-function slugify(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 async function getAuthorizationHeader() {
   const { data, error } = await getSupabaseClient().auth.getSession();
@@ -53,13 +42,10 @@ export function AdminSkillLibrary() {
   const [pending, setPending] = useState("");
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [slugTouched, setSlugTouched] = useState(false);
   const [form, setForm] = useState<SkillForm>({
-    name: "",
-    slug: "",
+    content: "",
     category_id: "",
-    short_description: "",
-    price: "0",
+    price: "",
   });
 
   const load = useCallback(async () => {
@@ -112,7 +98,7 @@ export function AdminSkillLibrary() {
     setNotice("");
     const price = Number(form.price);
     const priceCents = Math.round(price * 100);
-    if (!Number.isFinite(price) || price < 0 || !Number.isSafeInteger(priceCents) || priceCents > 2_147_483_647) {
+    if (!form.price.trim() || !Number.isFinite(price) || price < 0 || !Number.isSafeInteger(priceCents) || priceCents > 2_147_483_647) {
       setError("Saisissez un prix valide en euros.");
       return;
     }
@@ -123,10 +109,8 @@ export function AdminSkillLibrary() {
         method: "POST",
         headers: { ...await getAuthorizationHeader(), "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name,
-          slug: form.slug,
+          content: form.content,
           category_id: form.category_id,
-          short_description: form.short_description,
           price_cents: priceCents,
         }),
       });
@@ -134,15 +118,12 @@ export function AdminSkillLibrary() {
       if (!response.ok) throw new Error(payload.error ?? "Création impossible.");
       setSkills((current) => [...current, payload.skill].sort((a, b) => a.name.localeCompare(b.name)));
       setForm({
-        name: "",
-        slug: "",
+        content: "",
         category_id: categories[0]?.id ?? "",
-        short_description: "",
-        price: "0",
+        price: "",
       });
-      setSlugTouched(false);
       setCreating(false);
-      setNotice("Skill ajouté à la bibliothèque et activé.");
+      setNotice(`Skill « ${payload.skill.name} » ajouté à la bibliothèque et activé.`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Création impossible.");
     } finally {
@@ -183,37 +164,24 @@ export function AdminSkillLibrary() {
         {creating && (
           <form onSubmit={(event) => void createSkill(event)} className="mt-7 rounded-2xl border border-cyan-200/20 bg-[#111a2b] p-5">
             <h2 className="text-lg font-semibold">Nouveau skill</h2>
-            <p className="mt-1 text-sm text-slate-400">Le skill sera actif dès sa création.</p>
+            <p className="mt-1 text-sm text-slate-400">Collez le texte complet du skill. Le nom et le slug seront générés à partir du titre; le skill sera actif dès sa création.</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="text-xs text-slate-400">
-                Nom
-                <input
+              <label className="text-xs text-slate-400 sm:col-span-2">
+                Texte complet du skill
+                <textarea
                   required
-                  minLength={2}
-                  maxLength={160}
-                  value={form.name}
-                  onChange={(event) => setForm((current) => ({
-                    ...current,
-                    name: event.target.value,
-                    slug: slugTouched ? current.slug : slugify(event.target.value),
-                  }))}
-                  className={inputClass}
+                  minLength={20}
+                  maxLength={30000}
+                  rows={16}
+                  value={form.content}
+                  onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))}
+                  placeholder={`# Nom du skill\n\n## Description courte\nDécrivez le résultat en quelques phrases (500 caractères maximum).\n\n## Promesse\nQuel résultat concret le skill aide-t-il à obtenir ?\n\n## Cas d'utilisation\n- Premier cas d'utilisation\n\n## Entrées requises\n- Informations nécessaires pour commencer\n\n## Formats de sortie\n- Livrable attendu\n\n## Étapes du workflow\n1. Première étape\n2. Vérification du résultat\n\n## Outils MCP\n- Outil nécessaire, s'il y en a un\n\n## Instructions\nDécrivez ici le comportement complet du skill, ses règles, ses limites et ses exemples.`}
+                  className={`${inputClass} font-mono leading-6`}
                 />
               </label>
-              <label className="text-xs text-slate-400">
-                Slug
-                <input
-                  required
-                  pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                  title="Minuscules, chiffres et tirets uniquement."
-                  value={form.slug}
-                  onChange={(event) => {
-                    setSlugTouched(true);
-                    setForm((current) => ({ ...current, slug: event.target.value }));
-                  }}
-                  className={inputClass}
-                />
-              </label>
+              <p className="text-xs leading-5 text-slate-400 sm:col-span-2">
+                Utilisez le format Markdown ci-dessus : le titre « # » fournit le nom, « ## Description courte » est obligatoire. Les autres sections structurent automatiquement les entrées, sorties et étapes. Le texte complet est conservé comme instructions du skill.
+              </p>
               <label className="text-xs text-slate-400">
                 Catégorie
                 <select
@@ -236,17 +204,6 @@ export function AdminSkillLibrary() {
                   step="0.01"
                   value={form.price}
                   onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
-                  className={inputClass}
-                />
-              </label>
-              <label className="text-xs text-slate-400 sm:col-span-2">
-                Courte description
-                <textarea
-                  required
-                  maxLength={500}
-                  rows={3}
-                  value={form.short_description}
-                  onChange={(event) => setForm((current) => ({ ...current, short_description: event.target.value }))}
                   className={inputClass}
                 />
               </label>
