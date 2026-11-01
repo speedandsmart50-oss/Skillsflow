@@ -486,8 +486,8 @@ export function AdminDashboard() {
           <Link href="/account" className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 hover:border-cyan-400">Voir l’espace client</Link>
         </header>
 
-        <nav aria-label="Navigation de l’administration" className="admin-main-nav mt-4 overflow-x-auto rounded-[1.75rem] border border-cyan-400/15 bg-slate-950/75 px-3 py-3 shadow-[0_16px_45px_rgba(0,0,0,.18)] sm:px-4">
-          <div className="flex min-w-max gap-2">
+        <nav aria-label="Navigation de l’administration" className="admin-main-nav mt-4 rounded-[1.75rem] border border-cyan-400/15 bg-slate-950/75 px-3 py-3 shadow-[0_16px_45px_rgba(0,0,0,.18)] sm:px-4">
+          <div className="flex w-full flex-wrap justify-start gap-2">
             {sections.map((item) => (
               <button
                 key={item.id}
@@ -498,7 +498,7 @@ export function AdminDashboard() {
                   setNotice("");
                 }}
                 aria-current={section === item.id ? "page" : undefined}
-                className={`admin-nav-link min-h-11 rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 ${
+                className={`admin-nav-link min-h-11 shrink-0 rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 ${
                   section === item.id ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-300" : "border-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-900 hover:text-slate-100"
                 }`}
               >
