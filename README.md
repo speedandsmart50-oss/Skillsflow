@@ -48,6 +48,7 @@ la requête est également acceptée.
 
 The `list_skills` tool searches the bundled free Go Pro skills and published
 catalogue products. The free bundled skills can be retrieved with `get_skill`.
+The configured administrator also has access to paid packs and member skills.
 For a paid pack, create an MCP key from the customer account and configure it as
 `Authorization: Bearer <key>` in the MCP client. After a confirmed purchase,
 `get_skill` returns a private ZIP link that expires after 10 minutes.

@@ -5,6 +5,7 @@ import {
   verifyMetaWebhookSignature,
   verifyMetaWebhookToken,
 } from "@/lib/messaging/webhooks/meta-signature";
+import { readBoundedMetaWebhookBody } from "@/lib/messaging/webhooks/http";
 import {
   parseWhatsAppWebhookPayload,
   WhatsAppWebhookPayloadError,
@@ -16,42 +17,10 @@ import {
 
 export const maxDuration = 60;
 
-const MAX_WEBHOOK_BODY_BYTES = 1_048_576;
 const RESPONSE_HEADERS = { "cache-control": "no-store" };
 
 function disabledResponse(): Response {
   return new Response(null, { status: 404, headers: RESPONSE_HEADERS });
-}
-
-async function readBoundedBody(request: Request): Promise<Uint8Array | null> {
-  const contentLength = request.headers.get("content-length");
-  if (contentLength && /^\d+$/.test(contentLength)
-    && Number(contentLength) > MAX_WEBHOOK_BODY_BYTES) {
-    return null;
-  }
-  if (!request.body) return new Uint8Array();
-
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let totalLength = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    totalLength += value.byteLength;
-    if (totalLength > MAX_WEBHOOK_BODY_BYTES) {
-      await reader.cancel();
-      return null;
-    }
-    chunks.push(value);
-  }
-
-  const body = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return body;
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -87,7 +56,7 @@ export async function POST(request: Request): Promise<Response> {
     return new Response(null, { status: 503, headers: RESPONSE_HEADERS });
   }
 
-  const rawBody = await readBoundedBody(request);
+  const rawBody = await readBoundedMetaWebhookBody(request);
   if (!rawBody) return new Response(null, { status: 413, headers: RESPONSE_HEADERS });
   if (!verifyMetaWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), appSecret)) {
     return new Response(null, { status: 401, headers: RESPONSE_HEADERS });

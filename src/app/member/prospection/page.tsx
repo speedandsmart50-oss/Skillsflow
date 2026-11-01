@@ -2,8 +2,10 @@ import { BackLink } from "@/components/back-link";
 import { connection } from "next/server";
 import { requirePageUser } from "@/lib/security/page-auth";
 import { ProspectionPipeline } from "@/components/prospection-pipeline";
+import { ProspectionReminders } from "@/components/prospection-reminders";
 import Link from "next/link";
 import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
+import { hasPaidMemberAccess } from "@/lib/security/paid-access";
 
 export const instant = false;
 
@@ -19,15 +21,7 @@ export default async function MemberProspectionPage() {
   await connection();
   const user = await requirePageUser("/member/prospection");
   const supabase = await getSupabaseSessionClient();
-  const { data: subscription } = await supabase
-    .from("member_subscriptions")
-    .select("plan_slug, ends_at")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .gt("ends_at", new Date().toISOString())
-    .order("ends_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const hasAccess = await hasPaidMemberAccess(supabase, user);
 
   return (
     <main className="min-h-screen bg-[#0B1020] px-4 py-8 text-slate-100 sm:px-6 sm:py-12">
@@ -61,7 +55,12 @@ export default async function MemberProspectionPage() {
           </p>
         </section>
 
-        {subscription ? <ProspectionPipeline /> : (
+        {hasAccess ? (
+          <>
+            <ProspectionPipeline />
+            <ProspectionReminders />
+          </>
+        ) : (
           <section className="mt-8 rounded-3xl border border-cyan-300/25 bg-[#11182B] p-7 text-center shadow-2xl sm:p-10">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Fonctionnalité réservée aux abonnés</p>
             <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">Activez un abonnement pour utiliser Prospection.</h2>

@@ -68,6 +68,12 @@ Configure `NEXT_PUBLIC_APP_URL` to the canonical HTTPS production origin,
 `SASPAY_WEBHOOK_SECRET` as server-only deployment values. Assign the first
 administrator manually from a trusted Supabase operator session after verifying
 the account. Public signup and checkout cannot assign administrator access.
+For paid-feature access, set the server-only `SKILLFLOW_ADMIN_EMAIL` to the
+verified administrator's exact email and ensure that account's `profiles.role`
+is `admin` in Supabase. The admin role is required by database RPCs and row-level
+security; the configured email is also checked by server routes. This grants
+access to paid packs and subscription-gated member features without creating
+purchase, payment, or subscription records.
 
 Before opening sales, replace every `[À COMPLÉTER]` marker in the legal pages,
 publish the seller's legal identity and contact details, terms of sale, product
@@ -139,6 +145,151 @@ seven-day expiry timestamp. Configure an operational cleanup before enabling
 the webhook in production. Neither migration has been applied to a persistent
 database; do not apply either migration to production without the owner's
 explicit approval.
+
+Phase 4 adds `supabase/migrations/051_messaging_send_rules.sql` and its matching
+rollback. The server-only `canSend` gate records allowed and refused decisions,
+and creates a draft/reservation only when all checks pass. It requires a
+recorded, timestamped opt-in with a non-empty source; receiving an inbound
+message does not grant consent. Free-form WhatsApp messages are refused at or
+after the exact 24-hour customer-service-window boundary. Outside that window,
+only an approved template whose provider ID and approval were verified within
+the previous 24 hours is eligible. No template synchronization or sender exists
+yet, so template sends remain unavailable and Phase 4 performs no sending.
+Messenger and Instagram sends are refused because their policies have not been
+implemented.
+
+The database serializes send decisions before applying rolling global hourly,
+UTC contact-daily, and 24-hour exact-content duplicate limits. Defaults are
+`MAX_OUTBOUND_PER_CONTACT_PER_DAY=3` and `MAX_OUTBOUND_PER_HOUR=50`; invalid or
+out-of-range values fail explicitly. The audit log records the decision reason
+and message metadata, not message content. These rules do not replace review of
+consent and privacy obligations in each recipient's jurisdiction.
+
+Keep the production messaging flag disabled until the remaining phases,
+durable queue recovery, and cleanup are complete. Migration 051 has not been
+applied to a persistent database; do not apply it without the owner's explicit
+approval.
+
+Phase 5 adds a WhatsApp Cloud API adapter and an authorized send coordinator.
+The coordinator calls `canSend` first and never invokes the adapter for refused
+decisions or dry-run drafts. Live sends additionally require both
+`DRY_RUN=false` and `WHATSAPP_LIVE_SENDS_ENABLED=true`, as well as a configured
+WhatsApp access token, phone-number ID, and explicit Graph API version. The
+live-send flag defaults to `false` and must remain off until separate owner
+approval and a dedicated test number are provided. This phase did not perform
+any provider calls.
+
+The adapter uses the stored contact's WhatsApp ID, sends text or registered
+template payloads without template variables, and stores the provider message
+ID/status. It makes at most three attempts on explicit HTTP 429 responses,
+using bounded backoff or a short `Retry-After`; it does not retry network
+errors or other HTTP failures because the provider may already have accepted a
+request. Delivery/read/failure updates continue to come from the signed
+webhook. This sender is not yet exposed via MCP or an inbox.
+
+Phase 6 registers administrator-only MCP tools only when `MESSAGING_ENABLED=true` and the
+MCP caller is authenticated: list WhatsApp contacts, read a contact's recent
+conversation, and send a WhatsApp reply. Every operation checks that the
+caller profile is an administrator and that its email exactly matches
+`SKILLFLOW_ADMIN_EMAIL`; ordinary members are denied. Conversation and send
+inputs use a stored SkillFlow contact UUID, never a free-form recipient number.
+The send tool delegates to the same `canSend` gate and sender as the server
+module. MCP usage logs include contact IDs, message length, and outcomes, not
+message text. Keep the module disabled until the admin profile, opt-in records,
+and queue recovery/cleanup are configured.
+Phase 8 extends only the list/read tools to include Messenger and Instagram
+contacts and conversations; sending remains WhatsApp-only.
+
+Phase 7 adds draft-first WhatsApp follow-ups through migration
+`052_messaging_followup_scheduler.sql`; its rollback is
+`supabase/rollback/052_messaging_followup_scheduler.down.sql`. Creating a
+follow-up never schedules it immediately: an administrator must approve the
+follow-up draft. Its due time is transparently offset by a recorded random
+0–900 seconds (`jitter_seconds`) to distribute worker load; this is not an
+evasion feature. At processing time, the worker re-runs the same consent,
+24-hour window/template, rate-limit, and duplicate checks used for manual
+messages. A dry-run creates a separate message draft that needs explicit
+approval and a fresh policy check before any send. Ambiguous failures and
+expired claims require manual review and are never automatically retried.
+
+The existing Vercel Hobby cron runs only daily and is not suitable for this
+queue. Configure an external scheduler to call
+`/api/cron/messaging-followups` every five minutes with
+`Authorization: Bearer <CRON_SECRET>`. Keep the request limited to that cadence;
+each invocation claims at most five due follow-ups. Configure `CRON_SECRET` as a
+server-only value. Do not rely on the daily `vercel.json` job for follow-up
+timing. Migration 052 has not been applied to a persistent database; do not
+apply it without the owner's explicit approval. Keep `MESSAGING_ENABLED=false`,
+`DRY_RUN=true`, and `WHATSAPP_LIVE_SENDS_ENABLED=false` until operational
+recovery, opt-in, administrator approval, and dedicated live-send readiness
+have been reviewed.
+
+Phase 8 adds **inbound Facebook Page Messenger and Instagram Professional
+Messaging only** at `/api/webhooks/messenger` and `/api/webhooks/instagram`.
+Both routes share the Meta raw-body signature and verification checks, a 1 MiB
+request bound, strict configured Page/account ID matching, asynchronous
+durable processing, and idempotent message storage. Echoes, deletions, and
+non-message notifications are ignored; supported non-text messages are stored
+without copying media payloads or URLs. Exact opt-out commands mark the
+contact opted out. Inbound messages never grant marketing consent. This phase
+adds no Messenger or Instagram sender and no automated reply. MCP contact and
+conversation reads can select WhatsApp, Messenger, or Instagram; outbound
+sending remains WhatsApp-only.
+
+Configure the Meta Webhooks product for the `Page` object and subscribe the
+Page to `messages` for Messenger. For Instagram, connect the Professional
+account to the associated Page and subscribe the Instagram messaging app to
+the `messages` webhook field. The Instagram Messaging API requires
+`instagram_basic`, `instagram_manage_messages`, and `pages_manage_metadata`.
+Meta currently requires a published app; Standard Access is limited to app-role
+testers, and customer events generally require Advanced Access/App Review and
+the user's granted permissions. Meta also instructs businesses to subscribe
+all messaging apps to messaging webhooks. Event processing is queued after
+signature and payload validation so the endpoint can promptly return HTTP 200.
+The standard response window is generally 24 hours, with specific exceptions;
+this intake-only phase does not implement exceptions or sending policy.
+
+Keep all messaging flags disabled until the operator has reviewed platform
+access, permissions, privacy obligations, retention, and webhook subscriptions.
+Apply migration 053 for Messenger and 054 for Instagram only after explicit
+approval and in numeric order after 049–052. Each rollback refuses to narrow
+the shared queue while events for that channel remain retained.
+
+References: Meta [Messenger Webhooks](https://developers.facebook.com/documentation/business-messaging/messenger-platform/webhooks),
+[Instagram Messaging Webhooks](https://developers.facebook.com/documentation/business-messaging/instagram-messaging/webhooks),
+and [Messenger/Instagram Messaging policy](https://developers.facebook.com/documentation/business-messaging/messenger-platform/policy).
+
+## Phase 9: internal growth indicators and reminders
+
+Migration `055_growth_metrics_and_reminders.sql` adds administrator-only,
+internal reminder drafts and aggregate read-only metrics. Its rollback is
+`supabase/rollback/055_growth_metrics_and_reminders.down.sql`. Apply it only
+after migrations 049–054 and only with the owner's explicit approval. It has
+been applied to the confirmed staging project; production must not be migrated
+without separate approval.
+
+The MCP tools are registered only when `GROWTH_ENABLED=true` and still require
+an authenticated caller whose profile is the configured administrator. Metrics
+contain counts only, not conversation text or recipient details. Reminder drafts
+may be listed, completed, or cancelled, but do not send messages, publish
+content, call external services, or schedule a delivery. Keep
+`GROWTH_ENABLED=false` and `GROWTH_PUBLISHING_ENABLED=false` until reviewed.
+The publishing flag does not enable any publishing tools in this phase.
+
+The Prospection page has a separate member-facing dashboard backed by migration
+`056_prospection_reminders.sql` and its rollback
+`supabase/rollback/056_prospection_reminders.down.sql`. It is limited to members
+with an active Prospection subscription, plus the configured administrator,
+and stores reminders against that user's own prospects. Its indicators are
+computed only from that user's prospects and reminders; they do not include or
+expose administrator-owned WhatsApp, Messenger, or Instagram conversations.
+Reminders are internal checklists only and have no delivery or notification
+integration. Migration 056 is applied to the confirmed staging project, not
+production.
+
+Migration `057_admin_paid_access.sql` additionally grants administrator
+accounts access to paid-member feature checks without creating a fabricated
+subscription. It is also applied to staging and is not approved for production.
 
 ## Pre-deployment validation
 

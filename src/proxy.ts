@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isConfiguredAdminEmail } from "@/lib/security/access";
 
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -52,7 +53,7 @@ export async function proxy(request: NextRequest) {
         headers: { "Cache-Control": "private, no-store" },
       });
     }
-    if (profile?.role !== "admin") {
+    if (profile?.role !== "admin" && !isConfiguredAdminEmail(user.email, process.env.SKILLFLOW_ADMIN_EMAIL)) {
       return new Response(
         "<!doctype html><html lang=\"fr\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Accès refusé</title><main><h1>Accès refusé</h1><p>Cette page est réservée aux administrateurs SkillFlow.</p><a href=\"/\">Retour à l’accueil</a></main></html>",
         {

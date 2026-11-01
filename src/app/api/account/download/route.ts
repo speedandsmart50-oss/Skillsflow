@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
+import { isConfiguredAdmin } from "@/lib/security/admin-access";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SKILL_FORMATS = new Set(["claude", "chatgpt", "archive"]);
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Impossible de vérifier vos droits." }, { status: 500 });
     }
 
-    if (profile?.role !== "admin") {
+    if (profile?.role !== "admin" && !isConfiguredAdmin(user)) {
       const { data: entitlement, error: entitlementError } = await supabase
         .from("entitlements")
         .select("id")
@@ -139,7 +140,7 @@ export async function GET(request: Request) {
   }
 
   let productId: string;
-  if (profile?.role === "admin" && productSlug) {
+  if ((profile?.role === "admin" || isConfiguredAdmin(user)) && productSlug) {
     const { data: product, error: productError } = await supabase
       .from("products")
       .select("id")

@@ -198,7 +198,7 @@ const OPT_OUT_PHRASES = new Set([
   "ARRET",
 ]);
 
-export function isWhatsAppOptOut(text: string | null): boolean {
+export function isMessagingOptOut(text: string | null): boolean {
   if (!text) return false;
   const normalized = text
     .normalize("NFD")
@@ -208,3 +208,5 @@ export function isWhatsAppOptOut(text: string | null): boolean {
     .replace(/[.!?]+$/, "");
   return OPT_OUT_PHRASES.has(normalized);
 }
+
+export const isWhatsAppOptOut = isMessagingOptOut;

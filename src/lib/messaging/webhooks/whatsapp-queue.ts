@@ -2,7 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
-import { isWhatsAppOptOut, type NormalizedWhatsAppEvent } from "./whatsapp-parser";
+import { isMessagingOptOut, type NormalizedWhatsAppEvent } from "./whatsapp-parser";
 
 const QUEUE_CLAIM_MS = 5 * 60 * 1000;
 
@@ -136,7 +136,7 @@ async function processWhatsAppEvent(
       p_content: event.text ?? "",
       p_content_type: event.contentType,
       p_received_at: event.receivedAt,
-      p_opt_out: isWhatsAppOptOut(event.text),
+      p_opt_out: isMessagingOptOut(event.text),
     });
     if (error) throw new WhatsAppWebhookServiceError("inbound_message_record_failed");
   } else {

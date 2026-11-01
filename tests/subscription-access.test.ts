@@ -4,6 +4,7 @@ import test from "node:test";
 
 test("subscription limits and paid areas are enforced in the server layer", async () => {
   const migration = await readFile(new URL("../supabase/migrations/044_subscription_limits_and_paid_communities.sql", import.meta.url), "utf8");
+  const adminMigration = await readFile(new URL("../supabase/migrations/057_admin_paid_access.sql", import.meta.url), "utf8");
   const prospection = await readFile(new URL("../src/app/member/prospection/page.tsx", import.meta.url), "utf8");
   const communityRoute = await readFile(new URL("../src/app/api/community/my/route.ts", import.meta.url), "utf8");
   const navigation = await readFile(new URL("../src/components/account-dashboard.tsx", import.meta.url), "utf8");
@@ -14,8 +15,11 @@ test("subscription limits and paid areas are enforced in the server layer", asyn
   assert.match(migration, /skillflow-max.*then 3/);
   assert.match(migration, /member_subscription_skills/);
   assert.match(migration, /has_active_member_subscription/);
-  assert.match(prospection, /member_subscriptions/);
-  assert.match(communityRoute, /hasActiveSubscription/);
+  assert.match(adminMigration, /public\.profiles p[\s\S]*p\.role = 'admin'/);
+  assert.match(adminMigration, /public\.has_active_member_subscription/);
+  assert.match(adminMigration, /auth\.uid\(\) = p_user_id or auth\.role\(\) = 'service_role'/);
+  assert.match(prospection, /hasPaidMemberAccess/);
+  assert.match(communityRoute, /hasPaidMemberAccess/);
   assert.match(navigation, /href="\/account\?section=subscription"/);
   assert.match(navigation, /label: "Abonnements"/);
 });
@@ -29,4 +33,3 @@ test("Max uses a contact form before any payment flow", async () => {
   assert.match(form, /consent/);
   assert.match(form, /avant toute proposition de paiement/);
 });
-

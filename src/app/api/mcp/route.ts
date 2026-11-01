@@ -9,13 +9,15 @@ import { hashMcpKey, parseMcpBearerToken } from "@/lib/security/mcp-keys";
 import { consumeApiRateLimit, getRateLimitIpSubjectKey } from "@/lib/security/api-rate-limit";
 import { matchesFileContentType } from "@/lib/security/file-content";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { isAdminUserId } from "@/lib/security/admin-access";
 import { oauthJson, parseBearer, validateAccessToken } from "@/lib/oauth/server";
 import { isValidEmail, sendEmail } from "@/lib/email/resend";
-import { isMessagingEnabled } from "@/lib/messaging/config";
+import { isGrowthEnabled, isMessagingEnabled } from "@/lib/messaging/config";
 import { registerMessagingTools } from "@/lib/messaging/mcp-tools/register";
+import { registerGrowthTools } from "@/lib/messaging/mcp-tools/growth-register";
 import type { Product } from "@/types/skillflow";
 
-type McpCaller = { userId: string; keyId: string } | null;
+type McpCaller = { userId: string; keyId: string; isAdmin: boolean } | null;
 
 const MCP_CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -46,7 +48,7 @@ async function authenticateMcpKey(request: Request, supabase: ReturnType<typeof 
     const verified = await validateAccessToken(bearer, request);
     if (!verified) return mcpUnauthorized(request, true);
     if ("insufficientScope" in verified) return oauthJson({ error: "insufficient_scope", error_description: "Le scope mcp:read est requis." }, 403, { "WWW-Authenticate": 'Bearer error="insufficient_scope", scope="mcp:read"' });
-    return { userId: verified.userId, keyId: "" };
+    return await resolveMcpCaller(verified.userId, "");
   }
 
   const key = parseMcpBearerToken(authorization);
@@ -70,10 +72,19 @@ async function authenticateMcpKey(request: Request, supabase: ReturnType<typeof 
       return mcpUnauthorized(request, true);
     }
 
-    return { userId: data.user_id, keyId: data.id };
+    return await resolveMcpCaller(data.user_id, data.id);
   } catch (error) {
     console.error("MCP key authentication is unavailable:", error instanceof Error ? error.message : "Unknown error");
     return oauthJson({ error: "server_error", error_description: "L'authentification MCP est temporairement indisponible." }, 503);
+  }
+}
+
+async function resolveMcpCaller(userId: string, keyId: string): Promise<McpCaller | Response> {
+  try {
+    return { userId, keyId, isAdmin: await isAdminUserId(userId) };
+  } catch (error) {
+    console.error("Could not verify MCP caller access:", error instanceof Error ? error.message : "Unknown error");
+    return oauthJson({ error: "server_error", error_description: "Les droits du compte ne peuvent pas être vérifiés." }, 503);
   }
 }
 
@@ -248,26 +259,28 @@ function createMcpServer(caller: McpCaller) {
       }
 
       const supabase = getSupabaseAdminClient();
-      const { data: entitlement, error: entitlementError } = await supabase
-        .from("entitlements")
-        .select("id")
-        .eq("user_id", caller.userId)
-        .eq("product_id", product.id)
-        .eq("status", "active")
-        .maybeSingle();
+      if (!caller.isAdmin) {
+        const { data: entitlement, error: entitlementError } = await supabase
+          .from("entitlements")
+          .select("id")
+          .eq("user_id", caller.userId)
+          .eq("product_id", product.id)
+          .eq("status", "active")
+          .maybeSingle();
 
-      if (entitlementError) {
-        console.error("Could not verify MCP entitlement:", entitlementError.message);
-        return {
-          content: [{ type: "text", text: "Impossible de vérifier votre achat pour le moment." }],
-          isError: true,
-        };
-      }
-      if (!entitlement) {
-        return {
-          content: [{ type: "text", text: "Aucun achat actif ne donne accès à ce pack dans ce compte SkillFlow." }],
-          isError: true,
-        };
+        if (entitlementError) {
+          console.error("Could not verify MCP entitlement:", entitlementError.message);
+          return {
+            content: [{ type: "text", text: "Impossible de vérifier votre achat pour le moment." }],
+            isError: true,
+          };
+        }
+        if (!entitlement) {
+          return {
+            content: [{ type: "text", text: "Aucun achat actif ne donne accès à ce pack dans ce compte SkillFlow." }],
+            isError: true,
+          };
+        }
       }
 
       const { data: productFile, error: productFileError } = await supabase
@@ -334,7 +347,7 @@ function createMcpServer(caller: McpCaller) {
   const withMember = async (skillId: string | undefined, toolName: string, input: Record<string, unknown>, operation: (supabase: ReturnType<typeof getSupabaseAdminClient>, userId: string) => Promise<unknown>) => {
     if (!caller) return { content: [{ type: "text" as const, text: "Authentification requise. Connectez une clé MCP personnelle depuis votre espace SkillFlow." }], isError: true };
     const supabase = getSupabaseAdminClient();
-    if (skillId) {
+    if (skillId && !caller.isAdmin) {
       const { data: access, error } = await supabase.rpc("can_access_skill", { p_user_id: caller.userId, p_skill_id: skillId });
       if (error || !access) return { content: [{ type: "text" as const, text: "Accès à ce skill requis ou migration 011 non appliquée." }], isError: true };
     }
@@ -355,6 +368,7 @@ function createMcpServer(caller: McpCaller) {
     return withMember(undefined, "list_available_skills", {}, async (supabase, userId) => {
       const { data: skills, error } = await supabase.from("skills").select("id,slug,name,short_description,category_id").eq("is_active", true);
       if (error) throw error;
+      if (caller?.isAdmin) return { skills: skills ?? [] };
       const accessResults = await Promise.all((skills ?? []).map((skill) => supabase.rpc("can_access_skill", { p_user_id: userId, p_skill_id: skill.id })));
       if (accessResults.some((result) => result.error)) throw new Error("Skill access unavailable");
       return { skills: (skills ?? []).filter((_, index) => accessResults[index].data === true) };
@@ -507,8 +521,10 @@ function createMcpServer(caller: McpCaller) {
     const section = String(variables.section);
     if (!["configuration", "profile", "files", "outputs"].includes(section)) throw new Error("Section invalide.");
     const supabase = getSupabaseAdminClient();
-    const { data: access, error: accessError } = await supabase.rpc("can_access_skill", { p_user_id: caller.userId, p_skill_id: skillId });
-    if (accessError || !access) throw new Error("Accès au skill requis.");
+    if (!caller.isAdmin) {
+      const { data: access, error: accessError } = await supabase.rpc("can_access_skill", { p_user_id: caller.userId, p_skill_id: skillId });
+      if (accessError || !access) throw new Error("Accès au skill requis.");
+    }
     const tables: Record<string, string> = { configuration: "skill_configurations", profile: "communication_profiles", files: "uploaded_files", outputs: "generated_outputs" };
     const columns: Record<string, string> = { configuration: "id,configuration_data,status,updated_at", profile: "id,summary,version,is_active,updated_at", files: "id,file_name,file_type,extraction_status,created_at", outputs: "id,output_type,content,status,created_at" };
     const { data, error } = await supabase.from(tables[section]).select(columns[section]).eq("user_id", caller.userId).eq("skill_id", skillId);
@@ -518,6 +534,9 @@ function createMcpServer(caller: McpCaller) {
   });
   if (isMessagingEnabled()) {
     registerMessagingTools(server, caller);
+  }
+  if (isGrowthEnabled()) {
+    registerGrowthTools(server, caller);
   }
   return server;
 }

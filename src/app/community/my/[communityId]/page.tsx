@@ -3,6 +3,7 @@ import { MemberCommunityWorkspace } from "@/components/community/member-communit
 import { requirePageUser } from "@/lib/security/page-auth";
 import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
 import { redirect } from "next/navigation";
+import { hasPaidMemberAccess } from "@/lib/security/paid-access";
 
 export const instant = false;
 
@@ -11,7 +12,6 @@ export default async function MemberCommunityPage({ params }: { params: Promise<
   const { communityId } = await params;
   const user = await requirePageUser(`/community/my/${communityId}`);
   const supabase = await getSupabaseSessionClient();
-  const { data: subscription } = await supabase.from("member_subscriptions").select("id").eq("user_id", user.id).eq("status", "active").gt("ends_at", new Date().toISOString()).limit(1).maybeSingle();
-  if (!subscription) redirect("/account");
+  if (!(await hasPaidMemberAccess(supabase, user))) redirect("/account");
   return <MemberCommunityWorkspace communityId={communityId} userId={user.id} />;
 }

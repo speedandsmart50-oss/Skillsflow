@@ -79,11 +79,11 @@ create table public.msg_followups (
   updated_at timestamptz not null default now(),
   foreign key (contact_id, user_id)
     references public.msg_contacts(id, user_id) on delete cascade,
-  check (
+  constraint msg_followups_claim_state_check check (
     (status = 'processing' and claimed_at is not null and claim_expires_at is not null and claim_expires_at > claimed_at and claim_token is not null)
     or (status <> 'processing' and claimed_at is null and claim_expires_at is null and claim_token is null)
   ),
-  check (
+  constraint msg_followups_template_name_check check (
     (message_type = 'free' and template_name is null)
     or (message_type = 'template' and nullif(btrim(template_name), '') is not null)
   )

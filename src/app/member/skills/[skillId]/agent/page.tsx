@@ -4,6 +4,7 @@ import { requirePageUser } from "@/lib/security/page-auth";
 import { connection } from "next/server";
 import { getSupabaseSessionClient } from "@/lib/supabase/browser-server";
 import { AccountConversations } from "@/components/account-conversations";
+import { isConfiguredAdmin } from "@/lib/security/admin-access";
 
 export const instant = false;
 export default async function SkillAgent({ params }: { params: Promise<{ skillId: string }> }) {
@@ -11,9 +12,18 @@ export default async function SkillAgent({ params }: { params: Promise<{ skillId
   await connection();
   const user = await requirePageUser(`/member/skills/${skillId}/agent`);
   const supabase = await getSupabaseSessionClient();
-  const { data: access, error } = await supabase.rpc("can_access_skill", { p_user_id: user.id, p_skill_id: skillId });
+  let hasAccess = isConfiguredAdmin(user);
+  if (!hasAccess) {
+    const { data: access, error } = await supabase.rpc("can_access_skill", { p_user_id: user.id, p_skill_id: skillId });
+    if (error) {
+      console.error("Could not verify member skill page access:", error.message);
+      hasAccess = false;
+    } else {
+      hasAccess = access === true;
+    }
+  }
 
-  if (error || !access) {
+  if (!hasAccess) {
     return (
       <main className="min-h-screen bg-[#0B1020] p-8 text-slate-100">
         <div className="mx-auto max-w-xl rounded-3xl border border-[#202E50] bg-[#151F38] p-8 text-center shadow-xl">

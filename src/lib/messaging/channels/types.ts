@@ -1,12 +1,5 @@
 export type MessagingChannel = "whatsapp" | "messenger" | "instagram";
 
-export type MessagingMessageStatus =
-  | "queued"
-  | "sent"
-  | "delivered"
-  | "read"
-  | "failed";
-
 export interface MessagingContactReference<TChannel extends MessagingChannel = MessagingChannel> {
   id: string;
   channel: TChannel;
@@ -32,5 +25,4 @@ export interface MessagingChannelAdapter<TChannel extends MessagingChannel = Mes
     contact: MessagingContactReference<TChannel>,
     template: ApprovedMessageTemplate,
   ): Promise<ChannelSendResult>;
-  getStatus(externalMessageId: string): Promise<MessagingMessageStatus>;
 }

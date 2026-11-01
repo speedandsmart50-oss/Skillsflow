@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, getSupabaseAdminClient } from "@/lib/supabase/server";
+import { isConfiguredAdmin } from "@/lib/security/admin-access";
 
 const stages = new Set(["new", "contacted", "presentation", "follow-up", "won", "lost"]);
 
@@ -7,8 +8,14 @@ async function requirePaidUser(request: Request) {
   const user = await getAuthenticatedUser(request);
   if (!user) return { error: NextResponse.json({ error: "Connectez-vous pour utiliser Prospection." }, { status: 401 }) };
   const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase.rpc("has_active_member_subscription", { p_user_id: user.id });
-  if (error || !data) return { error: NextResponse.json({ error: "Un abonnement actif est requis pour utiliser Prospection." }, { status: 403 }) };
+  if (!isConfiguredAdmin(user)) {
+    const { data, error } = await supabase.rpc("has_active_member_subscription", { p_user_id: user.id });
+    if (error) {
+      console.error("Could not verify prospection subscription:", error.message);
+      return { error: NextResponse.json({ error: "Impossible de vérifier votre abonnement." }, { status: 503 }) };
+    }
+    if (!data) return { error: NextResponse.json({ error: "Un abonnement actif est requis pour utiliser Prospection." }, { status: 403 }) };
+  }
   return { user, supabase };
 }
 
@@ -55,4 +62,3 @@ export async function DELETE(request: Request) {
   if (error) return NextResponse.json({ error: "Impossible de supprimer ce contact." }, { status: 503 });
   return NextResponse.json({ deleted: true });
 }
-
