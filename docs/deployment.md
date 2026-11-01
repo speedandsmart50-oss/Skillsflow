@@ -100,6 +100,46 @@ The endpoint can be reached without a key for public catalogue metadata and free
 bundled skills. Never return customer-specific content or private files without
 validating both the MCP key and the purchaser's active entitlement.
 
+## Inbound messaging foundation
+
+The messaging module is being introduced in gated phases. Keep
+`MESSAGING_ENABLED=false` and `DRY_RUN=true` until the channel integrations,
+policies, and owner-approved test setup are complete. Phase 3 adds only an
+admin-owned WhatsApp inbound webhook at `/api/webhooks/whatsapp`; it does not
+send messages or expose messaging tools or an inbox UI. The route returns 404
+while messaging is disabled. When enabled, configure the server-only
+`META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,
+`WHATSAPP_BUSINESS_ACCOUNT_ID`, and `SKILLFLOW_ADMIN_EMAIL` values. The POST
+handler verifies Meta's HMAC-SHA256 signature over the raw body, enforces a 1
+MiB request limit, checks the configured business-account and phone-number IDs,
+and places normalized events
+in an asynchronous, idempotent queue. The inbox is assigned to the profile
+whose email matches `SKILLFLOW_ADMIN_EMAIL` and whose `profiles.role` is
+`admin`; it is not shared with all members. Exact opt-out commands (`STOP`,
+`STOP ALL`, `UNSUBSCRIBE`,
+`CANCEL`, `END`, `QUIT`, and `ARRET`) mark the contact opted out. No webhook
+handler sends a reply. Never add channel credentials to Git or browser-exposed
+environment variables.
+
+See Meta's current [WhatsApp webhook endpoint guide](https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint)
+for the verification, signature, response, and retry protocol. Verified event
+data is stored only after signature validation. The current processor uses
+Next.js `after()` with a bounded queue claim; a scheduled recovery worker and
+automated expired-event cleanup are not configured yet. Keep messaging disabled
+in production until durable recovery and cleanup are operational.
+
+Migration `049_inbound_messaging.sql` adds owner-scoped message, contact,
+follow-up, and audit tables. Its matching rollback is kept outside the forward
+migration directory at `supabase/rollback/049_inbound_messaging.down.sql`.
+Migration `050_whatsapp_webhook_queue.sql` adds the isolated webhook queue and
+server-only processing functions; its rollback is
+`supabase/rollback/050_whatsapp_webhook_queue.down.sql`. Processed queue records
+have their normalized payload cleared; pending or failed records have a
+seven-day expiry timestamp. Configure an operational cleanup before enabling
+the webhook in production. Neither migration has been applied to a persistent
+database; do not apply either migration to production without the owner's
+explicit approval.
+
 ## Pre-deployment validation
 
 1. Run `npm test`, `npm run lint`, and `npm run build`.
