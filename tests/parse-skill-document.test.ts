@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseSkillDocument } from "../src/lib/skills/parse-skill-document";
+import { parseSkillDocument, toEditableSkillDocument } from "../src/lib/skills/parse-skill-document";
 
 test("parses a structured skill document and keeps the complete instructions", () => {
   const content = `# Coach commercial
 
 ## Description courte
 Aide à préparer des rendez-vous clients.
+
+## Domaine
+Vente
 
 ## Promesse
 Un plan concret pour chaque rendez-vous.
@@ -33,6 +36,7 @@ Toujours rester honnête et précis.`;
   assert.ok(skill);
   assert.equal(skill.name, "Coach commercial");
   assert.equal(skill.slug, "coach-commercial");
+  assert.equal(skill.domain, "Vente");
   assert.equal(skill.shortDescription, "Aide à préparer des rendez-vous clients.");
   assert.equal(skill.promise, "Un plan concret pour chaque rendez-vous.");
   assert.deepEqual(skill.useCases, ["Préparer un appel", "Répondre aux objections"]);
@@ -40,6 +44,28 @@ Toujours rester honnête et précis.`;
   assert.deepEqual(skill.outputTypes, ["Plan d'appel"]);
   assert.deepEqual(skill.workflow, ["Clarifier le besoin", "Préparer les questions"]);
   assert.equal(skill.content, content);
+});
+
+test("uses a general domain when the document omits it", () => {
+  const skill = parseSkillDocument("# Skill\n\n## Description courte\nUn résumé.");
+  assert.equal(skill?.domain, "Général");
+});
+
+test("prepares existing plain-text descriptions for editing without losing their content", () => {
+  const document = toEditableSkillDocument({
+    name: "Skill existant",
+    description: "Instructions historiques complètes.",
+    domain: "Conseil",
+  });
+  assert.match(document, /^# Skill existant/m);
+  assert.match(document, /## Domaine\nConseil/);
+  assert.match(document, /## Instructions\nInstructions historiques complètes\./);
+  assert.ok(parseSkillDocument(document));
+});
+
+test("keeps an existing structured skill document intact for editing", () => {
+  const document = "# Skill\n\n## Description courte\nRésumé.\n\n## Instructions\nTexte.";
+  assert.equal(toEditableSkillDocument({ name: "Autre nom", description: document }), document);
 });
 
 test("rejects a document without a title or a short description", () => {

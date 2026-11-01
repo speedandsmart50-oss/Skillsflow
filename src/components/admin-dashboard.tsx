@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { pricingOffers } from "@/features/pricing/offers";
+import { eurosToXof } from "@/lib/money";
+import { parseSkillDocument, toEditableSkillDocument } from "@/lib/skills/parse-skill-document";
 
 type Section = "overview" | "premium" | "catalog" | "orders" | "customers" | "mcp" | "waitlist" | "support" | "settings";
 type CatalogStatus = "a_venir" | "en_preparation" | "disponible";
@@ -204,6 +206,9 @@ export function AdminDashboard() {
   const [ticketFilter, setTicketFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [newSkillPriceEur, setNewSkillPriceEur] = useState("");
+  const [editingSkillId, setEditingSkillId] = useState("");
+  const [skillTextDraft, setSkillTextDraft] = useState("");
 
   const loadData = useCallback(async () => {
     try {
@@ -279,16 +284,44 @@ export function AdminDashboard() {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const parsedSkill = parseSkillDocument(String(form.get("content") ?? ""));
+    if (!parsedSkill) {
+      setError("Le texte doit contenir un titre « # Nom du skill » et une section « ## Description courte » (500 caractères maximum).");
+      return;
+    }
+    const priceEur = Number(form.get("priceEur"));
+    if (!Number.isFinite(priceEur) || priceEur < 0 || priceEur > 99999999) {
+      setError("Saisissez un prix valide en euros.");
+      return;
+    }
     const success = await runAction("/api/admin/skills", "POST", {
-      slug: form.get("slug"),
-      name: form.get("name"),
-      description: form.get("description"),
-      domain: form.get("domain"),
-      priceEur: Number(form.get("priceEur")),
-      priceXof: Number(form.get("priceXof")),
+      content: parsedSkill.content,
+      priceEur,
+      priceXof: eurosToXof(priceEur),
       status: form.get("status"),
     }, "Le skill a été créé.");
-    if (success) formElement.reset();
+    if (success) {
+      formElement.reset();
+      setNewSkillPriceEur("");
+    }
+  }
+
+  async function saveSkillContent(event: FormEvent<HTMLFormElement>, skill: AdminSkill) {
+    event.preventDefault();
+    if (!parseSkillDocument(skillTextDraft)) {
+      setError("Le texte doit contenir un titre « # Nom du skill » et une section « ## Description courte » (500 caractères maximum).");
+      return;
+    }
+    const saved = await runAction(
+      "/api/admin/skills",
+      "PATCH",
+      { id: skill.id, content: skillTextDraft },
+      `Le skill « ${skill.name} » a été amélioré.`,
+    );
+    if (saved) {
+      setEditingSkillId("");
+      setSkillTextDraft("");
+    }
   }
 
   async function uploadVersion(event: FormEvent<HTMLFormElement>, skillId: string) {
@@ -514,15 +547,42 @@ export function AdminDashboard() {
                 <>
                   <section className={cardClass} aria-labelledby="create-skill-heading">
                     <h2 id="create-skill-heading" className="text-xl font-bold">Ajouter un skill</h2>
-                    <p className="mt-2 text-sm leading-6 text-[#52645E]">Les prix sont indiqués en euros et en francs CFA. Un skill devient achetable seulement lorsque son statut est disponible et qu’un pack ZIP est publié.</p>
+                    <p className="mt-2 text-sm leading-6 text-[#52645E]">Collez le texte complet du skill. Le nom, l’adresse du catalogue et le domaine seront générés à partir du texte; le statut initial sera « En préparation ». Le prix en francs CFA est calculé automatiquement.</p>
                     <form className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={(event) => void createSkill(event)}>
-                      <Field label="Nom"><input className={inputClass} name="name" required minLength={2} maxLength={160} /></Field>
-                      <Field label="Adresse du catalogue"><input className={inputClass} name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" /></Field>
-                      <Field label="Domaine"><input className={inputClass} name="domain" required minLength={2} maxLength={120} /></Field>
-                      <Field label="Statut"><select className={inputClass} name="status" defaultValue="en_preparation"><option value="a_venir">À venir</option><option value="en_preparation">En préparation</option><option value="disponible">Disponible</option></select></Field>
-                      <Field label="Prix en euros"><input className={inputClass} name="priceEur" type="number" min="0" max="99999999" step="0.01" required /></Field>
-                      <Field label="Prix en francs CFA"><input className={inputClass} name="priceXof" type="number" min="0" step="1" required /></Field>
-                      <div className="sm:col-span-2"><Field label="Description"><textarea className={`${inputClass} min-h-28`} name="description" maxLength={5000} /></Field></div>
+                      <input type="hidden" name="status" value="en_preparation" />
+                      <div className="sm:col-span-2">
+                        <Field label="Texte complet du skill">
+                          <textarea
+                            className={`${inputClass} min-h-80 font-mono leading-6`}
+                            name="content"
+                            required
+                            minLength={20}
+                            maxLength={30000}
+                            placeholder={`# Nom du skill\n\n## Description courte\nDécrivez le résultat en quelques phrases (500 caractères maximum).\n\n## Domaine\nEx. Marketing, Productivité, Vente\n\n## Promesse\nQuel résultat concret le skill aide-t-il à obtenir ?\n\n## Cas d'utilisation\n- Premier cas d'utilisation\n\n## Entrées requises\n- Informations nécessaires pour commencer\n\n## Formats de sortie\n- Livrable attendu\n\n## Étapes du workflow\n1. Première étape\n2. Vérification du résultat\n\n## Instructions\nDécrivez ici le comportement complet du skill, ses règles, ses limites et ses exemples.`}
+                          />
+                        </Field>
+                        <p className="mt-2 text-xs leading-5 text-[#52645E]">Le titre « # » fournit le nom et le slug. La description courte est obligatoire; le domaine est facultatif et vaut « Général » s’il est absent. Le texte complet est conservé comme description du catalogue.</p>
+                      </div>
+                      <Field label="Prix en euros">
+                        <input
+                          className={inputClass}
+                          name="priceEur"
+                          type="number"
+                          min="0"
+                          max="99999999"
+                          step="0.01"
+                          required
+                          value={newSkillPriceEur}
+                          onChange={(event) => setNewSkillPriceEur(event.target.value)}
+                        />
+                      </Field>
+                      <Field label="Prix en francs CFA">
+                        <output className={`${inputClass} block min-h-11 text-[#52645E]`} aria-live="polite" name="priceXof">
+                          {newSkillPriceEur && Number.isFinite(Number(newSkillPriceEur)) && Number(newSkillPriceEur) >= 0
+                            ? `${new Intl.NumberFormat("fr-FR").format(eurosToXof(Number(newSkillPriceEur)))} XOF`
+                            : "Saisissez le prix en euros"}
+                        </output>
+                      </Field>
                       <div className="sm:col-span-2"><button className={buttonClass} type="submit" disabled={pending}>Créer le skill</button></div>
                     </form>
                   </section>
@@ -539,6 +599,42 @@ export function AdminDashboard() {
                       </div>
                       <p className="mt-3 text-sm leading-6 text-[#52645E]">{skill.description || "Aucune description."}</p>
                       <p className="mt-3 text-sm font-semibold">{formatMoney(skill.price_eur, "EUR")} · {formatMoney(skill.price_xof, "XOF")} · Version actuelle {skill.version}</p>
+                      {editingSkillId === skill.id ? (
+                        <form className="mt-5 space-y-3 rounded-2xl border border-[#B9CEC7] bg-[#F7FAF8] p-4" onSubmit={(event) => void saveSkillContent(event, skill)}>
+                          <Field label="Améliorer le texte complet du skill">
+                            <textarea
+                              className={`${inputClass} min-h-80 font-mono leading-6`}
+                              value={skillTextDraft}
+                              onChange={(event) => setSkillTextDraft(event.target.value)}
+                              required
+                              minLength={20}
+                              maxLength={30000}
+                            />
+                          </Field>
+                          <p className="text-xs leading-5 text-[#52645E]">Modifiez le texte puis enregistrez pour remplacer le contenu actuel. Le nom, la description et le domaine seront actualisés; l’adresse publique reste stable.</p>
+                          <div className="flex flex-wrap gap-2">
+                            <button className={buttonClass} type="submit" disabled={pending}>Enregistrer le skill amélioré</button>
+                            <button className={secondaryButtonClass} type="button" disabled={pending} onClick={() => { setEditingSkillId(""); setSkillTextDraft(""); }}>Annuler</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          className={`${secondaryButtonClass} mt-5`}
+                          type="button"
+                          onClick={() => {
+                            setEditingSkillId(skill.id);
+                            setSkillTextDraft(toEditableSkillDocument({
+                              name: skill.name,
+                              description: skill.description,
+                              domain: skill.domain,
+                            }));
+                            setError("");
+                            setNotice("");
+                          }}
+                        >
+                          Améliorer le skill
+                        </button>
+                      )}
                       <form className="mt-5 grid gap-3 border-t border-[#DCE7E3] pt-5 sm:grid-cols-2" onSubmit={(event) => updateSkill(event, skill)}>
                         <Field label="Nom"><input className={inputClass} name="name" defaultValue={skill.name} required minLength={2} maxLength={160} /></Field>
                         <Field label="Adresse du catalogue"><input className={inputClass} name="slug" defaultValue={skill.slug} required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" /></Field>

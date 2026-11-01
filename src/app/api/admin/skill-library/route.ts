@@ -13,6 +13,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export async function GET(request: Request) {
   const access = await requireAdminApiUser(request);
   if (!access.ok) return access.response;
+  const skillId = new URL(request.url).searchParams.get("skillId");
+  if (skillId) {
+    if (!UUID_PATTERN.test(skillId)) return NextResponse.json({ error: "Skill introuvable." }, { status: 400 });
+    const { data: skill, error } = await access.supabase
+      .from("skills")
+      .select("id,slug,name,category_id,short_description,long_description,promise,use_cases,required_inputs,output_types,workflow,mcp_tools,system_prompt,price_cents,is_active,is_included_in_membership,product_id")
+      .eq("id", skillId)
+      .maybeSingle();
+    if (error) {
+      console.error("Could not load admin skill content:", error.message);
+      return NextResponse.json({ error: "Impossible de charger le texte du skill." }, { status: 500 });
+    }
+    if (!skill) return NextResponse.json({ error: "Skill introuvable." }, { status: 404 });
+    return NextResponse.json({ skill }, { headers: { "Cache-Control": "private, no-store" } });
+  }
   const [{ data: skills, error }, { data: categories, error: categoryError }] = await Promise.all([
     access.supabase.from("skills").select("id,slug,name,category_id,short_description,price_cents,is_active,is_included_in_membership,product_id").order("name"),
     access.supabase.from("skill_categories").select("id,slug,name,sort_order").order("sort_order"),
@@ -123,6 +138,27 @@ export async function PATCH(request: Request) {
   const input = body as Record<string, unknown>;
   if (typeof input.id !== "string") return NextResponse.json({ error: "Skill invalide." }, { status: 400 });
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if ("content" in input) {
+    if (typeof input.content !== "string" || input.content.length > 30000) {
+      return NextResponse.json({ error: "Le texte du skill est invalide ou trop long." }, { status: 400 });
+    }
+    const parsedSkill = parseSkillDocument(input.content);
+    if (!parsedSkill) {
+      return NextResponse.json({
+        error: "Le texte doit contenir un titre « # Nom du skill » et une section « ## Description courte » (500 caractères maximum).",
+      }, { status: 400 });
+    }
+    update.name = parsedSkill.name;
+    update.short_description = parsedSkill.shortDescription;
+    update.long_description = parsedSkill.content;
+    update.promise = parsedSkill.promise;
+    update.use_cases = parsedSkill.useCases;
+    update.required_inputs = parsedSkill.requiredInputs;
+    update.output_types = parsedSkill.outputTypes;
+    update.workflow = parsedSkill.workflow;
+    update.mcp_tools = parsedSkill.mcpTools;
+    update.system_prompt = parsedSkill.content;
+  }
   if (typeof input.is_active === "boolean") update.is_active = input.is_active;
   if (typeof input.price_cents === "number" && Number.isSafeInteger(input.price_cents) && input.price_cents >= 0) update.price_cents = input.price_cents;
   if (typeof input.product_id === "string" || input.product_id === null) update.product_id = input.product_id;

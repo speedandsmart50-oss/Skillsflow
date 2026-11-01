@@ -3,6 +3,7 @@ import { validateSlug } from "@/lib/security/access";
 export type ParsedSkillDocument = {
   name: string;
   slug: string;
+  domain: string;
   shortDescription: string;
   promise: string;
   useCases: string[];
@@ -15,9 +16,10 @@ export type ParsedSkillDocument = {
 
 const SECTION_ALIASES: Record<string, keyof Pick<
   ParsedSkillDocument,
-  "shortDescription" | "promise" | "useCases" | "requiredInputs" | "outputTypes" | "workflow" | "mcpTools"
+  "domain" | "shortDescription" | "promise" | "useCases" | "requiredInputs" | "outputTypes" | "workflow" | "mcpTools"
 >> = {
   "description courte": "shortDescription",
+  "domaine": "domain",
   "promesse": "promise",
   "cas d'utilisation": "useCases",
   "cas d’usage": "useCases",
@@ -72,6 +74,7 @@ export function parseSkillDocument(content: string): ParsedSkillDocument | null 
   }
 
   let shortDescription = "";
+  let domain = "";
   let promise = "";
   let useCases: string[] = [];
   let requiredInputs: string[] = [];
@@ -81,7 +84,8 @@ export function parseSkillDocument(content: string): ParsedSkillDocument | null 
   for (const [heading, value] of sections) {
     const field = SECTION_ALIASES[heading];
     if (!field) continue;
-    if (field === "shortDescription") shortDescription = value;
+    if (field === "domain") domain = value;
+    else if (field === "shortDescription") shortDescription = value;
     else if (field === "promise") promise = value;
     else if (field === "useCases") useCases = extractListItems(value);
     else if (field === "requiredInputs") requiredInputs = extractListItems(value);
@@ -91,10 +95,12 @@ export function parseSkillDocument(content: string): ParsedSkillDocument | null 
   }
 
   if (!shortDescription || shortDescription.length > 500) return null;
+  if (domain.length > 120) return null;
 
   return {
     name,
     slug,
+    domain: domain || "Général",
     shortDescription,
     promise: promise || shortDescription,
     useCases,
@@ -104,4 +110,27 @@ export function parseSkillDocument(content: string): ParsedSkillDocument | null 
     mcpTools,
     content: normalizedContent,
   };
+}
+
+export function toEditableSkillDocument(input: {
+  name: string;
+  description: string;
+  domain?: string;
+}) {
+  if (parseSkillDocument(input.description)) return input.description.trim();
+
+  const shortDescription = input.description.trim().slice(0, 500) || `Instructions et description du skill ${input.name}.`;
+  const instructions = input.description.trim() || "Décrivez ici le comportement complet du skill, ses règles, ses limites et ses exemples.";
+  return [
+    `# ${input.name}`,
+    "",
+    "## Description courte",
+    shortDescription,
+    "",
+    "## Domaine",
+    input.domain?.trim() || "Général",
+    "",
+    "## Instructions",
+    instructions,
+  ].join("\n");
 }

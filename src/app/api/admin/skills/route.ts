@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { recordAdminAction, requireAdminApiUser } from "@/lib/security/admin-api";
 import { validateSlug } from "@/lib/security/access";
+import { eurosToXof } from "@/lib/money";
+import { parseSkillDocument } from "@/lib/skills/parse-skill-document";
 
 const SKILL_STATUSES = new Set(["a_venir", "en_preparation", "disponible"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -56,43 +58,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Les informations du skill sont invalides." }, { status: 400 });
   }
 
+  if (!isRecord(body)) {
+    return NextResponse.json({ error: "Les informations du skill sont invalides." }, { status: 400 });
+  }
+
+  const content = typeof body.content === "string" ? body.content : null;
+  const isTextSkill = content !== null;
+  const parsedSkill = content !== null ? parseSkillDocument(content) : null;
+  if (isTextSkill && !parsedSkill) {
+    return NextResponse.json({
+      error: "Le texte doit contenir un titre « # Nom du skill » et une section « ## Description courte » (500 caractères maximum).",
+    }, { status: 400 });
+  }
+
+  const name = parsedSkill?.name ?? (typeof body.name === "string" ? body.name.trim() : "");
+  const slug = parsedSkill?.slug ?? (typeof body.slug === "string" ? body.slug : "");
+  const description = parsedSkill?.content ?? (typeof body.description === "string" ? body.description.trim() : "");
+  const domain = parsedSkill?.domain ?? (typeof body.domain === "string" ? body.domain.trim() : "");
+  const euroPrice = typeof body.priceEur === "number" ? body.priceEur : null;
+  const priceXof = isTextSkill
+    ? euroPrice !== null && Number.isFinite(euroPrice) && euroPrice >= 0 && euroPrice <= 99999999
+      ? eurosToXof(euroPrice)
+      : null
+    : body.priceXof;
+
   if (
-    !isRecord(body)
-    || typeof body.slug !== "string"
-    || !validateSlug(body.slug)
-    || typeof body.name !== "string"
-    || body.name.trim().length < 2
-    || body.name.trim().length > 160
-    || typeof body.description !== "string"
-    || body.description.trim().length > 5000
-    || typeof body.domain !== "string"
-    || body.domain.trim().length < 2
-    || body.domain.trim().length > 120
+    !validateSlug(slug)
+    || name.length < 2
+    || name.length > 160
+    || description.length > (isTextSkill ? 30000 : 5000)
+    || domain.length < 2
+    || domain.length > 120
     || typeof body.priceEur !== "number"
     || !Number.isFinite(body.priceEur)
     || body.priceEur < 0
     || body.priceEur > 99999999
-    || typeof body.priceXof !== "number"
-    || !Number.isSafeInteger(body.priceXof)
-    || body.priceXof < 0
+    || typeof priceXof !== "number"
+    || !Number.isSafeInteger(priceXof)
+    || priceXof < 0
     || typeof body.status !== "string"
     || !SKILL_STATUSES.has(body.status)
   ) {
-    return NextResponse.json({ error: "Vérifiez le nom, le domaine, le statut et les deux prix." }, { status: 400 });
+    return NextResponse.json({ error: "Vérifiez le texte du skill, le statut et le prix en euros." }, { status: 400 });
   }
 
   const id = randomUUID();
   const values = {
     id,
-    slug: body.slug,
-    name: body.name.trim(),
-    description: body.description.trim(),
-    domain: body.domain.trim(),
+    slug,
+    name,
+    description,
+    domain,
     status: "published",
     catalog_status: body.status,
     price: body.priceEur,
     price_eur: body.priceEur,
-    price_xof: body.priceXof,
+    price_xof: priceXof,
     version: "1.0.0",
   };
 
@@ -159,6 +180,20 @@ export async function PATCH(request: Request) {
   if (!existing) return NextResponse.json({ error: "Skill introuvable." }, { status: 404 });
 
   const update: Record<string, unknown> = {};
+  if ("content" in body) {
+    if (typeof body.content !== "string" || body.content.length > 30000) {
+      return NextResponse.json({ error: "Le texte du skill est invalide ou trop long." }, { status: 400 });
+    }
+    const parsedSkill = parseSkillDocument(body.content);
+    if (!parsedSkill) {
+      return NextResponse.json({
+        error: "Le texte doit contenir un titre « # Nom du skill » et une section « ## Description courte » (500 caractères maximum).",
+      }, { status: 400 });
+    }
+    update.name = parsedSkill.name;
+    update.description = parsedSkill.content;
+    update.domain = parsedSkill.domain;
+  }
   if ("name" in body) {
     if (typeof body.name !== "string" || body.name.trim().length < 2 || body.name.trim().length > 160) {
       return NextResponse.json({ error: "Le nom doit contenir entre 2 et 160 caractères." }, { status: 400 });
@@ -218,6 +253,7 @@ export async function PATCH(request: Request) {
     "name",
     "slug",
     "description",
+    "content",
     "domain",
     "priceEur",
     "priceXof",
