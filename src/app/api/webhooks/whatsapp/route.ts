@@ -82,7 +82,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const appSecret = process.env.META_APP_SECRET;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  if (!appSecret || !phoneNumberId) {
+  const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+  if (!appSecret || !phoneNumberId || !businessAccountId) {
     return new Response(null, { status: 503, headers: RESPONSE_HEADERS });
   }
 
@@ -101,7 +102,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let events;
   try {
-    events = parseWhatsAppWebhookPayload(payload, phoneNumberId);
+    events = parseWhatsAppWebhookPayload(payload, phoneNumberId, businessAccountId);
   } catch (error) {
     if (error instanceof WhatsAppWebhookPayloadError) {
       return new Response(null, {
@@ -132,7 +133,16 @@ export async function POST(request: Request): Promise<Response> {
 
   if (queuedEvent.shouldProcess) {
     try {
-      after(() => processWhatsAppWebhookQueueEvent(queuedEvent.id));
+      after(async () => {
+        try {
+          await processWhatsAppWebhookQueueEvent(queuedEvent.id);
+        } catch (error) {
+          console.error("Could not process WhatsApp webhook event", {
+            eventId: queuedEvent.id,
+            error: error instanceof Error ? error.name : "UnknownError",
+          });
+        }
+      });
     } catch (error) {
       console.error("Could not schedule WhatsApp webhook processing", {
         eventId: queuedEvent.id,

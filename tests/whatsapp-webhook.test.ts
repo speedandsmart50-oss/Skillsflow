@@ -62,7 +62,11 @@ test("Meta webhook verification compares tokens and validates HMAC over raw byte
 });
 
 test("WhatsApp webhook payloads normalize inbound messages and statuses", () => {
-  const events = parseWhatsAppWebhookPayload(createWebhookPayload(), "phone-number-id");
+  const events = parseWhatsAppWebhookPayload(
+    createWebhookPayload(),
+    "phone-number-id",
+    "business-account-id",
+  );
 
   assert.equal(events.length, 2);
   assert.deepEqual(events[0], {
@@ -74,6 +78,7 @@ test("WhatsApp webhook payloads normalize inbound messages and statuses", () => 
       externalContactId: "15551234567",
       displayName: "Ada",
       receivedAt: "2025-06-08T20:59:43.000Z",
+      contentType: "text",
       text: "STOP",
     },
   });
@@ -94,6 +99,15 @@ test("WhatsApp webhook parser rejects wrong phone IDs and malformed events", () 
       && error.code === "phone_number_mismatch",
   );
   assert.throws(
+    () => parseWhatsAppWebhookPayload(
+      createWebhookPayload(),
+      "phone-number-id",
+      "another-business-account-id",
+    ),
+    (error: unknown) => error instanceof WhatsAppWebhookPayloadError
+      && error.code === "phone_number_mismatch",
+  );
+  assert.throws(
     () => parseWhatsAppWebhookPayload({ object: "page", entry: [] }, "phone-number-id"),
     WhatsAppWebhookPayloadError,
   );
@@ -104,6 +118,22 @@ test("WhatsApp webhook parser rejects wrong phone IDs and malformed events", () 
     () => parseWhatsAppWebhookPayload(malformed, "phone-number-id"),
     WhatsAppWebhookPayloadError,
   );
+});
+
+test("WhatsApp webhook parser records non-text messages without interpreting their payload", () => {
+  const payload = createWebhookPayload();
+  payload.entry[0].changes[0].value.messages[0] = {
+    from: "15551234567",
+    id: "wamid.image",
+    timestamp: "1749416383",
+    type: "image",
+    image: { id: "media-id", caption: "caption stays unprocessed" },
+  };
+  const [event] = parseWhatsAppWebhookPayload(payload, "phone-number-id");
+  assert.equal(event.kind, "message");
+  if (event.kind !== "message") return;
+  assert.equal(event.event.contentType, "non_text");
+  assert.equal(event.event.text, null);
 });
 
 test("WhatsApp opt-out detection recognizes exact commands but not incidental text", () => {

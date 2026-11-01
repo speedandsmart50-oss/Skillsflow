@@ -38,6 +38,7 @@ create function public.record_inbound_whatsapp_message(
   p_display_name text,
   p_external_message_id text,
   p_content text,
+  p_content_type text,
   p_received_at timestamptz,
   p_opt_out boolean
 )
@@ -55,6 +56,8 @@ begin
     or char_length(btrim(p_external_contact_id)) not between 1 and 255
     or p_external_message_id is null
     or char_length(p_external_message_id) not between 1 and 255
+    or p_content_type is null
+    or p_content_type not in ('text', 'non_text')
     or p_received_at is null
     or char_length(coalesce(p_display_name, '')) > 200
     or char_length(coalesce(p_content, '')) > 30000
@@ -79,11 +82,11 @@ begin
 
   insert into public.msg_messages (
     user_id, contact_id, channel, direction, content, message_type,
-    source_event_type, source_event_id, external_message_id, status, created_at
+    content_type, source_event_type, source_event_id, external_message_id, status, created_at
   )
   values (
     p_user_id, v_contact_id, 'whatsapp', 'inbound', coalesce(p_content, ''), 'free',
-    'message', p_external_message_id, p_external_message_id, 'received', p_received_at
+    p_content_type, 'message', p_external_message_id, p_external_message_id, 'received', p_received_at
   )
   on conflict (user_id, channel, external_message_id) do nothing
   returning id into v_message_id;
@@ -101,9 +104,9 @@ begin
 end;
 $$;
 
-revoke all on function public.record_inbound_whatsapp_message(uuid, text, text, text, text, timestamptz, boolean)
+revoke all on function public.record_inbound_whatsapp_message(uuid, text, text, text, text, text, timestamptz, boolean)
   from public, anon, authenticated;
-grant execute on function public.record_inbound_whatsapp_message(uuid, text, text, text, text, timestamptz, boolean)
+grant execute on function public.record_inbound_whatsapp_message(uuid, text, text, text, text, text, timestamptz, boolean)
   to service_role;
 
 create function public.apply_whatsapp_message_status(
@@ -143,7 +146,10 @@ begin
         when p_status = 'failed' and status in ('approved', 'sent') then p_error_code
         else error_code
       end,
-      sent_at = coalesce(sent_at, p_status_at),
+      sent_at = case
+        when p_status = 'sent' then coalesce(sent_at, p_status_at)
+        else sent_at
+      end,
       updated_at = now()
   where user_id = p_user_id
     and channel = 'whatsapp'

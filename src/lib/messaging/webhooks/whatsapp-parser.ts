@@ -105,6 +105,7 @@ function parseMessage(
       externalContactId,
       displayName: optionalDisplayName(contacts, externalContactId),
       receivedAt,
+      contentType: messageType === "text" ? "text" : "non_text",
       text,
     },
   };
@@ -145,6 +146,7 @@ function parseStatus(value: unknown): NormalizedWhatsAppEvent {
 export function parseWhatsAppWebhookPayload(
   payload: unknown,
   expectedPhoneNumberId: string,
+  expectedBusinessAccountId?: string,
 ): NormalizedWhatsAppEvent[] {
   if (!isRecord(payload) || payload.object !== "whatsapp_business_account"
     || !Array.isArray(payload.entry) || !expectedPhoneNumberId) {
@@ -155,6 +157,10 @@ export function parseWhatsAppWebhookPayload(
   for (const entry of payload.entry) {
     if (!isRecord(entry) || !Array.isArray(entry.changes)) {
       throw new WhatsAppWebhookPayloadError("invalid_payload");
+    }
+    if (expectedBusinessAccountId
+      && requiredString(entry.id, 255) !== expectedBusinessAccountId) {
+      throw new WhatsAppWebhookPayloadError("phone_number_mismatch");
     }
 
     for (const change of entry.changes) {
