@@ -591,6 +591,14 @@ export function AccountDashboard() {
                   <span aria-label="Abonnement requis" className="sr-only">Abonnement requis</span>
                   <span>SkillFlow Prospection</span>
                 </Link>
+
+                <Link
+                  href="/member/jarvisflow"
+                  className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl border border-[#20DDF2]/20 bg-[#20DDF2]/[.06] px-4 text-left text-sm font-semibold text-[#B8EAF0] transition-all duration-200 hover:translate-x-1 hover:border-[#20DDF2]/40 hover:bg-[#20DDF2]/[.12] hover:text-white"
+                >
+                  <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#20DDF2]/10 text-sm text-[#20DDF2]">✦</span>
+                  <span>Jarvisflow</span>
+                </Link>
               </nav>
 
               {account?.user.role === "admin" && (
