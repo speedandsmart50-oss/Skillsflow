@@ -11,6 +11,8 @@ import { matchesFileContentType } from "@/lib/security/file-content";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { oauthJson, parseBearer, validateAccessToken } from "@/lib/oauth/server";
 import { isValidEmail, sendEmail } from "@/lib/email/resend";
+import { isMessagingEnabled } from "@/lib/messaging/config";
+import { registerMessagingTools } from "@/lib/messaging/mcp-tools/register";
 import type { Product } from "@/types/skillflow";
 
 type McpCaller = { userId: string; keyId: string } | null;
@@ -514,6 +516,9 @@ function createMcpServer(caller: McpCaller) {
     await supabase.from("mcp_tool_usage").insert({ user_id: caller.userId, skill_id: skillId, tool_name: `resource_${section}`, input_summary: {}, output_summary: { count: data?.length ?? 0 }, status: "success" });
     return { contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify({ [section]: data }) }] };
   });
+  if (isMessagingEnabled()) {
+    registerMessagingTools(server, caller);
+  }
   return server;
 }
 
