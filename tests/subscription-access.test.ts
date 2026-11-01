@@ -21,6 +21,7 @@ test("subscription limits and paid areas are enforced in the server layer", asyn
   assert.match(prospection, /hasPaidMemberAccess/);
   assert.match(communityRoute, /hasPaidMemberAccess/);
   assert.match(navigation, /href="\/account\?section=subscription"/);
+  assert.match(navigation, /href="\/member\/prospection"[\s\S]*<NavIconProspection/);
   assert.match(navigation, /label: "Abonnements"/);
 });
 

@@ -584,7 +584,7 @@ export function AccountDashboard() {
                 </Link>
 
                 <Link
-                  href="/account?section=subscription"
+                  href="/member/prospection"
                   className="group flex min-h-[46px] w-full items-center gap-3.5 rounded-xl px-4 text-left text-sm font-medium text-[#8F9CAE] transition-all duration-200 hover:bg-white/[0.04] hover:text-white hover:translate-x-1 after:ml-auto after:rounded-full after:border after:border-[#397BFF]/35 after:bg-[#397BFF]/10 after:px-2 after:py-0.5 after:text-[9px] after:font-bold after:uppercase after:tracking-wide after:text-[#82A8FF] after:content-['Abonnement']"
                 >
                   <NavIconProspection active={false} />
