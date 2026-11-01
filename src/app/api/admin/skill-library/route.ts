@@ -1,5 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { recordAdminAction, requireAdminApiUser } from "@/lib/security/admin-api";
+import { validateSlug } from "@/lib/security/access";
+
+const INTEGER_MAX = 2_147_483_647;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 export async function GET(request: Request) {
   const access = await requireAdminApiUser(request);
@@ -10,6 +18,98 @@ export async function GET(request: Request) {
   ]);
   if (error || categoryError) return NextResponse.json({ error: "Appliquez la migration 011 pour gérer la bibliothèque." }, { status: 503 });
   return NextResponse.json({ skills, categories }, { headers: { "Cache-Control": "private, no-store" } });
+}
+
+export async function POST(request: Request) {
+  const access = await requireAdminApiUser(request);
+  if (!access.ok) return access.response;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Les informations du skill sont invalides." }, { status: 400 });
+  }
+
+  if (
+    !isRecord(body)
+    || typeof body.slug !== "string"
+    || !validateSlug(body.slug)
+    || typeof body.name !== "string"
+    || body.name.trim().length < 2
+    || body.name.trim().length > 160
+    || typeof body.category_id !== "string"
+    || typeof body.short_description !== "string"
+    || body.short_description.trim().length < 1
+    || body.short_description.trim().length > 500
+    || typeof body.price_cents !== "number"
+    || !Number.isSafeInteger(body.price_cents)
+    || body.price_cents < 0
+    || body.price_cents > INTEGER_MAX
+  ) {
+    return NextResponse.json({ error: "Vérifiez le nom, le slug, la catégorie, la description et le prix." }, { status: 400 });
+  }
+
+  const { data: category, error: categoryError } = await access.supabase
+    .from("skill_categories")
+    .select("id")
+    .eq("id", body.category_id)
+    .maybeSingle();
+  if (categoryError) {
+    console.error("Could not validate skill category:", categoryError.message);
+    return NextResponse.json({ error: "Impossible de vérifier la catégorie." }, { status: 500 });
+  }
+  if (!category) return NextResponse.json({ error: "La catégorie sélectionnée est introuvable." }, { status: 400 });
+
+  const id = randomUUID();
+  const values = {
+    id,
+    slug: body.slug,
+    name: body.name.trim(),
+    category_id: body.category_id,
+    short_description: body.short_description.trim(),
+    long_description: body.short_description.trim(),
+    promise: body.short_description.trim(),
+    price_cents: body.price_cents,
+    is_active: true,
+  };
+
+  try {
+    await recordAdminAction(access.supabase, access.user.id, "library.skill.create", "skill", id, "requested", {
+      slug: values.slug,
+      category_id: values.category_id,
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Journal indisponible." }, { status: 500 });
+  }
+
+  const { data, error } = await access.supabase
+    .from("skills")
+    .insert(values)
+    .select("id,slug,name,category_id,short_description,price_cents,is_active,is_included_in_membership,product_id")
+    .single();
+  if (error) {
+    console.error("Could not create library skill:", error.message);
+    const duplicateSlug = error.code === "23505";
+    return NextResponse.json(
+      { error: duplicateSlug ? "Ce slug est déjà utilisé." : "Impossible de créer ce skill." },
+      { status: duplicateSlug ? 409 : 500 },
+    );
+  }
+
+  try {
+    await recordAdminAction(access.supabase, access.user.id, "library.skill.create", "skill", id, "completed", {
+      slug: values.slug,
+      category_id: values.category_id,
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Journal indisponible." }, { status: 500 });
+  }
+
+  return NextResponse.json({ skill: data }, {
+    status: 201,
+    headers: { "Cache-Control": "private, no-store" },
+  });
 }
 
 export async function PATCH(request: Request) {
